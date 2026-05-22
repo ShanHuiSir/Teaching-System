@@ -12,7 +12,7 @@
 
 ## 本地启动
 
-项目当前不依赖 Maven、Tomcat 或数据库，直接使用 JDK 17 启动。
+使用JDK17.
 
 ```bash
 javac -encoding UTF-8 -d out src/main/java/com/teachingeval/App.java
