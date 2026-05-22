@@ -1,4 +1,17 @@
+# === IDE ===
+.idea/
+
+# === Java build output ===
 out/
 *.class
-.DS_Store
+*.jar
+*.war
 
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Environment ===
+.env
+.env.local
