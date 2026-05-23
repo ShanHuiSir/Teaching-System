@@ -1,5 +1,6 @@
 # === IDE ===
 .idea/
+.vscode/
 
 # === Java build output ===
 out/
@@ -15,3 +16,4 @@ desktop.ini
 # === Environment ===
 .env
 .env.local
+/Teaching-System.iml
