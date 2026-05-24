@@ -1,6 +1,6 @@
 # 教学评价系统
 
-使用 `JavaWeb` 与 `Maven` 。
+使用 `SpringBoot` 与 `Maven` 。
 
 ## 当前最小功能
 
