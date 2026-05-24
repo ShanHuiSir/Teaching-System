@@ -19,10 +19,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Compile Java Code
-        run: |
-          mkdir -p out
-          javac -encoding UTF-8 -d out src/main/java/com/teachingeval/App.java
+      - name: Build with Maven
+        run: mvn compile -B
 
       - name: Deploy to Server
         uses: appleboy/scp-action@v0.1.7
@@ -31,7 +29,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          source: "out"
+          source: "target/classes"
           target: "/usr/share/nginx/teaching-system"
 
       - name: Restart Service
@@ -42,43 +40,42 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            set -e
-
-            APP_DIR="/usr/share/nginx/teaching-system"
-            PID_FILE="$APP_DIR/app.pid"
+            set APP_DIR "/usr/share/nginx/teaching-system"
+            set PID_FILE "$APP_DIR/app.pid"
 
             cd "$APP_DIR"
 
             # 停止旧服务
-            if [ -f "$PID_FILE" ]; then
-              OLD_PID=$(cat "$PID_FILE")
-              if kill -0 "$OLD_PID" 2>/dev/null; then
+            if test -f "$PID_FILE"
+              set OLD_PID (cat "$PID_FILE")
+              if kill -0 "$OLD_PID" 2>/dev/null
                 echo "正在停止旧服务 (PID: $OLD_PID)..."
                 kill -15 "$OLD_PID"
-                # 等待最多 10 秒
-                for i in $(seq 1 10); do
-                  kill -0 "$OLD_PID" 2>/dev/null || break
+                for i in (seq 1 10)
+                  if not kill -0 "$OLD_PID" 2>/dev/null
+                    break
+                  end
                   sleep 1
-                done
-                # 仍未退出则强制终止
-                kill -0 "$OLD_PID" 2>/dev/null && kill -9 "$OLD_PID" || true
-              fi
+                end
+                if kill -0 "$OLD_PID" 2>/dev/null
+                  kill -9 "$OLD_PID"
+                end
+              end
               rm -f "$PID_FILE"
-            fi
+            end
 
             # 启动新服务
             echo "正在启动新服务..."
-            nohup java -cp out com.teachingeval.App > app.log 2>&1 &
-            NEW_PID=$!
+            nohup java -cp target/classes com.teachingeval.App > app.log 2>&1 &
+            set NEW_PID $last_pid
             echo "$NEW_PID" > "$PID_FILE"
 
-            # 等待启动
             sleep 3
 
-            if kill -0 "$NEW_PID" 2>/dev/null; then
+            if kill -0 "$NEW_PID" 2>/dev/null
               echo "部署完成 (PID: $NEW_PID)"
             else
               echo "启动失败，最近日志："
               tail -20 app.log
               exit 1
-            fi
+            end
