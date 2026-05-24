@@ -10,14 +10,15 @@
 - 作品评价页占位
 - 报表导出入口占位
 
-## 本地启动
-
-使用JDK17.
-
+## 编译与运行
 ```bash
-javac -encoding UTF-8 -d out src/main/java/com/teachingeval/App.java
-java -cp out com.teachingeval.App
+# 编译
+mvn compile
+
+# 运行
+mvn exec:java -Dexec.mainClass="com.teachingeval.App"
 ```
+
 
 启动后访问：
 

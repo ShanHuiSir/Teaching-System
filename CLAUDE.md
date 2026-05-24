@@ -4,7 +4,7 @@
 AI + 教师实训教学评价系统。教师登录后管理学生、AI 辅助评价学生作品、导出成绩。
 
 ## 技术栈
-- 原生 Java（无 Maven/Gradle），使用 `javac` 直接编译
+- Java 17 + Maven
 - `com.sun.net.httpserver.HttpServer` 内置 HTTP 服务器
 - 纯 HTML/CSS 服务端渲染，无前端框架
 - 端口：`8080`
@@ -12,17 +12,17 @@ AI + 教师实训教学评价系统。教师登录后管理学生、AI 辅助评
 ## 项目结构
 ```
 src/main/java/com/teachingeval/App.java   # 唯一源文件，包含所有路由与页面
-out/                                       # 编译输出目录
+target/                                    # Maven 编译输出目录
 docs/                                      # 设计文档
 ```
 
 ## 编译与运行
 ```bash
 # 编译
-javac -d out -encoding UTF-8 src/main/java/com/teachingeval/App.java
+mvn compile
 
 # 运行
-java -cp out com.teachingeval.App
+mvn exec:java -Dexec.mainClass="com.teachingeval.App"
 ```
 
 ## 路由
