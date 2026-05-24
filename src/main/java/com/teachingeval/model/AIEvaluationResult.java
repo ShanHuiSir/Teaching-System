@@ -1,4 +1,4 @@
-package com.teachingeval;
+package com.teachingeval.model;
 
 import java.math.BigDecimal;
 
