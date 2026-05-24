@@ -17,3 +17,6 @@ desktop.ini
 .env
 .env.local
 /Teaching-System.iml
+
+# === Maven ===
+.mvn/
