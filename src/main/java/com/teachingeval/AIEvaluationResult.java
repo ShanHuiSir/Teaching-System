@@ -2,6 +2,28 @@ package com.teachingeval;
 
 import java.math.BigDecimal;
 
+/**
+ * [1. 类概述]
+ * AI 评价结果实体类，承载 AI 对一份学生作品提交的自动评价数据，
+ * 包括分数、发现的问题、综合评语以及评价状态。
+ * <p>
+ * [2. 成员变量详解]
+ * - private Long id:                 主键，数据库自增，新建对象时为 null。
+ * - private Long submissionId:       关联的作品提交 ID，用于追溯评价对应的提交记录。
+ * - private BigDecimal aiScore:      AI 建议分数，取值范围 0.00 ~ 100.00，精度两位小数。
+ * - private String aiIssues:         AI 发现的问题，多条问题以换行符分隔。
+ * - private String aiComment:        AI 综合评语。
+ * - private int status:              评价状态：0 表示未评价，1 表示 AI 已评价。
+ * <p>
+ * [3. 方法调用指南]
+ * - 无参构造函数用于创建空实例，随后通过 setter 填充各字段。
+ * - isAiEvaluated() 在 status >= 1 时返回 true，用于判断 AI 是否已完成评价。
+ * - toString() 输出关键字段的快照，便于调试日志。
+ * <p>
+ * [4. 继承与实现关系]
+ * - 直接继承 java.lang.Object，无实现的接口。
+ * - 隶属于系统的实体层 (Entity)，对应数据库 evaluation 表中的 AI 相关字段。
+ */
 public class AIEvaluationResult {
 
     private Long id;
@@ -35,7 +57,7 @@ public class AIEvaluationResult {
 
     @Override
     public String toString() {
-        return "EvaluationResult{" +
+        return "AIEvaluationResult{" +
                 "id=" + id +
                 ", submissionId=" + submissionId +
                 ", aiScore=" + aiScore +
