@@ -45,9 +45,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          # 服务器默认 Shell 是 Fish，这里显式切换到 Bash 执行
+          # 服务器默认 Shell 是 Fish（< 3.5 不支持 heredoc），通过 bash -c 配合单引号多行字符串切换至 Bash
           script: |
-            /usr/bin/env bash <<'DEPLOY_SCRIPT'
+            bash -c '
             set -euo pipefail
 
             APP_DIR="/usr/share/teaching-system"
@@ -119,4 +119,4 @@ jobs:
               tail -50 "$LOG_FILE"
               exit 1
             fi
-            DEPLOY_SCRIPT
+            '
