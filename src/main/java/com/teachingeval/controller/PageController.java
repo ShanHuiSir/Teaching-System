@@ -33,6 +33,11 @@ public class PageController {
         return "students";
     }
 
+    @GetMapping("/works")
+    public String works() {
+        return "works";
+    }
+
     @GetMapping("/evaluation")
     public String evaluation() {
         return "evaluation";
@@ -43,4 +48,3 @@ public class PageController {
         return "export";
     }
 }
-

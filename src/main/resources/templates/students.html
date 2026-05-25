@@ -11,6 +11,7 @@
     <h1>教学评价系统</h1>
     <nav>
       <a href="/students">学生管理</a>
+      <a href="/works">作品提交</a>
       <a href="/evaluation">作品评价</a>
       <a href="/export">导出成绩</a>
       <a href="/">退出</a>
@@ -90,7 +91,7 @@
               <td>${escapeHtml(student.name)}</td>
               <td>${escapeHtml(student.className)}</td>
               <td class="action-cell">
-                <a href="/evaluation?studentName=${encodeURIComponent(student.name)}">进入评价</a>
+                <a href="/works?studentId=${student.id}">提交作品</a>
                 <button class="button-secondary" type="button" data-delete-id="${student.id}">删除</button>
               </td>
             </tr>

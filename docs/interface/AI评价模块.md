@@ -10,10 +10,10 @@ AIService (接口)
   └── FakeAIService (@Service 模拟实现)
        │
        ▼
-AIEvaluationResult (@Entity 评价结果)
+AIEvaluationResult (@Entity 评价结果，保存 AI 和教师评价)
 ```
 
-分层设计：Controller 接收前端 JSON → 反序列化为 `AIEvalRequestDTO` → 注入 `AIService` 调用 `evaluate` → 返回 `AIEvaluationResult`。后续参数扩展只需在 DTO 中加字段，接口签名不变。
+分层设计：Controller 接收前端 JSON → 反序列化为 `AIEvalRequestDTO` → 调用 `EvaluationService` → 内部使用 `AIService` 生成模拟评价 → 保存并返回 `AIEvaluationResult`。后续参数扩展只需在 DTO 中加字段，接口签名不变。
 
 ---
 
@@ -54,13 +54,13 @@ public interface AIService {
 | 项 | 说明 |
 |----|------|
 | 参数 `request` | `AIEvalRequestDTO`，包含学生姓名、作品文件名、提交 ID |
-| 返回值 | `AIEvaluationResult`，包含 submissionId、评分、问题、评语、状态 |
+| 返回值 | `AIEvaluationResult`，包含 submissionId、AI 评分、问题、评语、教师评分、教师评语、状态 |
 
 ---
 
 ## AIEvaluationResult — AI 评价结果实体
 
-`com.teachingeval.model.AIEvaluationResult`，JPA `@Entity`，映射至 `ai_evaluation_result` 表。
+`com.teachingeval.model.AIEvaluationResult`，JPA `@Entity`，映射至 `ai_evaluation_result` 表。第二天开始，`POST /api/evaluate` 会把 FakeAIService 的结果保存到数据库。
 
 ### 字段
 
@@ -71,7 +71,9 @@ public interface AIService {
 | `aiScore` | `BigDecimal` | `ai_score` | AI 建议分数 (precision=5, scale=2) |
 | `aiIssues` | `String` | `ai_issues` | AI 发现的问题，TEXT 类型 |
 | `aiComment` | `String` | `ai_comment` | AI 综合评语，TEXT 类型 |
-| `status` | `int` | `status` | 0-未评价，1-AI 已评价 |
+| `teacherScore` | `BigDecimal` | `teacher_score` | 教师最终评分 |
+| `teacherComment` | `String` | `teacher_comment` | 教师最终评语 |
+| `status` | `int` | `status` | 0-未评价，1-AI 已评价，2-教师已确认 |
 
 ### 方法
 
@@ -104,15 +106,15 @@ public interface AIService {
 @RestController
 public class EvaluationController {
 
-    private final AIService aiService;
+    private final EvaluationService evaluationService;
 
-    public EvaluationController(AIService aiService) {
-        this.aiService = aiService;
+    public EvaluationController(EvaluationService evaluationService) {
+        this.evaluationService = evaluationService;
     }
 
     @PostMapping("/api/evaluate")
     public AIEvaluationResult evaluate(@RequestBody AIEvalRequestDTO request) {
-        return aiService.evaluate(request);
+        return evaluationService.evaluateAndSave(request);
     }
 }
 ```
@@ -129,3 +131,17 @@ Content-Type: application/json
   "submissionId": 1001
 }
 ```
+
+## 教师最终评价保存接口
+
+```http
+POST /api/submissions/1/teacher-review
+Content-Type: application/json
+
+{
+  "teacherScore": 88.0,
+  "teacherComment": "整体完成较好，建议继续完善代码注释。"
+}
+```
+
+保存成功后返回同一个 `AIEvaluationResult`，其中 `status` 为 `2`。

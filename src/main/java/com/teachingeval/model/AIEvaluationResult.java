@@ -37,8 +37,16 @@ public class AIEvaluationResult {
     @Schema(description = "AI 综合评语", example = "整体完成度较好，但在结构组织上还有提升空间")
     private String aiComment;
 
+    @Column(name = "teacher_score", precision = 5, scale = 2)
+    @Schema(description = "教师最终评分，取值范围 0.00 ~ 100.00", example = "88.00")
+    private BigDecimal teacherScore;
+
+    @Column(name = "teacher_comment", columnDefinition = "TEXT")
+    @Schema(description = "教师最终评语", example = "整体完成较好，建议继续完善代码注释。")
+    private String teacherComment;
+
     @Column(name = "status")
-    @Schema(description = "评价状态：0 表示未评价，1 表示 AI 已评价", example = "1")
+    @Schema(description = "评价状态：0 表示未评价，1 表示 AI 已评价，2 表示教师已确认", example = "1")
     private int status;
 
     public AIEvaluationResult() {}
@@ -58,6 +66,12 @@ public class AIEvaluationResult {
     public String getAiComment() { return aiComment; }
     public void setAiComment(String aiComment) { this.aiComment = aiComment; }
 
+    public BigDecimal getTeacherScore() { return teacherScore; }
+    public void setTeacherScore(BigDecimal teacherScore) { this.teacherScore = teacherScore; }
+
+    public String getTeacherComment() { return teacherComment; }
+    public void setTeacherComment(String teacherComment) { this.teacherComment = teacherComment; }
+
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }
 
@@ -71,6 +85,8 @@ public class AIEvaluationResult {
                 ", aiScore=" + aiScore +
                 ", aiIssues='" + aiIssues + '\'' +
                 ", aiComment='" + aiComment + '\'' +
+                ", teacherScore=" + teacherScore +
+                ", teacherComment='" + teacherComment + '\'' +
                 ", status=" + status +
                 '}';
     }
