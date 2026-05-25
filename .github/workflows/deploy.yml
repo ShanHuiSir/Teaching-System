@@ -22,6 +22,11 @@ jobs:
       - name: Build with Maven
         run: mvn package -B -DskipTests
 
+      - name: Prepare JAR
+        run: |
+          JAR=$(ls target/Teaching-System-*.jar | grep -v '\.original$' | head -1)
+          cp "$JAR" target/app.jar
+
       - name: Deploy JAR to Server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -29,8 +34,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          source: "target/Teaching-System-*.jar"
+          source: "target/app.jar"
           target: "/usr/share/teaching-system"
+          strip_components: 1
 
       - name: Restart Service
         uses: appleboy/ssh-action@v1.2.1
@@ -41,11 +47,9 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
             set APP_DIR "/usr/share/teaching-system"
-            set JAR_FILE (ls "$APP_DIR/target/Teaching-System-"*.jar | tail -1)
+            set JAR_FILE "$APP_DIR/app.jar"
             set PID_FILE "$APP_DIR/app.pid"
             set LOG_FILE "$APP_DIR/app.log"
-
-            cd "$APP_DIR"
 
             # 停止旧服务
             if test -f "$PID_FILE"
