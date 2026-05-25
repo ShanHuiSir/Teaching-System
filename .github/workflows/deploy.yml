@@ -48,41 +48,70 @@ jobs:
           script: |
             set APP_DIR "/usr/share/teaching-system"
             set JAR_FILE "$APP_DIR/app.jar"
-            set PID_FILE "$APP_DIR/app.pid"
             set LOG_FILE "$APP_DIR/app.log"
+            set PORT 8080
+            set MAX_WAIT 30
 
-            # 停止旧服务
-            if test -f "$PID_FILE"
-              set OLD_PID (cat "$PID_FILE")
-              if kill -0 "$OLD_PID" 2>/dev/null
-                echo "正在停止旧服务 (PID: $OLD_PID)..."
-                kill -15 "$OLD_PID"
-                for i in (seq 1 10)
-                  if not kill -0 "$OLD_PID" 2>/dev/null
-                    break
-                  end
-                  sleep 1
-                end
-                if kill -0 "$OLD_PID" 2>/dev/null
-                  echo "强制终止旧服务..."
-                  kill -9 "$OLD_PID"
-                end
+            # ── 停止占用端口的旧进程 ──
+            echo "=== 检查端口 $PORT 上的旧进程 ==="
+            set OLD_PIDS (lsof -t -i:$PORT 2>/dev/null)
+
+            if test -n "$OLD_PIDS"
+              for OLD_PID in $OLD_PIDS
+                echo "发现旧进程 PID: $OLD_PID，发送 SIGTERM..."
+                kill -15 "$OLD_PID" 2>/dev/null; or true
               end
-              rm -f "$PID_FILE"
+
+              set RETRY 0
+              while test $RETRY -lt 10
+                set STILL_ALIVE (lsof -t -i:$PORT 2>/dev/null)
+                if test -z "$STILL_ALIVE"
+                  break
+                end
+                sleep 1
+                set RETRY (math $RETRY + 1)
+              end
+
+              set STUBBORN (lsof -t -i:$PORT 2>/dev/null)
+              if test -n "$STUBBORN"
+                echo "进程未响应 SIGTERM，强制终止..."
+                for P in $STUBBORN
+                  kill -9 "$P" 2>/dev/null; or true
+                end
+                sleep 1
+              end
             end
 
-            # 启动新服务
-            echo "正在启动新服务..."
+            set LEFTOVER (lsof -t -i:$PORT 2>/dev/null)
+            if test -n "$LEFTOVER"
+              echo "错误：无法释放端口 $PORT，残留进程 PID: $LEFTOVER"
+              exit 1
+            end
+
+            echo "端口 $PORT 已释放。"
+
+            # ── 启动新服务并轮询端口 ──
+            echo "=== 启动新服务 ==="
             nohup java -jar "$JAR_FILE" > "$LOG_FILE" 2>&1 &
-            set NEW_PID $last_pid
-            echo "$NEW_PID" > "$PID_FILE"
 
-            sleep 5
+            set ELAPSED 0
+            set STARTED 0
 
-            if kill -0 "$NEW_PID" 2>/dev/null
-              echo "部署完成 (PID: $NEW_PID)"
+            while test $ELAPSED -lt $MAX_WAIT
+              sleep 1
+              set ELAPSED (math $ELAPSED + 1)
+              set NEW_PID (lsof -t -i:$PORT 2>/dev/null)
+              if test -n "$NEW_PID"
+                set STARTED 1
+                break
+              end
+            end
+
+            if test $STARTED -eq 1
+              echo "部署成功！新服务 PID: $NEW_PID，监听端口: $PORT"
             else
-              echo "启动失败，最近日志："
+              echo "启动失败！等待了 $MAX_WAIT 秒后端口 $PORT 仍未监听。"
+              echo "--- 最近日志 ---"
               tail -50 "$LOG_FILE"
               exit 1
             end
