@@ -8,21 +8,24 @@
 </head>
 <body class="login-page">
   <main class="login-card">
-    <h1>教学评价系统</h1>
-    <p>教师端作品评价与成绩导出</p>
-    <form method="post" action="/login">
-      <label>
-        账号
-        <input name="username" value="teacher" autocomplete="username">
+    <div class="login-card__header">
+      <h1>教学评价系统</h1>
+      <p>教师端作品评价与成绩管理</p>
+    </div>
+
+    <div class="login-error" th:if="${error}" th:text="${error}"></div>
+
+    <form class="login-form" method="post" action="/login">
+      <label class="md-field">
+        <span class="md-field__label">账号</span>
+        <input class="md-field__input" name="username" placeholder="请输入教师账号" autocomplete="username" required>
       </label>
-      <label>
-        密码
-        <input name="password" type="password" value="123456" autocomplete="current-password">
+      <label class="md-field">
+        <span class="md-field__label">密码</span>
+        <input class="md-field__input" name="password" type="password" placeholder="请输入密码" autocomplete="current-password" required>
       </label>
-      <p class="error" th:if="${error}" th:text="${error}"></p>
-      <button type="submit">登录</button>
+      <button class="md-btn md-btn--filled" type="submit">登录</button>
     </form>
   </main>
 </body>
 </html>
-
