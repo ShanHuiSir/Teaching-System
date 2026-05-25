@@ -25,6 +25,11 @@ button {
   font-size: 14px;
 }
 
+button.button-secondary {
+  color: #334155;
+  background: #e2e8f0;
+}
+
 input,
 textarea {
   width: 100%;
@@ -79,9 +84,26 @@ label {
   gap: 16px;
 }
 
+.inline-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
 .error {
   margin: 0;
   color: #b91c1c;
+  font-size: 14px;
+}
+
+.error-text {
+  color: #b91c1c;
+}
+
+.status-text {
+  color: #64748b;
   font-size: 14px;
 }
 
@@ -157,11 +179,32 @@ th {
   font-weight: 600;
 }
 
+.action-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.result-box {
+  min-height: 48px;
+  margin: 8px 0 0;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #334155;
+  background: #f8fafc;
+  font: inherit;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 640px) {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
     padding: 16px;
   }
-}
 
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+}

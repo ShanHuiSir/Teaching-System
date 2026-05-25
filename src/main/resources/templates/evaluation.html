@@ -19,39 +19,96 @@
   <main class="container">
     <section class="panel">
       <h2>作品评价</h2>
-      <form class="form-grid">
+      <form class="form-grid" id="evaluationForm">
         <label>
           学生
-          <input value="张三" readonly>
+          <input name="studentName" value="张三" required>
         </label>
         <label>
           作品文件名
-          <input value="student-work.zip" readonly>
+          <input name="fileName" value="student-work.zip" required>
         </label>
-        <button type="button">点击 AI 评价</button>
+        <label>
+          作品提交 ID
+          <input name="submissionId" type="number" value="1001" required>
+        </label>
+        <button type="submit">点击 AI 评价</button>
       </form>
     </section>
     <section class="panel">
       <h2>AI 评价结果</h2>
-      <p><strong>评分建议：</strong>85</p>
-      <p><strong>主要问题：</strong>作品结构完整，但说明文档还不够清楚。</p>
-      <p><strong>评语草稿：</strong>整体完成度较好，建议继续完善功能说明和测试截图。</p>
+      <p class="status-text" id="evaluationStatus">等待发起 AI 评价。</p>
+      <p><strong>评分建议：</strong><span id="aiScore">-</span></p>
+      <p><strong>主要问题：</strong></p>
+      <pre class="result-box" id="aiIssues">-</pre>
+      <p><strong>评语草稿：</strong></p>
+      <pre class="result-box" id="aiComment">-</pre>
     </section>
     <section class="panel">
       <h2>教师复核</h2>
       <form class="form-grid">
         <label>
           最终分数
-          <input value="85">
+          <input id="finalScore" value="">
         </label>
         <label>
           最终评语
-          <textarea>整体完成度较好，继续优化细节。</textarea>
+          <textarea id="finalComment"></textarea>
         </label>
         <button type="button">保存最终评价</button>
       </form>
     </section>
   </main>
+  <script>
+    const evaluationForm = document.querySelector("#evaluationForm");
+    const evaluationStatus = document.querySelector("#evaluationStatus");
+    const aiScore = document.querySelector("#aiScore");
+    const aiIssues = document.querySelector("#aiIssues");
+    const aiComment = document.querySelector("#aiComment");
+    const finalScore = document.querySelector("#finalScore");
+    const finalComment = document.querySelector("#finalComment");
+
+    const params = new URLSearchParams(window.location.search);
+    const studentNameFromUrl = params.get("studentName");
+    if (studentNameFromUrl) {
+      evaluationForm.elements.studentName.value = studentNameFromUrl;
+    }
+
+    function setEvaluationStatus(message, isError = false) {
+      evaluationStatus.textContent = message;
+      evaluationStatus.classList.toggle("error-text", isError);
+    }
+
+    evaluationForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const formData = new FormData(evaluationForm);
+      const payload = Object.fromEntries(formData.entries());
+      payload.submissionId = Number(payload.submissionId);
+
+      setEvaluationStatus("AI 正在评价...");
+
+      try {
+        const response = await fetch("/api/evaluate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error("AI 评价失败");
+        }
+
+        const result = await response.json();
+        aiScore.textContent = result.aiScore ?? "-";
+        aiIssues.textContent = result.aiIssues || "-";
+        aiComment.textContent = result.aiComment || "-";
+        finalScore.value = result.aiScore ?? "";
+        finalComment.value = result.aiComment || "";
+        setEvaluationStatus("AI 评价完成");
+      } catch (error) {
+        setEvaluationStatus(error.message, true);
+      }
+    });
+  </script>
 </body>
 </html>
-
