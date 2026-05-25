@@ -7,75 +7,58 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>教学评价系统</h1>
-    <nav>
+  <header class="md-topbar">
+    <span class="md-topbar__brand">教学评价系统</span>
+    <nav class="md-topbar__nav">
       <a href="/students">学生管理</a>
       <a href="/works">作品提交</a>
       <a href="/evaluation">作品评价</a>
-      <a href="/export">导出成绩</a>
-      <a href="/">退出</a>
+      <a href="/export" class="active">导出成绩</a>
+      <a href="#" class="logout-link">退出</a>
     </nav>
   </header>
-  <main class="container">
-    <section class="panel">
-      <div class="panel-header">
-        <h2>成绩统计</h2>
-        <span class="status-text" id="exportStatus">正在加载统计数据...</span>
+
+  <main class="md-page">
+    <div class="md-page-header">
+      <h2>导出成绩</h2>
+      <div class="md-page-header__actions">
+        <button class="md-btn md-btn--filled" type="button">导出 Excel</button>
       </div>
-      <div class="summary-grid">
-        <div>
-          <strong id="studentCount">0</strong>
-          <span>学生总数</span>
-        </div>
-        <div>
-          <strong id="submissionCount">0</strong>
-          <span>作品提交数</span>
-        </div>
-        <div>
-          <strong id="aiEvaluatedCount">0</strong>
-          <span>AI 已评价</span>
-        </div>
-        <div>
-          <strong id="teacherConfirmedCount">0</strong>
-          <span>教师已确认</span>
-        </div>
-        <div>
-          <strong id="averageTeacherScore">0</strong>
-          <span>平均分</span>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__body">
+        <div class="md-empty">
+          <div class="md-empty__icon">&#8595;</div>
+          <p>暂无导出记录</p>
+          <span style="font: var(--md-typescale-body-small); color: var(--md-sys-color-on-surface-variant);">点击上方按钮导出学生成绩汇总</span>
         </div>
       </div>
-    </section>
-    <section class="panel">
-      <h2>导出 Excel</h2>
-      <p class="status-text">第二天先完成统计接口和页面规划，后续接入 Apache POI 生成 Excel 文件。</p>
-      <button type="button" disabled>导出 Excel</button>
-    </section>
+    </div>
   </main>
+
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="md-dialog__title">确认退出</div>
+      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
+        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const exportStatus = document.querySelector("#exportStatus");
-
-    async function loadSummary() {
-      try {
-        const response = await fetch("/api/statistics/summary");
-        if (!response.ok) {
-          throw new Error("统计数据加载失败");
-        }
-
-        const summary = await response.json();
-        document.querySelector("#studentCount").textContent = summary.studentCount;
-        document.querySelector("#submissionCount").textContent = summary.submissionCount;
-        document.querySelector("#aiEvaluatedCount").textContent = summary.aiEvaluatedCount;
-        document.querySelector("#teacherConfirmedCount").textContent = summary.teacherConfirmedCount;
-        document.querySelector("#averageTeacherScore").textContent = summary.averageTeacherScore;
-        exportStatus.textContent = "统计数据已更新";
-      } catch (error) {
-        exportStatus.textContent = error.message;
-        exportStatus.classList.add("error-text");
-      }
-    }
-
-    loadSummary();
+    const l = document.querySelector('.logout-link');
+    const d = document.getElementById('logout-dialog');
+    document.getElementById('logout-cancel').onclick = () => { d.classList.add('hidden'); l.focus(); };
+    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
+    l.onclick = e => { e.preventDefault(); d.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
+    d.onclick = e => { if (e.target === d) { d.classList.add('hidden'); l.focus(); } };
+    document.onkeydown = e => { if (e.key === 'Escape' && !d.classList.contains('hidden')) { d.classList.add('hidden'); l.focus(); } };
   </script>
 </body>
 </html>

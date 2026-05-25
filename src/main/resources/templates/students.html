@@ -7,153 +7,76 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>教学评价系统</h1>
-    <nav>
-      <a href="/students">学生管理</a>
-      <a href="/works">作品提交</a>
+  <header class="md-topbar">
+    <span class="md-topbar__brand">教学评价系统</span>
+    <nav class="md-topbar__nav">
+      <a href="/students" class="active">学生管理</a>
       <a href="/evaluation">作品评价</a>
       <a href="/export">导出成绩</a>
-      <a href="/">退出</a>
+      <a href="#" class="logout-link">退出</a>
     </nav>
   </header>
-  <main class="container">
-    <section class="panel">
-      <div class="panel-header">
-        <h2>学生列表</h2>
-        <span class="status-text" id="studentStatus">正在加载学生数据...</span>
+
+  <main class="md-page">
+    <div class="md-page-header">
+      <h2>学生管理</h2>
+      <div class="md-page-header__actions">
+        <button class="md-btn md-btn--filled" type="button">新增学生</button>
       </div>
-      <form class="inline-form" id="studentForm">
-        <label>
-          学号
-          <input name="studentNo" placeholder="2026001" required>
-        </label>
-        <label>
-          姓名
-          <input name="name" placeholder="张三" required>
-        </label>
-        <label>
-          班级
-          <input name="className" placeholder="软件 1 班" required>
-        </label>
-        <button type="submit">新增学生</button>
-      </form>
-      <table>
+    </div>
+
+    <div class="md-toolbar">
+      <div class="md-toolbar__search">
+        <input class="md-field__input" type="search" placeholder="搜索姓名或学号...">
+      </div>
+    </div>
+
+    <div class="md-card">
+      <table class="md-table">
         <thead>
           <tr>
             <th>学号</th>
             <th>姓名</th>
             <th>班级</th>
-            <th>操作</th>
+            <th style="width: 120px;">操作</th>
           </tr>
         </thead>
         <tbody id="studentTableBody">
           <tr>
-            <td colspan="4">正在加载...</td>
+            <td>2026001</td>
+            <td>张三</td>
+            <td><span class="md-chip">软件 1 班</span></td>
+            <td>
+              <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation">评价</a>
+            </td>
           </tr>
         </tbody>
       </table>
-    </section>
+    </div>
   </main>
+
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="md-dialog__title">确认退出</div>
+      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
+        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const studentForm = document.querySelector("#studentForm");
-    const studentStatus = document.querySelector("#studentStatus");
-    const studentTableBody = document.querySelector("#studentTableBody");
-
-    function setStatus(message, isError = false) {
-      studentStatus.textContent = message;
-      studentStatus.classList.toggle("error-text", isError);
-    }
-
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    async function loadStudents() {
-      try {
-        const response = await fetch("/api/students");
-        if (!response.ok) {
-          throw new Error("学生列表加载失败");
-        }
-
-        const students = await response.json();
-        if (students.length === 0) {
-          studentTableBody.innerHTML = '<tr><td colspan="4">暂无学生，请先新增学生。</td></tr>';
-        } else {
-          studentTableBody.innerHTML = students.map(student => `
-            <tr>
-              <td>${escapeHtml(student.studentNo)}</td>
-              <td>${escapeHtml(student.name)}</td>
-              <td>${escapeHtml(student.className)}</td>
-              <td class="action-cell">
-                <a href="/works?studentId=${student.id}">提交作品</a>
-                <button class="button-secondary" type="button" data-delete-id="${student.id}">删除</button>
-              </td>
-            </tr>
-          `).join("");
-        }
-
-        setStatus(`已加载 ${students.length} 名学生`);
-      } catch (error) {
-        studentTableBody.innerHTML = '<tr><td colspan="4">学生数据加载失败。</td></tr>';
-        setStatus(error.message, true);
-      }
-    }
-
-    studentForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const formData = new FormData(studentForm);
-      const student = Object.fromEntries(formData.entries());
-
-      try {
-        const response = await fetch("/api/students", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(student)
-        });
-        const result = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(result.message || "新增学生失败");
-        }
-
-        studentForm.reset();
-        setStatus(`已新增学生：${result.name}`);
-        await loadStudents();
-      } catch (error) {
-        setStatus(error.message, true);
-      }
-    });
-
-    studentTableBody.addEventListener("click", async (event) => {
-      const deleteButton = event.target.closest("[data-delete-id]");
-      if (!deleteButton) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/students/${deleteButton.dataset.deleteId}`, {
-          method: "DELETE"
-        });
-
-        if (!response.ok) {
-          const result = await response.json().catch(() => ({}));
-          throw new Error(result.message || "删除学生失败");
-        }
-
-        setStatus("学生已删除");
-        await loadStudents();
-      } catch (error) {
-        setStatus(error.message, true);
-      }
-    });
-
-    loadStudents();
+    const l = document.querySelector('.logout-link');
+    const d = document.getElementById('logout-dialog');
+    document.getElementById('logout-cancel').onclick = () => { d.classList.add('hidden'); l.focus(); };
+    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
+    l.onclick = e => { e.preventDefault(); d.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
+    d.onclick = e => { if (e.target === d) { d.classList.add('hidden'); l.focus(); } };
+    document.onkeydown = e => { if (e.key === 'Escape' && !d.classList.contains('hidden')) { d.classList.add('hidden'); l.focus(); } };
   </script>
 </body>
 </html>

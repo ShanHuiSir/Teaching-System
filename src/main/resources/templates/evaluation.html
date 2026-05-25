@@ -7,148 +7,135 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>教学评价系统</h1>
-    <nav>
+  <header class="md-topbar">
+    <span class="md-topbar__brand">教学评价系统</span>
+    <nav class="md-topbar__nav">
       <a href="/students">学生管理</a>
-      <a href="/works">作品提交</a>
-      <a href="/evaluation">作品评价</a>
+      <a href="/evaluation" class="active">作品评价</a>
       <a href="/export">导出成绩</a>
-      <a href="/">退出</a>
+      <a href="#" class="logout-link">退出</a>
     </nav>
   </header>
-  <main class="container">
-    <section class="panel">
+
+  <main class="md-page">
+    <div class="md-page-header">
       <h2>作品评价</h2>
-      <form class="form-grid" id="evaluationForm">
-        <label>
-          学生
-          <input name="studentName" value="张三" required>
+    </div>
+
+    <!-- Step 1 ── Student & Work Info -->
+    <div class="md-card">
+      <div class="md-card__header">
+        <span class="md-step__marker">1</span>
+        <h3>学生与作品信息</h3>
+      </div>
+      <div class="md-card__body">
+        <div class="md-info-grid">
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">学生姓名</span>
+            <span class="md-info-grid__value">张三</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">学号</span>
+            <span class="md-info-grid__value">2026001</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">班级</span>
+            <span class="md-info-grid__value">软件 1 班</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">作品文件</span>
+            <span class="md-info-grid__value">student-work.zip</span>
+          </div>
+        </div>
+        <button class="md-btn md-btn--filled" type="button" style="margin-top: var(--md-space-4);">执行 AI 评价</button>
+      </div>
+    </div>
+
+    <!-- Step 2 ── AI Evaluation Result -->
+    <div class="md-card">
+      <div class="md-card__header">
+        <span class="md-step__marker">2</span>
+        <h3>AI 评价结果</h3>
+      </div>
+      <div class="md-card__body">
+        <div class="md-score" style="margin-bottom: var(--md-space-5);">
+          <span class="md-score__value">85</span>
+          <span class="md-score__unit">/ 100 分</span>
+        </div>
+
+        <div class="md-form-grid md-form-grid--2">
+          <div class="md-card" style="background: var(--md-sys-color-surface-container-low); border-color: transparent;">
+            <div class="md-card__header" style="background: transparent; border-bottom-color: var(--md-sys-color-outline-variant);">
+              <h3 style="font: var(--md-typescale-title-medium);">发现的问题</h3>
+            </div>
+            <div class="md-card__body">
+              <ol style="margin: 0; padding-left: 20px; display: grid; gap: var(--md-space-2); font: var(--md-typescale-body-medium); color: var(--md-sys-color-on-surface-variant);">
+                <li>结构不够清晰，建议优化段落层次</li>
+                <li>缺少核心论点支撑材料</li>
+                <li>格式规范性不足，标题层级需统一</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="md-card" style="background: var(--md-sys-color-surface-container-low); border-color: transparent;">
+            <div class="md-card__header" style="background: transparent; border-bottom-color: var(--md-sys-color-outline-variant);">
+              <h3 style="font: var(--md-typescale-title-medium);">综合评语</h3>
+            </div>
+            <div class="md-card__body">
+              <p style="font: var(--md-typescale-body-medium); color: var(--md-sys-color-on-surface-variant); line-height: 1.8;">
+                整体完成度较好，但在结构组织上还有提升空间，建议加强逻辑连贯性。作品的核心功能实现较为完整，后续可进一步优化用户交互体验。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 ── Teacher Review -->
+    <div class="md-card">
+      <div class="md-card__header">
+        <span class="md-step__marker">3</span>
+        <h3>教师复核</h3>
+      </div>
+      <div class="md-card__body">
+        <div class="md-form-grid md-form-grid--2" style="margin-bottom: var(--md-space-4);">
+          <label class="md-field">
+            <span class="md-field__label">最终分数（0-100）</span>
+            <input class="md-field__input" type="number" min="0" max="100" value="85">
+          </label>
+        </div>
+        <label class="md-field" style="margin-bottom: var(--md-space-4);">
+          <span class="md-field__label">最终评语</span>
+          <textarea class="md-field__input">整体完成度较好，继续优化细节。</textarea>
         </label>
-        <label>
-          作品文件名
-          <input name="fileName" value="student-work.zip" required>
-        </label>
-        <label>
-          作品提交 ID
-          <input name="submissionId" type="number" value="" required>
-        </label>
-        <button type="submit">点击 AI 评价</button>
-      </form>
-    </section>
-    <section class="panel">
-      <h2>AI 评价结果</h2>
-      <p class="status-text" id="evaluationStatus">等待发起 AI 评价。</p>
-      <p><strong>评分建议：</strong><span id="aiScore">-</span></p>
-      <p><strong>主要问题：</strong></p>
-      <pre class="result-box" id="aiIssues">-</pre>
-      <p><strong>评语草稿：</strong></p>
-      <pre class="result-box" id="aiComment">-</pre>
-    </section>
-    <section class="panel">
-      <h2>教师复核</h2>
-      <form class="form-grid" id="teacherReviewForm">
-        <label>
-          最终分数
-          <input id="finalScore" type="number" min="0" max="100" step="0.01" value="">
-        </label>
-        <label>
-          最终评语
-          <textarea id="finalComment"></textarea>
-        </label>
-        <button type="submit">保存最终评价</button>
-      </form>
-    </section>
+        <button class="md-btn md-btn--filled md-btn--lg" type="button">保存最终评价</button>
+      </div>
+    </div>
   </main>
+
+  <!-- Logout Dialog -->
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="md-dialog__title">确认退出</div>
+      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
+        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const evaluationForm = document.querySelector("#evaluationForm");
-    const evaluationStatus = document.querySelector("#evaluationStatus");
-    const teacherReviewForm = document.querySelector("#teacherReviewForm");
-    const aiScore = document.querySelector("#aiScore");
-    const aiIssues = document.querySelector("#aiIssues");
-    const aiComment = document.querySelector("#aiComment");
-    const finalScore = document.querySelector("#finalScore");
-    const finalComment = document.querySelector("#finalComment");
-
-    const params = new URLSearchParams(window.location.search);
-    const studentNameFromUrl = params.get("studentName");
-    const fileNameFromUrl = params.get("fileName");
-    const submissionIdFromUrl = params.get("submissionId");
-    if (studentNameFromUrl) {
-      evaluationForm.elements.studentName.value = studentNameFromUrl;
-    }
-    if (fileNameFromUrl) {
-      evaluationForm.elements.fileName.value = fileNameFromUrl;
-    }
-    if (submissionIdFromUrl) {
-      evaluationForm.elements.submissionId.value = submissionIdFromUrl;
-    }
-
-    function setEvaluationStatus(message, isError = false) {
-      evaluationStatus.textContent = message;
-      evaluationStatus.classList.toggle("error-text", isError);
-    }
-
-    evaluationForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const formData = new FormData(evaluationForm);
-      const payload = Object.fromEntries(formData.entries());
-      payload.submissionId = Number(payload.submissionId);
-
-      setEvaluationStatus("AI 正在评价...");
-
-      try {
-        const response = await fetch("/api/evaluate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-          throw new Error("AI 评价失败");
-        }
-
-        const result = await response.json();
-        aiScore.textContent = result.aiScore ?? "-";
-        aiIssues.textContent = result.aiIssues || "-";
-        aiComment.textContent = result.aiComment || "-";
-        finalScore.value = result.aiScore ?? "";
-        finalComment.value = result.aiComment || "";
-        setEvaluationStatus("AI 评价完成");
-      } catch (error) {
-        setEvaluationStatus(error.message, true);
-      }
-    });
-
-    teacherReviewForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const submissionId = Number(evaluationForm.elements.submissionId.value);
-      const payload = {
-        teacherScore: Number(finalScore.value),
-        teacherComment: finalComment.value
-      };
-
-      setEvaluationStatus("正在保存教师最终评价...");
-
-      try {
-        const response = await fetch(`/api/submissions/${submissionId}/teacher-review`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const result = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(result.message || "教师最终评价保存失败");
-        }
-
-        finalScore.value = result.teacherScore ?? "";
-        finalComment.value = result.teacherComment || "";
-        setEvaluationStatus("教师最终评价已保存");
-      } catch (error) {
-        setEvaluationStatus(error.message, true);
-      }
-    });
+    const l = document.querySelector('.logout-link');
+    const d = document.getElementById('logout-dialog');
+    document.getElementById('logout-cancel').onclick = () => { d.classList.add('hidden'); l.focus(); };
+    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
+    l.onclick = e => { e.preventDefault(); d.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
+    d.onclick = e => { if (e.target === d) { d.classList.add('hidden'); l.focus(); } };
+    document.onkeydown = e => { if (e.key === 'Escape' && !d.classList.contains('hidden')) { d.classList.add('hidden'); l.focus(); } };
   </script>
 </body>
 </html>
