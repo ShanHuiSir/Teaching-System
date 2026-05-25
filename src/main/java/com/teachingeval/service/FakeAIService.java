@@ -13,7 +13,6 @@ public class FakeAIService implements AIService {
     @Override
     public AIEvaluationResult evaluate(AIEvalRequestDTO request) {
         AIEvaluationResult result = new AIEvaluationResult();
-        result.setSubmissionId(request.getSubmissionId());
         result.setAiScore(new BigDecimal("82.50"));
 
         result.setAiIssues("""
