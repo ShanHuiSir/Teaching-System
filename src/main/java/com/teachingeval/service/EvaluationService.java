@@ -25,18 +25,15 @@ public class EvaluationService {
         this.submissionRepository = submissionRepository;
     }
 
-    public AIEvaluationResult evaluateAndSave(AIEvalRequestDTO request) {
-        if (request.getSubmissionId() == null) {
-            throw new IllegalArgumentException("作品提交 ID 不能为空");
-        }
-        submissionRepository.findById(request.getSubmissionId())
+    public AIEvaluationResult evaluateAndSave(Long submissionId, AIEvalRequestDTO request) {
+        submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("作品提交不存在"));
 
         AIEvaluationResult result = aiService.evaluate(request);
-        AIEvaluationResult saved = evaluationRepository.findBySubmissionId(request.getSubmissionId())
+        AIEvaluationResult saved = evaluationRepository.findBySubmissionId(submissionId)
                 .orElseGet(AIEvaluationResult::new);
 
-        saved.setSubmissionId(request.getSubmissionId());
+        saved.setSubmissionId(submissionId);
         saved.setAiScore(result.getAiScore());
         saved.setAiIssues(result.getAiIssues());
         saved.setAiComment(result.getAiComment());
