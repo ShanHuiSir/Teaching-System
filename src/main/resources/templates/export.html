@@ -7,22 +7,28 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>教学评价系统</h1>
-    <nav>
+  <header class="md-topbar">
+    <span class="md-topbar__title">教学评价系统</span>
+    <nav class="md-topbar__nav">
       <a href="/students">学生管理</a>
       <a href="/evaluation">作品评价</a>
-      <a href="/export">导出成绩</a>
+      <a href="/export" class="active">导出成绩</a>
       <a href="/">退出</a>
     </nav>
   </header>
-  <main class="container">
-    <section class="panel">
+
+  <main class="md-container">
+    <div class="page-header">
       <h2>导出成绩</h2>
-      <p>这里后续放 Excel 导出功能。</p>
-      <button type="button">导出 Excel</button>
-    </section>
+    </div>
+
+    <div class="md-card">
+      <div class="md-empty-state">
+        <div class="md-empty-state__icon">&darr;</div>
+        <p>导出学生评价成绩为 Excel 文件</p>
+        <button class="md-btn md-btn--filled" type="button">导出 Excel</button>
+      </div>
+    </div>
   </main>
 </body>
 </html>
-

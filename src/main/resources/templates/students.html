@@ -7,22 +7,39 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>教学评价系统</h1>
-    <nav>
-      <a href="/students">学生管理</a>
+  <header class="md-topbar">
+    <span class="md-topbar__title">教学评价系统</span>
+    <nav class="md-topbar__nav">
+      <a href="/students" class="active">学生管理</a>
       <a href="/evaluation">作品评价</a>
       <a href="/export">导出成绩</a>
       <a href="/">退出</a>
     </nav>
   </header>
-  <main class="container">
-    <section class="panel">
-      <div class="panel-header">
-        <h2>学生列表</h2>
-        <button type="button">新增学生</button>
+
+  <main class="md-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h2>学生管理</h2>
+      <div class="page-header__actions">
+        <button class="md-btn md-btn--filled" type="button">新增学生</button>
       </div>
-      <table>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="md-toolbar">
+      <div class="md-toolbar__search">
+        <input
+          class="md-field__input"
+          type="search"
+          placeholder="搜索姓名或学号..."
+        >
+      </div>
+    </div>
+
+    <!-- Student Table -->
+    <div class="md-card">
+      <table class="md-table">
         <thead>
           <tr>
             <th>学号</th>
@@ -35,13 +52,14 @@
           <tr>
             <td>2026001</td>
             <td>张三</td>
-            <td>软件 1 班</td>
-            <td><a href="/evaluation">进入评价</a></td>
+            <td><span class="md-chip">软件 1 班</span></td>
+            <td>
+              <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation">进入评价</a>
+            </td>
           </tr>
         </tbody>
       </table>
-    </section>
+    </div>
   </main>
 </body>
 </html>
-
