@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教学评价系统 - 作品评价</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>教学评价系统</h1>
+    <nav>
+      <a href="/students">学生管理</a>
+      <a href="/evaluation">作品评价</a>
+      <a href="/export">导出成绩</a>
+      <a href="/">退出</a>
+    </nav>
+  </header>
+  <main class="container">
+    <section class="panel">
+      <h2>作品评价</h2>
+      <form class="form-grid">
+        <label>
+          学生
+          <input value="张三" readonly>
+        </label>
+        <label>
+          作品文件名
+          <input value="student-work.zip" readonly>
+        </label>
+        <button type="button">点击 AI 评价</button>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>AI 评价结果</h2>
+      <p><strong>评分建议：</strong>85</p>
+      <p><strong>主要问题：</strong>作品结构完整，但说明文档还不够清楚。</p>
+      <p><strong>评语草稿：</strong>整体完成度较好，建议继续完善功能说明和测试截图。</p>
+    </section>
+    <section class="panel">
+      <h2>教师复核</h2>
+      <form class="form-grid">
+        <label>
+          最终分数
+          <input value="85">
+        </label>
+        <label>
+          最终评语
+          <textarea>整体完成度较好，继续优化细节。</textarea>
+        </label>
+        <button type="button">保存最终评价</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
+
