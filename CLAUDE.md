@@ -4,38 +4,77 @@
 
 ## 核心禁止行为
 - **禁止单文件堆叠**：绝对禁止将新逻辑、新路由直接写入 `App.java`。
-- **禁止省略注释**：编写新类、新方法时，绝对禁止以“省略...”或“此处保持不变”替代代码和注释。
+- **禁止省略 API 文档注解**：编写新类、新方法时，绝对禁止以"省略..."或"此处保持不变"替代 OpenAPI 注解和代码。
 
-## 代码注释规范
+## API 文档规范
 
-每个新创建或修改的类、接口，**必须**在最上方包含完整的多行注释（Javadoc 格式），明确列出以下四大要素：
-1. **类/接口概述**：解释该类的核心职责与业务意义。
-2. **成员变量详解**：逐一说明每个成员变量的值、作用与取值范围。
-3. **方法调用指南**：说明核心方法的调用入口、前置条件与预期行为。
-4. **继承与实现关系**：明确说明其父类、实现的接口以及在架构中的位置。
+本项目使用 OpenAPI 3.0 注解（springdoc-openapi）生成 API 文档，**禁止**使用 Javadoc 多行注释（`/** ... */`）来描述类或字段。所有文档信息必须通过以下注解承载：
 
-### 注释示例模板：
+### Controller 类
+
 ```java
-/**
- * [1. 类概述] 
- * 学生数据管理 Handler，负责解析 /students 路由下的 GET 请求并渲染学生列表。
- * <p> 
- * [2. 成员变量详解]
- * - private final StudentService studentService: 学生业务逻辑组件，用于持久化和查询，不可为 null。
- * - private final TemplateEngine templateEngine: 静态 HTML 字符串模版拼接引擎。
- * <p>
- * [3. 方法调用指南]
- * - 外部通过 HttpServer 的 createContext("/students", new StudentHandler()) 进行绑定和调用。
- * - 核心入口 handle(HttpExchange exchange) 会自动拦截并处理请求，处理完毕后必须显式关闭 exchange.close()。
- * <p>
- * [4. 继承与实现关系]
- * - 实现了 com.sun.net.httpserver.HttpHandler 接口。
- * - 隶属于系统的控制层 (Controller/Handler 架构层)。
- */
-public class StudentHandler implements HttpHandler {
-    // 代码实现...
+@Tag(name = "学生管理")
+@RestController
+public class StudentController {
+
+    @Operation(summary = "查询学生列表", description = "返回所有在读学生的基本信息。")
+    @GetMapping("/api/students")
+    public List<StudentDTO> listStudents() {
+        // ...
+    }
 }
 ```
+
+### Model / DTO 类
+
+每个字段**必须**标注 `@Schema`。类上也标注 `@Schema` 提供概述。
+
+```java
+@Schema(description = "学生信息 DTO")
+public class StudentDTO {
+
+    @Schema(description = "学生姓名", example = "张三")
+    private String name;
+
+    @Schema(description = "学号", example = "2026001")
+    private String studentId;
+}
+```
+
+### Entity 类
+
+JPA 注解与 `@Schema` 并存，`@Schema` 负责 API 文档，JPA 负责持久化映射。
+
+```java
+@Entity
+@Table(name = "student")
+@Schema(description = "学生实体")
+public class Student {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "主键，数据库自增", example = "1")
+    private Long id;
+
+    @Column(name = "name")
+    @Schema(description = "学生姓名", example = "张三")
+    private String name;
+}
+```
+
+### Service 类
+
+Service 层类不添加 OpenAPI 注解，也不添加 Javadoc。仅用标准 Spring 注解（`@Service`）标注。
+
+## 自主创建 Controller 守则
+
+- **写完 Service 必须补 Controller**：每次新建或修改 Service 接口/实现后，AI **必须**主动检查是否存在对应的 `@RestController`。若不存在，须立即创建 Controller 将 Service 方法暴露为 REST 端点。
+- **每个 Service 方法至少一个端点**：不得存在无法通过 HTTP 访问的 Service 方法（内部辅助方法除外）。
+- **Controller 模板要求**：
+  - 类上标注 `@Tag(name = "模块名")` + `@RestController` + `@RequestMapping("/api")`。
+  - 方法上标注 `@Operation(summary = "...", description = "...")` + 对应的 `@PostMapping` / `@GetMapping` 等。
+  - 通过构造器注入 Service，禁止 `@Autowired` 字段注入。
+  - 确保 Swagger UI (`/swagger-ui/index.html`) 中能直接看到该端点并支持 "Try it out"。
 
 ## 自动化编译守则
 - **严禁带病交付**: AI 在交付最终代码前，必须确保编译通过，且没有任何 Warning 或 Error。如果编译失败，AI 必须根据编译器报错立即自动修复，直至编译成功后方可向用户汇报。
