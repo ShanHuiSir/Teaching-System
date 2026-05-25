@@ -3,11 +3,58 @@
 ## 架构概览
 
 ```
+AIEvalRequestDTO (JSON 请求体)
+       │
+       ▼
 AIService (接口)
   └── FakeAIService (@Service 模拟实现)
+       │
+       ▼
+AIEvaluationResult (@Entity 评价结果)
 ```
 
-分层设计：调用方通过 Spring DI（`@Autowired`）持有 `AIService` 接口引用，Spring 容器根据激活的 profile 或 `@Primary`/`@Qualifier` 注入对应实现。后续接入真实 AI 时只需新增一个 `@Service` 实现类并调整 Bean 优先级，调用方无需修改。
+分层设计：Controller 接收前端 JSON → 反序列化为 `AIEvalRequestDTO` → 注入 `AIService` 调用 `evaluate` → 返回 `AIEvaluationResult`。后续参数扩展只需在 DTO 中加字段，接口签名不变。
+
+---
+
+## AIEvalRequestDTO — AI 评价请求 DTO
+
+`com.teachingeval.model.AIEvalRequestDTO`
+
+前端通过 `@RequestBody` 以 JSON 格式发送，例如：
+
+```json
+{
+  "studentName": "张三",
+  "fileName": "实验报告.docx",
+  "submissionId": 1001
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `studentName` | `String` | 学生姓名 |
+| `fileName` | `String` | 作品文件名 |
+| `submissionId` | `Long` | 关联的提交 ID |
+
+---
+
+## AIService — AI 评价服务接口
+
+`com.teachingeval.service.AIService`
+
+```java
+public interface AIService {
+    AIEvaluationResult evaluate(AIEvalRequestDTO request);
+}
+```
+
+### evaluate
+
+| 项 | 说明 |
+|----|------|
+| 参数 `request` | `AIEvalRequestDTO`，包含学生姓名、作品文件名、提交 ID |
+| 返回值 | `AIEvaluationResult`，包含 submissionId、评分、问题、评语、状态 |
 
 ---
 
@@ -34,26 +81,6 @@ AIService (接口)
 
 ---
 
-## AIService — AI 评价服务接口
-
-`com.teachingeval.service.AIService`
-
-```java
-public interface AIService {
-    AIEvaluationResult evaluate(String studentName, String fileName);
-}
-```
-
-### evaluate
-
-| 项 | 说明 |
-|----|------|
-| 参数 `studentName` | `String`，学生姓名 |
-| 参数 `fileName` | `String`，作品文件名 |
-| 返回值 | `AIEvaluationResult`，包含评分、问题、评语、状态 |
-
----
-
 ## FakeAIService — 模拟 AI 评价服务
 
 `com.teachingeval.service.FakeAIService`，标注 `@Service`，实现 `AIService`。
@@ -61,10 +88,11 @@ public interface AIService {
 
 ### evaluate
 
-接收学生姓名和文件名，返回固定的模拟评价结果：
+接收 `AIEvalRequestDTO`，将 `submissionId` 回填至结果对象，其余字段返回固定值：
 
-| AI 字段 | 固定值 |
-|---------|--------|
+| 字段 | 固定值 |
+|------|--------|
+| `submissionId` | 取自 `request.getSubmissionId()` |
 | `aiScore` | `82.50` |
 | `aiIssues` | `1. 结构不够清晰，建议优化段落层次`<br>`2. 缺少核心论点支撑材料`<br>`3. 格式规范性不足，标题层级需统一` |
 | `aiComment` | `整体完成度较好，但在结构组织上还有提升空间，建议加强逻辑连贯性。` |
@@ -82,9 +110,22 @@ public class EvaluationController {
         this.aiService = aiService;
     }
 
-    @GetMapping("/api/evaluate")
-    public AIEvaluationResult evaluate() {
-        return aiService.evaluate("张三", "实验报告.docx");
+    @PostMapping("/api/evaluate")
+    public AIEvaluationResult evaluate(@RequestBody AIEvalRequestDTO request) {
+        return aiService.evaluate(request);
     }
+}
+```
+
+前端请求示例：
+
+```http
+POST /api/evaluate
+Content-Type: application/json
+
+{
+  "studentName": "张三",
+  "fileName": "实验报告.docx",
+  "submissionId": 1001
 }
 ```

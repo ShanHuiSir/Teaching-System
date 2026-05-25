@@ -1,6 +1,7 @@
 package com.teachingeval.service;
 
 import com.teachingeval.model.AIEvaluationResult;
+import com.teachingeval.model.AIEvalRequestDTO;
 
 /**
  * [1. 类概述]
@@ -13,8 +14,9 @@ import com.teachingeval.model.AIEvaluationResult;
  * 接口无成员变量，仅定义方法签名。
  * <p>
  * [3. 方法调用指南]
- * - evaluate(String studentName, String fileName)：
- *   接收学生姓名和作品文件名，返回 AIEvaluationResult 评价结果。
+ * - evaluate(AIEvalRequestDTO request)：
+ *   接收 AIEvalRequestDTO 传输对象（包含学生姓名、作品文件名、提交 ID），
+ *   返回 AIEvaluationResult 评价结果。
  *   调用方通过 Spring DI 注入 AIService 实例后直接调用，无需手动 new。
  * <p>
  * [4. 继承与实现关系]
@@ -23,5 +25,5 @@ import com.teachingeval.model.AIEvaluationResult;
  * - Spring 容器中通过 @Service 注解的实现类自动注册为 Bean。
  */
 public interface AIService {
-    AIEvaluationResult evaluate(String studentName, String fileName);
+    AIEvaluationResult evaluate(AIEvalRequestDTO request);
 }
