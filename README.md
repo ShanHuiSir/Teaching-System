@@ -2,6 +2,14 @@
 
 轻量级教师端作品评价系统。当前第一天目标是先跑通最小 Web 骨架，后续再逐步补齐学生管理、作品上传、AI 评价、教师复核和 Excel 导出。
 
+## 技术栈
+
+- Java 17
+- Maven
+- Spring Boot
+- Thymeleaf
+- HTML / CSS
+
 ## 当前最小功能
 
 - 固定账号登录：`teacher / 123456`
@@ -16,7 +24,7 @@
 mvn compile
 
 # 运行
-mvn exec:java -Dexec.mainClass="com.teachingeval.App"
+mvn spring-boot:run
 ```
 
 
@@ -26,9 +34,44 @@ mvn exec:java -Dexec.mainClass="com.teachingeval.App"
 http://localhost:8080
 ```
 
-## 第一天分工
+接口文档：
 
-- 队长：维护项目结构、登录主流程、后端接口边界、进度控制。
-- B 同学：设计 `FakeAIService`，先返回固定评分、问题和评语。
-- C 同学：按当前页面结构做 JSP/HTML/CSS 页面草图和样式。
+```text
+http://localhost:8080/swagger-ui/index.html
+```
 
+OpenAPI JSON：
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+如果 8080 端口已经被占用，可以临时换端口：
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
+```
+
+## 项目结构
+
+```text
+src/main/java/com/teachingeval
+├── TeachingSystemApplication.java
+└── controller
+    └── PageController.java
+
+src/main/resources
+├── static
+│   └── style.css
+└── templates
+    ├── login.html
+    ├── students.html
+    ├── evaluation.html
+    └── export.html
+```
+
+## 分工
+
+- 队长：后端主流程、数据库、接口整合、代码合并、进度控制。
+- B 同学：前端页面和样式，主要修改 `src/main/resources/templates` 和 `src/main/resources/static`。
+- C 同学：AI 模块与文档，先做 `AIResult` 和 `FakeAIService`，后期再接真实 AI。

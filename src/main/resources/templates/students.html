@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教学评价系统 - 学生管理</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>教学评价系统</h1>
+    <nav>
+      <a href="/students">学生管理</a>
+      <a href="/evaluation">作品评价</a>
+      <a href="/export">导出成绩</a>
+      <a href="/">退出</a>
+    </nav>
+  </header>
+  <main class="container">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>学生列表</h2>
+        <button type="button">新增学生</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>学号</th>
+            <th>姓名</th>
+            <th>班级</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2026001</td>
+            <td>张三</td>
+            <td>软件 1 班</td>
+            <td><a href="/evaluation">进入评价</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
+
