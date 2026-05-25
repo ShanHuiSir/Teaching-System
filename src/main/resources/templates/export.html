@@ -11,6 +11,7 @@
     <h1>教学评价系统</h1>
     <nav>
       <a href="/students">学生管理</a>
+      <a href="/works">作品提交</a>
       <a href="/evaluation">作品评价</a>
       <a href="/export">导出成绩</a>
       <a href="/">退出</a>
@@ -18,11 +19,63 @@
   </header>
   <main class="container">
     <section class="panel">
-      <h2>导出成绩</h2>
-      <p>这里后续放 Excel 导出功能。</p>
-      <button type="button">导出 Excel</button>
+      <div class="panel-header">
+        <h2>成绩统计</h2>
+        <span class="status-text" id="exportStatus">正在加载统计数据...</span>
+      </div>
+      <div class="summary-grid">
+        <div>
+          <strong id="studentCount">0</strong>
+          <span>学生总数</span>
+        </div>
+        <div>
+          <strong id="submissionCount">0</strong>
+          <span>作品提交数</span>
+        </div>
+        <div>
+          <strong id="aiEvaluatedCount">0</strong>
+          <span>AI 已评价</span>
+        </div>
+        <div>
+          <strong id="teacherConfirmedCount">0</strong>
+          <span>教师已确认</span>
+        </div>
+        <div>
+          <strong id="averageTeacherScore">0</strong>
+          <span>平均分</span>
+        </div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>导出 Excel</h2>
+      <p class="status-text">第二天先完成统计接口和页面规划，后续接入 Apache POI 生成 Excel 文件。</p>
+      <button type="button" disabled>导出 Excel</button>
     </section>
   </main>
+  <script>
+    const exportStatus = document.querySelector("#exportStatus");
+
+    async function loadSummary() {
+      try {
+        const response = await fetch("/api/statistics/summary");
+        if (!response.ok) {
+          throw new Error("统计数据加载失败");
+        }
+
+        const summary = await response.json();
+        document.querySelector("#studentCount").textContent = summary.studentCount;
+        document.querySelector("#submissionCount").textContent = summary.submissionCount;
+        document.querySelector("#aiEvaluatedCount").textContent = summary.aiEvaluatedCount;
+        document.querySelector("#teacherConfirmedCount").textContent = summary.teacherConfirmedCount;
+        document.querySelector("#averageTeacherScore").textContent = summary.averageTeacherScore;
+        exportStatus.textContent = "统计数据已更新";
+      } catch (error) {
+        exportStatus.textContent = error.message;
+        exportStatus.classList.add("error-text");
+      }
+    }
+
+    loadSummary();
+  </script>
 </body>
 </html>
-

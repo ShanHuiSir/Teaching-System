@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教学评价系统 - 作品提交</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>教学评价系统</h1>
+    <nav>
+      <a href="/students">学生管理</a>
+      <a href="/works">作品提交</a>
+      <a href="/evaluation">作品评价</a>
+      <a href="/export">导出成绩</a>
+      <a href="/">退出</a>
+    </nav>
+  </header>
+  <main class="container">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>作品提交</h2>
+        <span class="status-text" id="workStatus">正在加载...</span>
+      </div>
+      <form class="form-grid" id="workForm">
+        <label>
+          学生
+          <select name="studentId" required id="studentSelect">
+            <option value="">请选择学生</option>
+          </select>
+        </label>
+        <label>
+          作品标题
+          <input name="title" value="第二天实训作品" required>
+        </label>
+        <label>
+          作品文件名
+          <input name="fileName" value="student-work.zip" required>
+        </label>
+        <label>
+          作品类型
+          <select name="workType" required>
+            <option value="代码压缩包">代码压缩包</option>
+            <option value="实验报告">实验报告</option>
+            <option value="截图材料">截图材料</option>
+            <option value="其他">其他</option>
+          </select>
+        </label>
+        <label>
+          备注
+          <textarea name="remark" placeholder="可填写作品说明"></textarea>
+        </label>
+        <button type="submit">保存作品提交</button>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>作品列表</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>学生</th>
+            <th>作品标题</th>
+            <th>文件名</th>
+            <th>类型</th>
+            <th>提交时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="workTableBody">
+          <tr>
+            <td colspan="6">正在加载...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+  <script>
+    const workForm = document.querySelector("#workForm");
+    const workStatus = document.querySelector("#workStatus");
+    const studentSelect = document.querySelector("#studentSelect");
+    const workTableBody = document.querySelector("#workTableBody");
+    const params = new URLSearchParams(window.location.search);
+    const selectedStudentId = params.get("studentId");
+
+    function setStatus(message, isError = false) {
+      workStatus.textContent = message;
+      workStatus.classList.toggle("error-text", isError);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function loadStudents() {
+      const response = await fetch("/api/students");
+      if (!response.ok) {
+        throw new Error("学生列表加载失败");
+      }
+
+      const students = await response.json();
+      studentSelect.innerHTML = '<option value="">请选择学生</option>' + students.map(student => `
+        <option value="${student.id}">${escapeHtml(student.studentNo)} - ${escapeHtml(student.name)}</option>
+      `).join("");
+
+      if (selectedStudentId) {
+        studentSelect.value = selectedStudentId;
+      }
+    }
+
+    async function loadWorks() {
+      const response = await fetch("/api/submissions");
+      if (!response.ok) {
+        throw new Error("作品列表加载失败");
+      }
+
+      const works = await response.json();
+      if (works.length === 0) {
+        workTableBody.innerHTML = '<tr><td colspan="6">暂无作品，请先提交。</td></tr>';
+      } else {
+        workTableBody.innerHTML = works.map(work => `
+          <tr>
+            <td>${escapeHtml(work.studentName)}</td>
+            <td>${escapeHtml(work.title)}</td>
+            <td>${escapeHtml(work.fileName)}</td>
+            <td>${escapeHtml(work.workType)}</td>
+            <td>${escapeHtml((work.submittedAt || "").replace("T", " ").slice(0, 16))}</td>
+            <td class="action-cell">
+              <a href="/evaluation?submissionId=${work.id}&studentName=${encodeURIComponent(work.studentName)}&fileName=${encodeURIComponent(work.fileName)}">进入评价</a>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      setStatus(`已加载 ${works.length} 条作品提交`);
+    }
+
+    async function initPage() {
+      try {
+        await loadStudents();
+        await loadWorks();
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    }
+
+    workForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const formData = new FormData(workForm);
+      const payload = Object.fromEntries(formData.entries());
+      payload.studentId = Number(payload.studentId);
+
+      try {
+        const response = await fetch("/api/submissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(result.message || "保存作品失败");
+        }
+
+        workForm.reset();
+        setStatus(`已保存作品：${result.title}`);
+        await loadWorks();
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    });
+
+    initPage();
+  </script>
+</body>
+</html>
