@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import org.springframework.stereotype.Service;
 
+import com.teachingeval.model.AIEvalRequestDTO;
 import com.teachingeval.model.AIEvaluationResult;
 
 /**
@@ -17,9 +18,10 @@ import com.teachingeval.model.AIEvaluationResult;
  * 当前无成员变量，所有逻辑内聚在 evaluate 方法中。
  * <p>
  * [3. 方法调用指南]
- * - evaluate(String studentName, String fileName)：
- *   接收学生姓名与作品文件名，返回一个填充了固定 aiScore、aiIssues、
- *   aiComment 及 status=1 的 AIEvaluationResult 对象。
+ * - evaluate(AIEvalRequestDTO request)：
+ *   接收 AIEvalRequestDTO（含 studentName、fileName、submissionId），
+ *   返回一个填充了固定 aiScore、aiIssues、aiComment、status=1 及
+ *   对应 submissionId 的 AIEvaluationResult 对象。
  * - Spring 容器自动管理本 Bean 的生命周期，调用方通过 DI 注入使用。
  * <p>
  * [4. 继承与实现关系]
@@ -30,8 +32,9 @@ import com.teachingeval.model.AIEvaluationResult;
 public class FakeAIService implements AIService {
 
     @Override
-    public AIEvaluationResult evaluate(String studentName, String fileName) {
+    public AIEvaluationResult evaluate(AIEvalRequestDTO request) {
         AIEvaluationResult result = new AIEvaluationResult();
+        result.setSubmissionId(request.getSubmissionId());
         result.setAiScore(new BigDecimal("82.50"));
 
         result.setAiIssues("""
