@@ -3,20 +3,22 @@
 
 CREATE TABLE student (
     id         BIGINT       NOT NULL AUTO_INCREMENT  COMMENT '主键ID',
-    sno        VARCHAR(32)  NOT NULL                 COMMENT '学号',
+    student_no VARCHAR(32)  NOT NULL                 COMMENT '学号',
     name       VARCHAR(64)  NOT NULL                 COMMENT '姓名',
-    major      VARCHAR(128) NOT NULL DEFAULT ''      COMMENT '专业',
-    class_name VARCHAR(128) NOT NULL DEFAULT ''      COMMENT '班级',
+    class_name VARCHAR(64)  NOT NULL                 COMMENT '班级',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sno (sno)
+    UNIQUE KEY uk_student_no (student_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学生表';
 
 CREATE TABLE submission (
     id              BIGINT       NOT NULL AUTO_INCREMENT  COMMENT '主键ID',
     student_id      BIGINT       NOT NULL                 COMMENT '学生ID',
-    original_name   VARCHAR(512) NOT NULL                 COMMENT '原始文件名',
-    storage_path    VARCHAR(1024)NOT NULL                 COMMENT '服务器存储位置',
-    uploaded_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+    student_name    VARCHAR(64)  NOT NULL                 COMMENT '学生姓名快照',
+    title           VARCHAR(128) NOT NULL                 COMMENT '作品标题',
+    file_name       VARCHAR(512) NOT NULL                 COMMENT '作品文件名',
+    work_type       VARCHAR(32)  NOT NULL                 COMMENT '作品类型',
+    remark          TEXT                                  COMMENT '备注',
+    submitted_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
     PRIMARY KEY (id),
     INDEX idx_student_id (student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作品提交表';

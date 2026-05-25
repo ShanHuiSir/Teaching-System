@@ -1,0 +1,53 @@
+package com.teachingeval.service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.teachingeval.model.AIEvaluationResult;
+import com.teachingeval.model.StatisticsSummary;
+import com.teachingeval.repository.EvaluationRepository;
+import com.teachingeval.repository.StudentRepository;
+import com.teachingeval.repository.SubmissionRepository;
+
+@Service
+public class StatisticsService {
+
+    private final StudentRepository studentRepository;
+    private final SubmissionRepository submissionRepository;
+    private final EvaluationRepository evaluationRepository;
+
+    public StatisticsService(StudentRepository studentRepository,
+                             SubmissionRepository submissionRepository,
+                             EvaluationRepository evaluationRepository) {
+        this.studentRepository = studentRepository;
+        this.submissionRepository = submissionRepository;
+        this.evaluationRepository = evaluationRepository;
+    }
+
+    public StatisticsSummary getSummary() {
+        List<AIEvaluationResult> evaluations = evaluationRepository.findAll();
+        List<BigDecimal> confirmedScores = evaluations.stream()
+                .filter(evaluation -> evaluation.getStatus() >= 2)
+                .map(AIEvaluationResult::getTeacherScore)
+                .filter(score -> score != null)
+                .toList();
+
+        BigDecimal average = BigDecimal.ZERO;
+        if (!confirmedScores.isEmpty()) {
+            BigDecimal total = confirmedScores.stream()
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            average = total.divide(BigDecimal.valueOf(confirmedScores.size()), 2, RoundingMode.HALF_UP);
+        }
+
+        return new StatisticsSummary(
+                studentRepository.count(),
+                submissionRepository.count(),
+                evaluationRepository.countByStatusGreaterThanEqual(1),
+                evaluationRepository.countByStatusGreaterThanEqual(2),
+                average
+        );
+    }
+}
