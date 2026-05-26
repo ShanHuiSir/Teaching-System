@@ -4,10 +4,10 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.teachingeval.entity.AIEvaluationResult;
+import com.teachingeval.entity.EvaluationResult;
 
-public interface EvaluationRepository extends JpaRepository<AIEvaluationResult, Long> {
-    Optional<AIEvaluationResult> findBySubmissionId(Long submissionId);
+public interface EvaluationRepository extends JpaRepository<EvaluationResult, Long> {
+    Optional<EvaluationResult> findBySubmissionId(Long submissionId);
 
     long countByStatusGreaterThanEqual(int status);
 }

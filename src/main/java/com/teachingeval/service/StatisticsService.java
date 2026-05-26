@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
+import com.teachingeval.entity.EvaluationResult;
 import org.springframework.stereotype.Service;
 
-import com.teachingeval.entity.AIEvaluationResult;
 import com.teachingeval.dto.StatisticsSummaryResponse;
 import com.teachingeval.repository.EvaluationRepository;
 import com.teachingeval.repository.StudentRepository;
@@ -28,10 +28,10 @@ public class StatisticsService {
     }
 
     public StatisticsSummaryResponse getSummary() {
-        List<AIEvaluationResult> evaluations = evaluationRepository.findAll();
+        List<EvaluationResult> evaluations = evaluationRepository.findAll();
         List<BigDecimal> confirmedScores = evaluations.stream()
                 .filter(evaluation -> evaluation.getStatus() >= 2)
-                .map(AIEvaluationResult::getTeacherScore)
+                .map(EvaluationResult::getTeacherScore)
                 .filter(score -> score != null)
                 .toList();
 
