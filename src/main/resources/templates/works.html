@@ -160,7 +160,7 @@
             <td>${escapeHtml(work.workType)}</td>
             <td>${escapeHtml((work.submittedAt || "").replace("T", " ").slice(0, 16))}</td>
             <td>
-              <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation?submissionId=${work.id}&studentName=${encodeURIComponent(work.studentName)}&fileName=${encodeURIComponent(work.fileName)}">评价</a>
+              <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation?submissionId=${work.id}&studentId=${work.studentId}&studentName=${encodeURIComponent(work.studentName)}&fileName=${encodeURIComponent(work.fileName)}">评价</a>
             </td>
           </tr>
         `).join("");
