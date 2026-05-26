@@ -94,3 +94,5 @@ src/main/resources
 - 队长：后端主流程、数据库、接口整合、代码合并、进度控制。
 - B 同学：前端页面和样式，主要修改 `src/main/resources/templates` 和 `src/main/resources/static`。
 - C 同学：AI 模块与文档，先做 `AIService`、`FakeAIService` 和 `AIEvaluationResult`，后期再接真实 AI。
+
+第 3 天进入实现阶段时，按 `docs/工作清单/第3天-实现阶段队长工作包.md` 执行：队长先统一页面流程、接口字段、文件范围和验收标准，B 负责学生管理与作品提交，C 负责 AI 评价与统计展示。
