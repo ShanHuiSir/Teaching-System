@@ -1,8 +1,8 @@
 package com.teachingeval.controller;
 
-import com.teachingeval.model.AIEvalRequestDTO;
-import com.teachingeval.model.AIEvaluationResult;
-import com.teachingeval.model.TeacherReviewRequest;
+import com.teachingeval.dto.AIEvalRequest;
+import com.teachingeval.dto.TeacherReviewRequest;
+import com.teachingeval.entity.AIEvaluationResult;
 import com.teachingeval.service.EvaluationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,9 +25,10 @@ public class EvaluationController {
     }
 
     @Operation(summary = "执行 AI 评价并保存", description = "接收学生作品提交信息，调用 AI 评价服务并保存评分、问题列表和综合评语。")
-    @PostMapping("/evaluate")
-    public AIEvaluationResult evaluate(@RequestBody AIEvalRequestDTO request) {
-        return evaluationService.evaluateAndSave(request);
+    @PostMapping("/submissions/{submissionId}/evaluate")
+    public AIEvaluationResult evaluate(@PathVariable Long submissionId,
+                                        @RequestBody AIEvalRequest request) {
+        return evaluationService.evaluate(submissionId, request);
     }
 
     @Operation(summary = "查询评价结果", description = "根据作品提交 ID 查询 AI 和教师评价结果。")

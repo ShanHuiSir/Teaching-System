@@ -1,11 +1,11 @@
-package com.teachingeval.model;
+package com.teachingeval.dto;
 
 import java.math.BigDecimal;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "成绩统计摘要")
-public record StatisticsSummary(
+public record StatisticsSummaryResponse(
         @Schema(description = "学生总数", example = "30")
         long studentCount,
         @Schema(description = "作品提交数", example = "28")
