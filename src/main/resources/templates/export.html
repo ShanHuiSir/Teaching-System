@@ -1,22 +1,13 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>教学评价系统 - 导出成绩</title>
   <link rel="stylesheet" href="/style.css">
 </head>
-<body>
-  <header class="md-topbar">
-    <span class="md-topbar__brand">教学评价系统</span>
-    <nav class="md-topbar__nav">
-      <a href="/students">学生管理</a>
-      <a href="/works">作品提交</a>
-      <a href="/evaluation">作品评价</a>
-      <a href="/export" class="active">导出成绩</a>
-      <a href="#" class="logout-link">退出</a>
-    </nav>
-  </header>
+<body class="has-sidebar">
+  <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='export')}"></th:block>
 
   <main class="md-page">
     <div class="md-page-header">
@@ -52,6 +43,7 @@
   </div>
 
   <script>
+    // Logout dialog
     const l = document.querySelector('.logout-link');
     const d = document.getElementById('logout-dialog');
     document.getElementById('logout-cancel').onclick = () => { d.classList.add('hidden'); l.focus(); };

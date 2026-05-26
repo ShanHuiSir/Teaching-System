@@ -1,85 +1,114 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>教学评价系统 - 作品提交</title>
   <link rel="stylesheet" href="/style.css">
 </head>
-<body>
-  <header class="topbar">
-    <h1>教学评价系统</h1>
-    <nav>
-      <a href="/students">学生管理</a>
-      <a href="/works">作品提交</a>
-      <a href="/evaluation">作品评价</a>
-      <a href="/export">导出成绩</a>
-      <a href="/">退出</a>
-    </nav>
-  </header>
-  <main class="container">
-    <section class="panel">
-      <div class="panel-header">
-        <h2>作品提交</h2>
-        <span class="status-text" id="workStatus">正在加载...</span>
+<body class="has-sidebar">
+  <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='works')}"></th:block>
+  <main class="md-page">
+    <div class="md-page-header">
+      <h2>作品提交</h2>
+      <span class="md-page-header__status" id="work-status">正在加载...</span>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__header">
+        <h3>提交作品</h3>
       </div>
-      <form class="form-grid" id="workForm">
-        <label>
-          学生
-          <select name="studentId" required id="studentSelect">
-            <option value="">请选择学生</option>
-          </select>
-        </label>
-        <label>
-          作品标题
-          <input name="title" value="第二天实训作品" required>
-        </label>
-        <label>
-          作品文件名
-          <input name="fileName" value="student-work.zip" required>
-        </label>
-        <label>
-          作品类型
-          <select name="workType" required>
-            <option value="代码压缩包">代码压缩包</option>
-            <option value="实验报告">实验报告</option>
-            <option value="截图材料">截图材料</option>
-            <option value="其他">其他</option>
-          </select>
-        </label>
-        <label>
-          备注
-          <textarea name="remark" placeholder="可填写作品说明"></textarea>
-        </label>
-        <button type="submit">保存作品提交</button>
-      </form>
-    </section>
-    <section class="panel">
-      <h2>作品列表</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>学生</th>
-            <th>作品标题</th>
-            <th>文件名</th>
-            <th>类型</th>
-            <th>提交时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="workTableBody">
-          <tr>
-            <td colspan="6">正在加载...</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+      <div class="md-card__body">
+        <form class="md-form-grid md-form-grid--2" id="work-form">
+          <label class="md-field">
+            <span class="md-field__label">学生</span>
+            <select class="md-field__input" name="studentId" required id="student-select">
+              <option value="">请选择学生</option>
+            </select>
+          </label>
+          <label class="md-field">
+            <span class="md-field__label">作品标题</span>
+            <input class="md-field__input" name="title" value="第二天实训作品" required>
+          </label>
+          <label class="md-field">
+            <span class="md-field__label">作品文件名</span>
+            <input class="md-field__input" name="fileName" value="student-work.zip" required>
+          </label>
+          <label class="md-field">
+            <span class="md-field__label">作品类型</span>
+            <select class="md-field__input" name="workType" required>
+              <option value="代码压缩包">代码压缩包</option>
+              <option value="实验报告">实验报告</option>
+              <option value="截图材料">截图材料</option>
+              <option value="其他">其他</option>
+            </select>
+          </label>
+          <label class="md-field" style="grid-column: 1 / -1;">
+            <span class="md-field__label">备注</span>
+            <textarea class="md-field__input" name="remark" placeholder="可填写作品说明"></textarea>
+          </label>
+          <div style="grid-column: 1 / -1;">
+            <button class="md-btn md-btn--filled" type="submit">保存作品提交</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__header">
+        <h3>作品列表</h3>
+      </div>
+      <div class="md-card__body" style="padding: 0;">
+        <table class="md-table">
+          <thead>
+            <tr>
+              <th>学生</th>
+              <th>作品标题</th>
+              <th>文件名</th>
+              <th>类型</th>
+              <th>提交时间</th>
+              <th style="width: 100px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="work-table-body">
+            <tr>
+              <td colspan="6">正在加载...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </main>
+
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="md-dialog__title">确认退出</div>
+      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
+        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const workForm = document.querySelector("#workForm");
-    const workStatus = document.querySelector("#workStatus");
-    const studentSelect = document.querySelector("#studentSelect");
-    const workTableBody = document.querySelector("#workTableBody");
+    // Logout dialog
+    const l = document.querySelector('.logout-link');
+    const d = document.getElementById('logout-dialog');
+    document.getElementById('logout-cancel').onclick = () => { d.classList.add('hidden'); l.focus(); };
+    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
+    l.onclick = e => { e.preventDefault(); d.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
+    d.onclick = e => { if (e.target === d) { d.classList.add('hidden'); l.focus(); } };
+    document.onkeydown = e => { if (e.key === 'Escape' && !d.classList.contains('hidden')) { d.classList.add('hidden'); l.focus(); } };
+
+    // Form handling
+    const workForm = document.querySelector("#work-form");
+    const workStatus = document.querySelector("#work-status");
+    const studentSelect = document.querySelector("#student-select");
+    const workTableBody = document.querySelector("#work-table-body");
     const params = new URLSearchParams(window.location.search);
     const selectedStudentId = params.get("studentId");
 
@@ -130,8 +159,8 @@
             <td>${escapeHtml(work.fileName)}</td>
             <td>${escapeHtml(work.workType)}</td>
             <td>${escapeHtml((work.submittedAt || "").replace("T", " ").slice(0, 16))}</td>
-            <td class="action-cell">
-              <a href="/evaluation?submissionId=${work.id}&studentName=${encodeURIComponent(work.studentName)}&fileName=${encodeURIComponent(work.fileName)}">进入评价</a>
+            <td>
+              <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation?submissionId=${work.id}&studentName=${encodeURIComponent(work.studentName)}&fileName=${encodeURIComponent(work.fileName)}">评价</a>
             </td>
           </tr>
         `).join("");
