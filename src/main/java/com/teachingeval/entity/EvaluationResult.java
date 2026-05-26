@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "evaluation")
 @Schema(description = "AI 评价结果实体，承载 AI 对一份学生作品的自动评价数据")
-public class AIEvaluationResult {
+public class EvaluationResult {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,7 +49,7 @@ public class AIEvaluationResult {
     @Schema(description = "评价状态：0 表示未评价，1 表示 AI 已评价，2 表示教师已确认", example = "1")
     private int status;
 
-    public AIEvaluationResult() {}
+    public EvaluationResult() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -79,7 +79,7 @@ public class AIEvaluationResult {
 
     @Override
     public String toString() {
-        return "AIEvaluationResult{" +
+        return "EvaluationResult{" +
                 "id=" + id +
                 ", submissionId=" + submissionId +
                 ", aiScore=" + aiScore +

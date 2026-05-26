@@ -2,11 +2,11 @@ package com.teachingeval.service;
 
 import java.math.BigDecimal;
 
+import com.teachingeval.entity.EvaluationResult;
 import org.springframework.stereotype.Service;
 
 import com.teachingeval.dto.AIEvalRequest;
 import com.teachingeval.dto.TeacherReviewRequest;
-import com.teachingeval.entity.AIEvaluationResult;
 import com.teachingeval.repository.EvaluationRepository;
 import com.teachingeval.repository.SubmissionRepository;
 
@@ -25,13 +25,13 @@ public class EvaluationService {
         this.submissionRepository = submissionRepository;
     }
 
-    public AIEvaluationResult evaluate(Long submissionId, AIEvalRequest request) {
+    public EvaluationResult evaluate(Long submissionId, AIEvalRequest request) {
         submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("作品提交不存在"));
 
-        AIEvaluationResult result = aiService.evaluate(request);
-        AIEvaluationResult saved = evaluationRepository.findBySubmissionId(submissionId)
-                .orElseGet(AIEvaluationResult::new);
+        EvaluationResult result = aiService.evaluate(request);
+        EvaluationResult saved = evaluationRepository.findBySubmissionId(submissionId)
+                .orElseGet(EvaluationResult::new);
 
         saved.setSubmissionId(submissionId);
         saved.setAiScore(result.getAiScore());
@@ -41,8 +41,8 @@ public class EvaluationService {
         return evaluationRepository.save(saved);
     }
 
-    public AIEvaluationResult saveTeacherReview(Long submissionId, TeacherReviewRequest request) {
-        AIEvaluationResult evaluation = evaluationRepository.findBySubmissionId(submissionId)
+    public EvaluationResult saveTeacherReview(Long submissionId, TeacherReviewRequest request) {
+        EvaluationResult evaluation = evaluationRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("请先完成 AI 评价"));
 
         validateScore(request.getTeacherScore());
@@ -56,7 +56,7 @@ public class EvaluationService {
         return evaluationRepository.save(evaluation);
     }
 
-    public AIEvaluationResult getBySubmissionId(Long submissionId) {
+    public EvaluationResult getBySubmissionId(Long submissionId) {
         return evaluationRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("评价结果不存在"));
     }
