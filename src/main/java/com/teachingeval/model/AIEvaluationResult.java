@@ -11,7 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "ai_evaluation_result")
+@Table(name = "evaluation")
 @Schema(description = "AI 评价结果实体，承载 AI 对一份学生作品的自动评价数据")
 public class AIEvaluationResult {
 
