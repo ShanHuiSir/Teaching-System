@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.teachingeval.model.AIEvaluationResult;
-import com.teachingeval.model.StatisticsSummary;
+import com.teachingeval.entity.AIEvaluationResult;
+import com.teachingeval.dto.StatisticsSummaryResponse;
 import com.teachingeval.repository.EvaluationRepository;
 import com.teachingeval.repository.StudentRepository;
 import com.teachingeval.repository.SubmissionRepository;
@@ -27,7 +27,7 @@ public class StatisticsService {
         this.evaluationRepository = evaluationRepository;
     }
 
-    public StatisticsSummary getSummary() {
+    public StatisticsSummaryResponse getSummary() {
         List<AIEvaluationResult> evaluations = evaluationRepository.findAll();
         List<BigDecimal> confirmedScores = evaluations.stream()
                 .filter(evaluation -> evaluation.getStatus() >= 2)
@@ -42,7 +42,7 @@ public class StatisticsService {
             average = total.divide(BigDecimal.valueOf(confirmedScores.size()), 2, RoundingMode.HALF_UP);
         }
 
-        return new StatisticsSummary(
+        return new StatisticsSummaryResponse(
                 studentRepository.count(),
                 submissionRepository.count(),
                 evaluationRepository.countByStatusGreaterThanEqual(1),

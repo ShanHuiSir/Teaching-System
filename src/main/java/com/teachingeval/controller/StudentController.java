@@ -1,6 +1,6 @@
 package com.teachingeval.controller;
 
-import com.teachingeval.model.Student;
+import com.teachingeval.entity.Student;
 import com.teachingeval.service.StudentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

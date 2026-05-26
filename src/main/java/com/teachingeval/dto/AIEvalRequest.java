@@ -1,9 +1,9 @@
-package com.teachingeval.model;
+package com.teachingeval.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "AI 评价请求 DTO，封装前端提交的评价参数")
-public class AIEvalRequestDTO {
+public class AIEvalRequest {
 
     @Schema(description = "学生姓名", example = "张三")
     private String studentName;
@@ -11,7 +11,7 @@ public class AIEvalRequestDTO {
     @Schema(description = "作品文件名", example = "实验报告.docx")
     private String fileName;
 
-    public AIEvalRequestDTO() {}
+    public AIEvalRequest() {}
 
     public String getStudentName() { return studentName; }
     public void setStudentName(String studentName) { this.studentName = studentName; }
@@ -21,7 +21,7 @@ public class AIEvalRequestDTO {
 
     @Override
     public String toString() {
-        return "AIEvalRequestDTO{" +
+        return "AIEvalRequest{" +
                 "studentName='" + studentName + '\'' +
                 ", fileName='" + fileName + '\'' +
                 '}';

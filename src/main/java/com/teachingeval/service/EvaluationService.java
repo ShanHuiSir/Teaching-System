@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 
 import org.springframework.stereotype.Service;
 
-import com.teachingeval.model.AIEvalRequestDTO;
-import com.teachingeval.model.AIEvaluationResult;
-import com.teachingeval.model.TeacherReviewRequest;
+import com.teachingeval.dto.AIEvalRequest;
+import com.teachingeval.dto.TeacherReviewRequest;
+import com.teachingeval.entity.AIEvaluationResult;
 import com.teachingeval.repository.EvaluationRepository;
 import com.teachingeval.repository.SubmissionRepository;
 
@@ -25,7 +25,7 @@ public class EvaluationService {
         this.submissionRepository = submissionRepository;
     }
 
-    public AIEvaluationResult evaluateAndSave(Long submissionId, AIEvalRequestDTO request) {
+    public AIEvaluationResult evaluate(Long submissionId, AIEvalRequest request) {
         submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("作品提交不存在"));
 

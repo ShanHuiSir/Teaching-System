@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.teachingeval.model.AIEvaluationResult;
+import com.teachingeval.entity.AIEvaluationResult;
 
 public interface EvaluationRepository extends JpaRepository<AIEvaluationResult, Long> {
     Optional<AIEvaluationResult> findBySubmissionId(Long submissionId);
