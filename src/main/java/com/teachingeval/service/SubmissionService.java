@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.teachingeval.model.Student;
-import com.teachingeval.model.WorkSubmission;
+import com.teachingeval.entity.Student;
+import com.teachingeval.entity.WorkSubmission;
 import com.teachingeval.repository.StudentRepository;
 import com.teachingeval.repository.SubmissionRepository;
 

@@ -1,6 +1,6 @@
 package com.teachingeval.service;
 
-import com.teachingeval.model.Student;
+import com.teachingeval.entity.Student;
 import com.teachingeval.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 
