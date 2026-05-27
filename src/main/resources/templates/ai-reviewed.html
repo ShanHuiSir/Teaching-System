@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教学评价系统 - AI 已审批</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="has-sidebar">
+  <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='ai-reviewed')}"></th:block>
+  <main class="md-page">
+    <div class="md-page-header">
+      <h2>AI 已审批</h2>
+      <span class="md-page-header__status" id="page-status">正在加载...</span>
+    </div>
+
+    <div class="md-card" style="background:#E0E7FF;border-color:transparent;">
+      <div class="md-card__body" style="display:flex;align-items:center;gap:var(--md-space-3);padding:var(--md-space-4);">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#1E3A8A"><path d="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12.5c-2.67 0-4.85 2.03-4.85 4.5h1.8c0-1.66 1.34-3 3.05-3 1.66 0 3.05 1.32 3.05 3h1.8c0-2.47-2.18-4.5-4.85-4.5z"/></svg>
+        <span id="summary-banner" style="font:var(--md-typescale-title-small);color:#1E3A8A;">当前有 -- 份作业待教师复核</span>
+      </div>
+    </div>
+
+    <div class="md-page-header__actions" style="display:flex;gap:var(--md-space-2);">
+      <button class="md-btn md-btn--filled">人工复核</button>
+      <button class="md-btn md-btn--outlined">重新 AI 评价</button>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__header"><h3>提交作业</h3></div>
+      <div class="md-card__body">
+        <form class="md-form-grid md-form-grid--2" id="work-form">
+          <label class="md-field"><span class="md-field__label">学生</span><select class="md-field__input" name="studentId" required id="student-select"><option value="">请选择学生</option></select></label>
+          <label class="md-field"><span class="md-field__label">作业标题</span><input class="md-field__input" name="title" value="第二天实训作业" required></label>
+          <label class="md-field"><span class="md-field__label">作业文件名</span><input class="md-field__input" name="fileName" value="student-work.zip" required></label>
+          <label class="md-field"><span class="md-field__label">作业类型</span><select class="md-field__input" name="workType" required><option value="代码压缩包">代码压缩包</option><option value="实验报告">实验报告</option><option value="截图材料">截图材料</option><option value="其他">其他</option></select></label>
+          <label class="md-field" style="grid-column:1/-1;"><span class="md-field__label">备注</span><textarea class="md-field__input" name="remark" placeholder="可填写作业说明"></textarea></label>
+          <div style="grid-column:1/-1;"><button class="md-btn md-btn--filled" type="submit">保存作业提交</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__body" style="padding:0;">
+        <table class="md-table">
+          <thead><tr><th>学生</th><th>作业标题</th><th>文件名</th><th>类型</th><th>AI 分数</th><th>提交时间</th><th style="width:100px;">操作</th></tr></thead>
+          <tbody id="table-body"><tr><td colspan="7">正在加载...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <div class="md-dialog__title">确认退出</div><div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions"><button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button><button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button></div>
+    </div>
+  </div>
+
+  <script src="/js/assignment-page.js"></script>
+  <script>initAssignmentPage('ai-reviewed');</script>
+</body>
+</html>
