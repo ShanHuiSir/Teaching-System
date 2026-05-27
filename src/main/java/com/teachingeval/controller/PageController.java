@@ -33,6 +33,11 @@ public class PageController {
         return "students";
     }
 
+    @GetMapping("/submit")
+    public String submit() {
+        return "submit";
+    }
+
     @GetMapping("/works")
     public String works() {
         return "works";
