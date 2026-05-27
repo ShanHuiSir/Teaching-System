@@ -35,17 +35,36 @@
         </thead>
         <tbody id="student-table-body">
           <tr>
-            <td>2026001</td>
-            <td>张三</td>
-            <td><span class="md-chip">软件 1 班</span></td>
-            <td>
-              <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation">评价</a>
-            </td>
+            <td colspan="4" style="text-align:center;color:var(--md-sys-color-on-surface-variant);">正在加载...</td>
           </tr>
         </tbody>
       </table>
     </div>
   </main>
+
+  <div class="md-dialog-overlay hidden" id="add-student-dialog">
+    <div class="md-dialog">
+      <div class="md-dialog__title">新增学生</div>
+      <form id="add-student-form">
+        <label class="md-field">
+          <span class="md-field__label">学号</span>
+          <input class="md-field__input" name="studentNo" required autocomplete="off">
+        </label>
+        <label class="md-field">
+          <span class="md-field__label">姓名</span>
+          <input class="md-field__input" name="name" required autocomplete="off">
+        </label>
+        <label class="md-field">
+          <span class="md-field__label">班级</span>
+          <input class="md-field__input" name="className" required autocomplete="off">
+        </label>
+        <div class="md-dialog__actions" style="margin-top: var(--md-space-4);">
+          <button class="md-btn md-btn--outlined" type="button" id="add-cancel">取消</button>
+          <button class="md-btn md-btn--filled" type="submit">确认新增</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div class="md-dialog-overlay hidden" id="logout-dialog">
     <div class="md-dialog">
@@ -62,14 +81,116 @@
   </div>
 
   <script>
-    // Logout dialog
-    const l = document.querySelector('.logout-link');
-    const d = document.getElementById('logout-dialog');
-    document.getElementById('logout-cancel').onclick = () => { d.classList.add('hidden'); l.focus(); };
+    // ── DOM refs ──
+    const studentTbody = document.getElementById('student-table-body');
+    const addBtn = document.querySelector('.md-page-header__actions .md-btn--filled');
+    const addDialog = document.getElementById('add-student-dialog');
+    const addForm = document.getElementById('add-student-form');
+    const addCancel = document.getElementById('add-cancel');
+    const searchInput = document.querySelector('.md-toolbar__search input');
+    const logoutBtn = document.querySelector('.logout-link');
+    const logoutDialog = document.getElementById('logout-dialog');
+
+    let students = [];
+
+    // ── Helpers ──
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    }
+
+    function renderTable(list) {
+      if (list.length === 0) {
+        studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-on-surface-variant);">暂无学生，请先新增。</td></tr>';
+        return;
+      }
+      studentTbody.innerHTML = list.map(s => `
+        <tr>
+          <td>${escapeHtml(s.studentNo)}</td>
+          <td>${escapeHtml(s.name)}</td>
+          <td><span class="md-chip">${escapeHtml(s.className)}</span></td>
+          <td>
+            <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation">评价</a>
+            <button class="md-btn md-btn--text md-btn--sm" data-delete="${s.id}" style="color:var(--md-sys-color-error);">删除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ── Data ──
+    async function loadStudents() {
+      try {
+        const res = await fetch('/api/students');
+        if (!res.ok) throw new Error('加载失败');
+        students = await res.json();
+        renderTable(students);
+      } catch (e) {
+        studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-error);">加载失败，请刷新重试</td></tr>';
+      }
+    }
+
+    // ── Search ──
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase();
+      renderTable(students.filter(s =>
+        s.studentNo.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+      ));
+    });
+
+    // ── Add dialog ──
+    function openAddDialog() { addDialog.classList.remove('hidden'); addForm.querySelector('input').focus(); }
+    function closeAddDialog() { addDialog.classList.add('hidden'); addForm.reset(); addBtn.focus(); }
+
+    addBtn.onclick = openAddDialog;
+    addCancel.onclick = closeAddDialog;
+    addDialog.onclick = e => { if (e.target === addDialog) closeAddDialog(); };
+
+    addForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(addForm));
+      try {
+        const res = await fetch('/api/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || '新增失败');
+        }
+        closeAddDialog();
+        await loadStudents();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // ── Delete ──
+    studentTbody.addEventListener('click', async e => {
+      const delBtn = e.target.closest('[data-delete]');
+      if (!delBtn) return;
+      const id = delBtn.dataset.delete;
+      if (!confirm('确定删除该学生吗？')) return;
+      await fetch('/api/students/' + id, { method: 'DELETE' });
+      await loadStudents();
+    });
+
+    // ── Logout dialog ──
+    document.getElementById('logout-cancel').onclick = () => { logoutDialog.classList.add('hidden'); logoutBtn.focus(); };
     document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
-    l.onclick = e => { e.preventDefault(); d.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
-    d.onclick = e => { if (e.target === d) { d.classList.add('hidden'); l.focus(); } };
-    document.onkeydown = e => { if (e.key === 'Escape' && !d.classList.contains('hidden')) { d.classList.add('hidden'); l.focus(); } };
+    logoutBtn.onclick = e => { e.preventDefault(); logoutDialog.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
+    logoutDialog.onclick = e => { if (e.target === logoutDialog) { logoutDialog.classList.add('hidden'); logoutBtn.focus(); } };
+
+    // ── Global keyboard ──
+    document.onkeydown = e => {
+      if (e.key !== 'Escape') return;
+      if (!logoutDialog.classList.contains('hidden')) { logoutDialog.classList.add('hidden'); logoutBtn.focus(); return; }
+      if (!addDialog.classList.contains('hidden')) { closeAddDialog(); }
+    };
+
+    // ── Init ──
+    loadStudents();
   </script>
 </body>
 </html>
