@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>教学评价系统 - 学生管理</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    .action-menu { position: relative; display: inline-block; }
+    .action-menu__trigger { width: 28px; height: 28px; padding: 0; border-radius: var(--md-sys-shape-full); border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); font-size: 18px; line-height: 28px; cursor: pointer; text-align: center; transition: background var(--md-sys-duration-short) var(--md-sys-easing-standard); }
+    .action-menu__trigger:hover { background: var(--md-sys-color-surface-container-highest); }
+    .action-menu__dropdown { display: none; position: absolute; right: 0; top: calc(100% + 4px); min-width: 100px; padding: var(--md-space-1); border-radius: var(--md-sys-shape-sm); background: var(--md-sys-color-surface-bright); box-shadow: var(--md-sys-elevation-3); z-index: 50; }
+    .action-menu__dropdown--open { display: block; }
+    .action-menu__item { display: flex; align-items: center; gap: var(--md-space-2); height: 32px; padding: 0 var(--md-space-3); border: none; border-radius: var(--md-sys-shape-xs); background: transparent; color: var(--md-sys-color-on-surface); font: var(--md-typescale-body-medium); cursor: pointer; width: 100%; text-align: left; white-space: nowrap; }
+    .action-menu__item:hover { background: var(--md-sys-color-surface-container-low); }
+    .action-menu__item--danger { color: var(--md-sys-color-error); }
+    .action-menu__item--danger:hover { background: var(--md-sys-color-error-container); }
+  </style>
 </head>
 <body class="has-sidebar">
   <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='students')}"></th:block>
@@ -111,8 +122,13 @@
           <td>${escapeHtml(s.name)}</td>
           <td><span class="md-chip">${escapeHtml(s.className)}</span></td>
           <td>
-            <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation">评价</a>
-            <button class="md-btn md-btn--text md-btn--sm" data-delete="${s.id}" style="color:var(--md-sys-color-error);">删除</button>
+            <div class="action-menu">
+              <button class="action-menu__trigger" data-action-trigger="${s.id}" aria-label="操作菜单">&#8942;</button>
+              <div class="action-menu__dropdown" data-action-dropdown="${s.id}">
+                <a class="action-menu__item" href="/evaluation?studentId=${s.id}&studentName=${encodeURIComponent(s.name)}">评价</a>
+                <button class="action-menu__item action-menu__item--danger" data-delete="${s.id}">删除</button>
+              </div>
+            </div>
           </td>
         </tr>
       `).join('');
@@ -166,15 +182,41 @@
       }
     });
 
-    // ── Delete ──
+    // ── Action menu ──
+    let openMenuId = null;
+
+    function closeOpenMenu() {
+      if (openMenuId != null) {
+        const open = document.querySelector('[data-action-dropdown="' + openMenuId + '"]');
+        if (open) open.classList.remove('action-menu__dropdown--open');
+        openMenuId = null;
+      }
+    }
+
     studentTbody.addEventListener('click', async e => {
+      const trigger = e.target.closest('[data-action-trigger]');
+      if (trigger) {
+        e.stopPropagation();
+        const id = trigger.dataset.actionTrigger;
+        if (openMenuId === id) { closeOpenMenu(); return; }
+        closeOpenMenu();
+        const dropdown = document.querySelector('[data-action-dropdown="' + id + '"]');
+        if (dropdown) { dropdown.classList.add('action-menu__dropdown--open'); openMenuId = id; }
+        return;
+      }
+
       const delBtn = e.target.closest('[data-delete]');
-      if (!delBtn) return;
-      const id = delBtn.dataset.delete;
-      if (!confirm('确定删除该学生吗？')) return;
-      await fetch('/api/students/' + id, { method: 'DELETE' });
-      await loadStudents();
+      if (delBtn) {
+        closeOpenMenu();
+        const id = delBtn.dataset.delete;
+        if (!confirm('确定删除该学生吗？')) return;
+        await fetch('/api/students/' + id, { method: 'DELETE' });
+        await loadStudents();
+        return;
+      }
     });
+
+    document.addEventListener('click', closeOpenMenu);
 
     // ── Logout dialog ──
     document.getElementById('logout-cancel').onclick = () => { logoutDialog.classList.add('hidden'); logoutBtn.focus(); };
