@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教学评价系统 - 已完成</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="has-sidebar">
+  <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='completed')}"></th:block>
+  <main class="md-page">
+    <div class="md-page-header">
+      <h2>已完成</h2>
+      <span class="md-page-header__status" id="page-status">正在加载...</span>
+    </div>
+
+    <div class="md-card" style="background:#E6FBF1;border-color:transparent;">
+      <div class="md-card__body" style="display:flex;align-items:center;gap:var(--md-space-3);padding:var(--md-space-4);">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#05552D"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span id="summary-banner" style="font:var(--md-typescale-title-small);color:#05552D;">当前有 -- 份作业已完成</span>
+      </div>
+    </div>
+
+    <div class="md-page-header__actions" style="display:flex;gap:var(--md-space-2);">
+      <button class="md-btn md-btn--filled">导出 Excel</button>
+      <button class="md-btn md-btn--outlined">导出 PDF</button>
+      <button class="md-btn md-btn--tonal">归档</button>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__header"><h3>提交作业</h3></div>
+      <div class="md-card__body">
+        <form class="md-form-grid md-form-grid--2" id="work-form">
+          <label class="md-field"><span class="md-field__label">学生</span><select class="md-field__input" name="studentId" required id="student-select"><option value="">请选择学生</option></select></label>
+          <label class="md-field"><span class="md-field__label">作业标题</span><input class="md-field__input" name="title" value="第二天实训作业" required></label>
+          <label class="md-field"><span class="md-field__label">作业文件名</span><input class="md-field__input" name="fileName" value="student-work.zip" required></label>
+          <label class="md-field"><span class="md-field__label">作业类型</span><select class="md-field__input" name="workType" required><option value="代码压缩包">代码压缩包</option><option value="实验报告">实验报告</option><option value="截图材料">截图材料</option><option value="其他">其他</option></select></label>
+          <label class="md-field" style="grid-column:1/-1;"><span class="md-field__label">备注</span><textarea class="md-field__input" name="remark" placeholder="可填写作业说明"></textarea></label>
+          <div style="grid-column:1/-1;"><button class="md-btn md-btn--filled" type="submit">保存作业提交</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__body" style="padding:0;">
+        <table class="md-table">
+          <thead><tr><th>学生</th><th>作业标题</th><th>文件名</th><th>类型</th><th>最终分数</th><th>提交时间</th><th style="width:100px;">操作</th></tr></thead>
+          <tbody id="table-body"><tr><td colspan="7">正在加载...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <div class="md-dialog__title">确认退出</div><div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions"><button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button><button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button></div>
+    </div>
+  </div>
+
+  <script src="/js/assignment-page.js"></script>
+  <script>initAssignmentPage('completed');</script>
+</body>
+</html>

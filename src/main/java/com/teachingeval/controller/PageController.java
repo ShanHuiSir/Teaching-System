@@ -52,4 +52,13 @@ public class PageController {
     public String export() {
         return "export";
     }
+
+    @GetMapping("/assignments/pending")
+    public String pending() { return "pending"; }
+
+    @GetMapping("/assignments/ai-reviewed")
+    public String aiReviewed() { return "ai-reviewed"; }
+
+    @GetMapping("/assignments/completed")
+    public String completed() { return "completed"; }
 }
