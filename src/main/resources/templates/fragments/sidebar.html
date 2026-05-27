@@ -9,19 +9,41 @@
       </button>
     </div>
     <nav class="md-sidebar__nav">
-      <a href="/students" class="md-sidebar__nav-item" th:classappend="${activePage == 'students' ? 'active' : ''}">
+      <!-- 1. 未审批 — status page -->
+      <a href="/assignments/pending" class="sidebar-hl-item sidebar-hl-item--pending" th:classappend="${activePage == 'pending' ? 'active' : ''}">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm1 3.8h-1.2v-2.5h-1.2v3.7h2.4v-1.2zM14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2H6V4h7v5h5v3h2V8l-6-6z"/></svg>
+        <span>未审批</span>
+        <span class="sidebar-hl-item__badge" id="badge-pending">--</span>
+      </a>
+
+      <!-- 2. AI已审批 — status page -->
+      <a href="/assignments/ai-reviewed" class="sidebar-hl-item sidebar-hl-item--ai" th:classappend="${activePage == 'ai-reviewed' ? 'active' : ''}">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12.5c-2.67 0-4.85 2.03-4.85 4.5h1.8c0-1.66 1.34-3 3.05-3 1.66 0 3.05 1.32 3.05 3h1.8c0-2.47-2.18-4.5-4.85-4.5z"/></svg>
+        <span>AI 已审批</span>
+        <span class="sidebar-hl-item__badge" id="badge-ai">--</span>
+      </a>
+
+      <!-- 3. 已完成 — status page -->
+      <a href="/assignments/completed" class="sidebar-hl-item sidebar-hl-item--done" th:classappend="${activePage == 'completed' ? 'active' : ''}">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span>已完成</span>
+        <span class="sidebar-hl-item__badge" id="badge-done">--</span>
+      </a>
+
+      <!-- 4. 学生管理 — functional page -->
+      <a href="/students" class="sidebar-hl-item sidebar-hl-item--students" th:classappend="${activePage == 'students' ? 'active' : ''}">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         <span>学生管理</span>
       </a>
-      <a href="/submit" class="md-sidebar__nav-item" th:classappend="${activePage == 'submit' ? 'active' : ''}">
+
+      <!-- 5. 作业提交 — functional page -->
+      <a href="/submit" class="sidebar-hl-item sidebar-hl-item--submit" th:classappend="${activePage == 'submit' ? 'active' : ''}">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
         <span>作业提交</span>
       </a>
-      <a href="/works" class="md-sidebar__nav-item" th:classappend="${activePage == 'works' ? 'active' : ''}">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
-        <span>作业列表</span>
-      </a>
-      <a href="/export" class="md-sidebar__nav-item" th:classappend="${activePage == 'export' ? 'active' : ''}">
+
+      <!-- 6. 导出成绩 — functional page -->
+      <a href="/export" class="sidebar-hl-item sidebar-hl-item--export" th:classappend="${activePage == 'export' ? 'active' : ''}">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
         <span>导出成绩</span>
       </a>
@@ -42,6 +64,22 @@
         document.body.classList.toggle('has-sidebar--collapsed');
         localStorage.setItem('sidebar-collapsed', collapsed);
       };
+    })();
+
+    (function() {
+      var bp = document.getElementById('badge-pending');
+      var ba = document.getElementById('badge-ai');
+      var bd = document.getElementById('badge-done');
+      if (!bp) return;
+      fetch('/api/statistics/summary')
+        .then(function(res) { return res.ok ? res.json() : null; })
+        .then(function(data) {
+          if (!data) return;
+          bp.textContent = data.submissionCount - data.aiEvaluatedCount;
+          ba.textContent = data.aiEvaluatedCount - data.teacherConfirmedCount;
+          bd.textContent = data.teacherConfirmedCount;
+        })
+        .catch(function() {});
     })();
   </script>
 </th:block>
