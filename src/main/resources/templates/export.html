@@ -113,9 +113,20 @@
       }
     }
 
-    // Export placeholder
-    btnExport.addEventListener('click', function() {
-      alert('Excel 导出功能开发中，敬请期待。');
+    // Export
+    btnExport.addEventListener('click', async function() {
+      btnExport.disabled = true;
+      setStatus('正在导出...');
+      try {
+        const res = await fetch('/api/export/excel', { method: 'POST' });
+        if (!res.ok) throw new Error('导出失败');
+        const data = await res.json();
+        setStatus('导出成功: ' + data.fileUrl);
+      } catch (e) {
+        setStatus(e.message, true);
+      } finally {
+        btnExport.disabled = false;
+      }
     });
 
     // Init
