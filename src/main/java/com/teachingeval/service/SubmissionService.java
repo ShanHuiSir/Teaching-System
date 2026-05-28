@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.teachingeval.dto.SubmissionRequest;
 import com.teachingeval.entity.Student;
 import com.teachingeval.entity.WorkSubmission;
 import com.teachingeval.repository.StudentRepository;
@@ -25,26 +26,17 @@ public class SubmissionService {
         return submissionRepository.findAll();
     }
 
-    public WorkSubmission createSubmission(WorkSubmission submission) {
-        Student student = studentRepository.findById(submission.getStudentId())
+    public WorkSubmission createSubmission(SubmissionRequest request) {
+        Student student = studentRepository.findById(request.getStudentId())
                 .orElseThrow(() -> new IllegalArgumentException("学生不存在"));
 
-        if (isBlank(submission.getTitle())) {
-            throw new IllegalArgumentException("作品标题不能为空");
-        }
-        if (isBlank(submission.getFileName())) {
-            throw new IllegalArgumentException("作品文件名不能为空");
-        }
-        if (isBlank(submission.getWorkType())) {
-            throw new IllegalArgumentException("作品类型不能为空");
-        }
-
-        submission.setId(null);
+        WorkSubmission submission = new WorkSubmission();
+        submission.setStudentId(request.getStudentId());
         submission.setStudentName(student.getName());
+        submission.setTitle(request.getTitle());
+        submission.setFileName(request.getFileName());
+        submission.setWorkType(request.getWorkType());
+        submission.setRemark(request.getRemark());
         return submissionRepository.save(submission);
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
     }
 }
