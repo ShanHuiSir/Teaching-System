@@ -1,5 +1,6 @@
 package com.teachingeval.service;
 
+import com.teachingeval.dto.StudentRequest;
 import com.teachingeval.entity.Student;
 import com.teachingeval.repository.StudentRepository;
 import org.springframework.data.domain.Page;
@@ -39,12 +40,15 @@ public class StudentService {
         );
     }
 
-    public Student createStudent(Student student) {
-        if (studentRepository.existsByStudentNo(student.getStudentNo())) {
+    public Student createStudent(StudentRequest request) {
+        if (studentRepository.existsByStudentNo(request.getStudentNo())) {
             throw new IllegalArgumentException("学号已存在");
         }
 
-        student.setId(null);
+        Student student = new Student();
+        student.setStudentNo(request.getStudentNo());
+        student.setName(request.getName());
+        student.setClassName(request.getClassName());
         return studentRepository.save(student);
     }
 

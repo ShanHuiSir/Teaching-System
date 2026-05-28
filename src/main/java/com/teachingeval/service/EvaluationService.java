@@ -49,11 +49,6 @@ public class EvaluationService {
         EvaluationResult evaluation = evaluationRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("请先完成 AI 评价"));
 
-        validateScore(request.getTeacherScore());
-        if (isBlank(request.getTeacherComment())) {
-            throw new IllegalArgumentException("教师评语不能为空");
-        }
-
         evaluation.setTeacherScore(request.getTeacherScore());
         evaluation.setTeacherComment(request.getTeacherComment());
         evaluation.setStatus(EvaluationResult.STATUS_TEACHER_CONFIRMED);
