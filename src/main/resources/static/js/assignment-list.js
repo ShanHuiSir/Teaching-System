@@ -23,7 +23,7 @@ function initAssignmentPage(mode) {
     setStatus('正在加载...');
     try {
       var sRes = await fetch('/api/submissions');
-      if (!sRes.ok) throw new Error('作业列表加载失败');
+      if (!sRes.ok) throw new Error('作业提交记录加载失败');
       var submissions = await sRes.json();
 
       var evalMap = {};

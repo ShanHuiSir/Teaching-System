@@ -125,7 +125,7 @@
             <div class="action-menu">
               <button class="action-menu__trigger" data-action-trigger="${s.id}" aria-label="操作菜单">&#8942;</button>
               <div class="action-menu__dropdown" data-action-dropdown="${s.id}">
-                <a class="action-menu__item" href="/evaluation?studentId=${s.id}&studentName=${encodeURIComponent(s.name)}">评价</a>
+                <a class="action-menu__item" href="/submit?studentId=${s.id}">作业</a>
                 <button class="action-menu__item action-menu__item--danger" data-delete="${s.id}">删除</button>
               </div>
             </div>
