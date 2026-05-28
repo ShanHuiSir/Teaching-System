@@ -197,6 +197,10 @@
       } catch (e) {}
     }
 
+    function goToAssignmentStatusPage(targetMode) {
+      window.location.href = '/assignments/' + targetMode + '?_=' + Date.now();
+    }
+
     function escapeHtml(value) {
       return String(value ?? '')
         .replaceAll('&', '&amp;')
@@ -304,6 +308,9 @@
         }
         notifyAssignmentChanged('ai-evaluated');
         setStatus('AI 评价完成');
+        setTimeout(function() {
+          goToAssignmentStatusPage('ai-reviewed');
+        }, 500);
       } catch (e) {
         setStatus(e.message, true);
       } finally {
@@ -335,6 +342,9 @@
 
         notifyAssignmentChanged('teacher-reviewed');
         setStatus('教师复核已保存');
+        setTimeout(function() {
+          goToAssignmentStatusPage('completed');
+        }, 500);
       } catch (e) {
         setStatus(e.message, true);
       } finally {

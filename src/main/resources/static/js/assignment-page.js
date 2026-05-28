@@ -23,6 +23,10 @@ function initAssignmentPage(mode) {
     } catch(e) {}
   }
 
+  function goToStatusPage(targetMode) {
+    window.location.href = '/assignments/' + targetMode + '?_=' + Date.now();
+  }
+
   function reloadSoon() {
     var now = Date.now();
     if (now - lastReloadAt < 800) return;
@@ -110,7 +114,8 @@ function initAssignmentPage(mode) {
         form.reset();
         setStatus('已保存：' + result.title);
         notifyAssignmentChanged('submission-created');
-        await loadData();
+        if (mode === 'pending') await loadData();
+        else goToStatusPage('pending');
       } catch(err) {
         setStatus(err.message, true);
       }
