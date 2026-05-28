@@ -11,6 +11,8 @@ function initAssignmentPage(mode) {
   var select = document.getElementById('student-select');
   var submitBtn = form ? form.querySelector('button[type="submit"]') : null;
   var submitBtnText = submitBtn ? submitBtn.textContent : '保存作业提交';
+  var lastReloadAt = 0;
+  var loadSeq = 0;
   if (!tbody) return;
 
   function escapeHtml(v) {
