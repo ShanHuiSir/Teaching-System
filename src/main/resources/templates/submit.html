@@ -55,12 +55,15 @@
     </div>
   </main>
 
+  <script src="/js/toast.js"></script>
   <script>
-    const workForm = document.querySelector("#work-form");
-    const workStatus = document.querySelector("#work-status");
-    const studentSelect = document.querySelector("#student-select");
-    const params = new URLSearchParams(window.location.search);
-    const selectedStudentId = params.get("studentId");
+    var workForm = document.querySelector("#work-form");
+    var workStatus = document.querySelector("#work-status");
+    var studentSelect = document.querySelector("#student-select");
+    var submitBtn = workForm.querySelector('button[type="submit"]');
+    var submitBtnText = submitBtn ? submitBtn.textContent : '保存作业提交';
+    var params = new URLSearchParams(window.location.search);
+    var selectedStudentId = params.get("studentId");
 
     function setStatus(message, isError) {
       workStatus.textContent = message;
@@ -82,39 +85,41 @@
     }
 
     function escapeHtml(value) {
-      return String(value ?? "")
+      return String(value ?? '')
         .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
     }
 
     async function loadStudents() {
-      var res = await fetch("/api/students");
-      if (!res.ok) throw new Error("学生列表加载失败");
-      var students = await res.json();
-      studentSelect.innerHTML = '<option value="">请选择学生</option>' + students.map(function(s) {
-        return '<option value="' + s.id + '">' + escapeHtml(s.studentNo) + ' - ' + escapeHtml(s.name) + '</option>';
-      }).join("");
-      if (selectedStudentId) studentSelect.value = selectedStudentId;
+      try {
+        var res = await fetch("/api/students");
+        if (!res.ok) { var msg = await extractError(res); throw new Error(msg); }
+        var students = await res.json();
+        studentSelect.innerHTML = '<option value="">请选择学生</option>' + students.map(function(s) {
+          return '<option value="' + s.id + '">' + escapeHtml(s.studentNo) + ' - ' + escapeHtml(s.name) + '</option>';
+        }).join("");
+        if (selectedStudentId) studentSelect.value = selectedStudentId;
+      } catch(e) { showError(e.message); }
     }
 
     workForm.addEventListener("submit", async function(e) {
       e.preventDefault();
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '保存中...'; }
       var data = Object.fromEntries(new FormData(workForm));
       data.studentId = Number(data.studentId);
       try {
-        var res = await fetch("/api/submissions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        var result = await res.json().catch(function() { return {}; });
-        if (!res.ok) throw new Error(result.message || "保存作业失败");
+        var res = await fetch("/api/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+        if (!res.ok) { var err = await extractError(res); throw new Error(err); }
+        var result = await res.json();
         workForm.reset();
         notifyAssignmentChanged("submission-created");
         setStatus("已保存作业：" + result.title);
-        setTimeout(goToPendingPage, 500);
+        showSuccess("已保存作业：" + result.title);
       } catch (err) {
         setStatus(err.message, true);
+        showError(err.message);
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = submitBtnText; }
       }
     });
 
