@@ -15,6 +15,8 @@
     .action-menu__item:hover { background: var(--md-sys-color-surface-container-low); }
     .action-menu__item--danger { color: var(--md-sys-color-error); }
     .action-menu__item--danger:hover { background: var(--md-sys-color-error-container); }
+    .pagination-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--md-space-3); padding: var(--md-space-3) var(--md-space-4); border-top: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface-variant); font: var(--md-typescale-body-medium); }
+    .pagination-bar__actions { display: flex; gap: var(--md-space-2); }
   </style>
 </head>
 <body class="has-sidebar">
@@ -24,6 +26,7 @@
     <div class="md-page-header">
       <h2>学生管理</h2>
       <div class="md-page-header__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="reset-demo-data">重置数据</button>
         <button class="md-btn md-btn--filled" type="button">新增学生</button>
       </div>
     </div>
@@ -50,6 +53,13 @@
           </tr>
         </tbody>
       </table>
+      <div class="pagination-bar">
+        <span id="student-page-info">第 -- 页 / 共 -- 页，共 -- 名学生</span>
+        <div class="pagination-bar__actions">
+          <button class="md-btn md-btn--outlined" type="button" id="student-prev-page">上一页</button>
+          <button class="md-btn md-btn--outlined" type="button" id="student-next-page">下一页</button>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -90,6 +100,10 @@
     const addBtnText = addSubmitBtn ? addSubmitBtn.textContent : '确认新增';
 
     let students = [];
+    let pageIndex = 0;
+    let totalPages = 1;
+    let totalElements = 0;
+    const pageSize = 20;
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -114,6 +128,7 @@
         if (!res.ok) { var msg = await extractError(res); throw new Error(msg); }
         students = await res.json();
         renderTable(students);
+        renderPagination();
       } catch (e) {
         showError(e.message);
         studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-error);padding:32px;">加载失败，请刷新重试</td></tr>';

@@ -1,4 +1,9 @@
 function initAssignmentPage(mode) {
+  var EvaluationStatus = {
+    PENDING: 0,
+    AI_REVIEWED: 1,
+    TEACHER_CONFIRMED: 2
+  };
   var tbody = document.getElementById('table-body');
   var statusEl = document.getElementById('page-status');
   var banner = document.getElementById('summary-banner');
@@ -12,10 +17,10 @@ function initAssignmentPage(mode) {
 
   function filterByMode(submission, evalMap) {
     var ev = evalMap[submission.id];
-    var status = ev ? ev.status : 0;
-    if (mode === 'pending') return status === 0;
-    if (mode === 'ai-reviewed') return status === 1;
-    if (mode === 'completed') return status === 2;
+    var status = ev ? ev.status : EvaluationStatus.PENDING;
+    if (mode === 'pending') return status === EvaluationStatus.PENDING;
+    if (mode === 'ai-reviewed') return status === EvaluationStatus.AI_REVIEWED;
+    if (mode === 'completed') return status === EvaluationStatus.TEACHER_CONFIRMED;
     return false;
   }
 

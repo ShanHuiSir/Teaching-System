@@ -71,6 +71,19 @@
       else { workStatus.classList.remove("error-text"); }
     }
 
+    function notifyAssignmentChanged(reason) {
+      try {
+        localStorage.setItem("assignment-data-version", JSON.stringify({
+          reason: reason,
+          time: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function goToPendingPage() {
+      window.location.href = "/assignments/pending?_=" + Date.now();
+    }
+
     function escapeHtml(value) {
       return String(value ?? '')
         .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
@@ -99,6 +112,7 @@
         if (!res.ok) { var err = await extractError(res); throw new Error(err); }
         var result = await res.json();
         workForm.reset();
+        notifyAssignmentChanged("submission-created");
         setStatus("已保存作业：" + result.title);
         showSuccess("已保存作业：" + result.title);
       } catch (err) {

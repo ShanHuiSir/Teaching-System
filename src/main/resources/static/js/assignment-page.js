@@ -1,4 +1,9 @@
 function initAssignmentPage(mode) {
+  var EvaluationStatus = {
+    PENDING: 0,
+    AI_REVIEWED: 1,
+    TEACHER_CONFIRMED: 2
+  };
   var statusEl = document.getElementById('page-status');
   var banner = document.getElementById('summary-banner');
   var tbody = document.getElementById('table-body');
@@ -14,10 +19,30 @@ function initAssignmentPage(mode) {
 
   function setStatus(msg, err) { statusEl.textContent = msg; statusEl.classList.toggle('error-text', !!err); }
 
+  function notifyAssignmentChanged(reason) {
+    try {
+      localStorage.setItem('assignment-data-version', JSON.stringify({
+        reason: reason,
+        time: Date.now()
+      }));
+    } catch(e) {}
+  }
+
+  function goToStatusPage(targetMode) {
+    window.location.href = '/assignments/' + targetMode + '?_=' + Date.now();
+  }
+
+  function reloadSoon() {
+    var now = Date.now();
+    if (now - lastReloadAt < 800) return;
+    lastReloadAt = now;
+    loadData();
+  }
+
   // Load students into select
   async function loadStudents() {
     try {
-      var res = await fetch('/api/students');
+      var res = await fetch('/api/students?_=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) return;
       var students = await res.json();
       select.innerHTML = '<option value="">请选择学生</option>' + students.map(function(s) {
@@ -35,27 +60,30 @@ function initAssignmentPage(mode) {
 
   // Load filtered submissions + evaluation status
   async function loadData() {
+    var currentSeq = ++loadSeq;
     setStatus('正在加载...');
     try {
       var sRes = await fetch('/api/submissions');
       if (!sRes.ok) { var msg = await extractError(sRes); throw new Error(msg); }
       var submissions = await sRes.json();
 
+      var eRes = await fetch('/api/evaluations?_=' + Date.now(), { cache: 'no-store' });
+      if (!eRes.ok) throw new Error('评价结果加载失败');
+      var evaluations = await eRes.json();
+
       var evalMap = {};
-      for (var i = 0; i < submissions.length; i++) {
-        try {
-          var er = await fetch('/api/submissions/' + submissions[i].id + '/evaluation');
-          if (er.ok) evalMap[submissions[i].id] = await er.json();
-        } catch(e) {}
+      for (var i = 0; i < evaluations.length; i++) {
+        evalMap[evaluations[i].submissionId] = evaluations[i];
       }
+      if (currentSeq !== loadSeq) return;
 
       var filtered = [];
       for (var j = 0; j < submissions.length; j++) {
         var ev = evalMap[submissions[j].id];
-        var s = ev ? ev.status : 0;
-        if (mode === 'pending' && s === 0) filtered.push(submissions[j]);
-        else if (mode === 'ai-reviewed' && s === 1) filtered.push(submissions[j]);
-        else if (mode === 'completed' && s === 2) filtered.push(submissions[j]);
+        var s = ev ? ev.status : EvaluationStatus.PENDING;
+        if (mode === 'pending' && s === EvaluationStatus.PENDING) filtered.push(submissions[j]);
+        else if (mode === 'ai-reviewed' && s === EvaluationStatus.AI_REVIEWED) filtered.push(submissions[j]);
+        else if (mode === 'completed' && s === EvaluationStatus.TEACHER_CONFIRMED) filtered.push(submissions[j]);
       }
 
       if (mode === 'pending') banner.textContent = '当前有 ' + filtered.length + ' 份作业待审批';
@@ -106,6 +134,18 @@ function initAssignmentPage(mode) {
       }
     });
   }
+
+  window.addEventListener('storage', function(event) {
+    if (event.key === 'assignment-data-version') reloadSoon();
+  });
+  window.addEventListener('focus', reloadSoon);
+  window.addEventListener('pageshow', reloadSoon);
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) reloadSoon();
+  });
+  window.setInterval(function() {
+    if (!document.hidden) reloadSoon();
+  }, 3000);
 
   loadStudents();
   loadData();
