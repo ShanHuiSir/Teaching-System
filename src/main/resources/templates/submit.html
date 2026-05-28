@@ -68,6 +68,15 @@
       else { workStatus.classList.remove("error-text"); }
     }
 
+    function notifyAssignmentChanged(reason) {
+      try {
+        localStorage.setItem("assignment-data-version", JSON.stringify({
+          reason: reason,
+          time: Date.now()
+        }));
+      } catch (e) {}
+    }
+
     function escapeHtml(value) {
       return String(value ?? "")
         .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
@@ -97,6 +106,7 @@
         var result = await res.json().catch(function() { return {}; });
         if (!res.ok) throw new Error(result.message || "保存作业失败");
         workForm.reset();
+        notifyAssignmentChanged("submission-created");
         setStatus("已保存作业：" + result.title);
       } catch (err) {
         setStatus(err.message, true);

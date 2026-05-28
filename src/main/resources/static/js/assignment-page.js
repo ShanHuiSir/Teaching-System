@@ -4,6 +4,8 @@ function initAssignmentPage(mode) {
   var tbody = document.getElementById('table-body');
   var form = document.getElementById('work-form');
   var select = document.getElementById('student-select');
+  var lastReloadAt = 0;
+  var loadSeq = 0;
   if (!tbody) return;
 
   function escapeHtml(v) {
@@ -12,10 +14,26 @@ function initAssignmentPage(mode) {
 
   function setStatus(msg, err) { statusEl.textContent = msg; statusEl.classList.toggle('error-text', !!err); }
 
+  function notifyAssignmentChanged(reason) {
+    try {
+      localStorage.setItem('assignment-data-version', JSON.stringify({
+        reason: reason,
+        time: Date.now()
+      }));
+    } catch(e) {}
+  }
+
+  function reloadSoon() {
+    var now = Date.now();
+    if (now - lastReloadAt < 800) return;
+    lastReloadAt = now;
+    loadData();
+  }
+
   // Load students into select
   async function loadStudents() {
     try {
-      var res = await fetch('/api/students');
+      var res = await fetch('/api/students?_=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) return;
       var students = await res.json();
       select.innerHTML = '<option value="">请选择学生</option>' + students.map(function(s) {
@@ -26,19 +44,21 @@ function initAssignmentPage(mode) {
 
   // Load filtered submissions + evaluation status
   async function loadData() {
+    var currentSeq = ++loadSeq;
     setStatus('正在加载...');
     try {
-      var sRes = await fetch('/api/submissions');
+      var sRes = await fetch('/api/submissions?_=' + Date.now(), { cache: 'no-store' });
       if (!sRes.ok) throw new Error('加载失败');
       var submissions = await sRes.json();
 
       var evalMap = {};
       for (var i = 0; i < submissions.length; i++) {
         try {
-          var er = await fetch('/api/submissions/' + submissions[i].id + '/evaluation');
+          var er = await fetch('/api/submissions/' + submissions[i].id + '/evaluation?_=' + Date.now(), { cache: 'no-store' });
           if (er.ok) evalMap[submissions[i].id] = await er.json();
         } catch(e) {}
       }
+      if (currentSeq !== loadSeq) return;
 
       var filtered = [];
       for (var j = 0; j < submissions.length; j++) {
@@ -89,12 +109,25 @@ function initAssignmentPage(mode) {
         if (!res.ok) throw new Error(result.message || '保存失败');
         form.reset();
         setStatus('已保存：' + result.title);
+        notifyAssignmentChanged('submission-created');
         await loadData();
       } catch(err) {
         setStatus(err.message, true);
       }
     });
   }
+
+  window.addEventListener('storage', function(event) {
+    if (event.key === 'assignment-data-version') reloadSoon();
+  });
+  window.addEventListener('focus', reloadSoon);
+  window.addEventListener('pageshow', reloadSoon);
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) reloadSoon();
+  });
+  window.setInterval(function() {
+    if (!document.hidden) reloadSoon();
+  }, 3000);
 
   loadStudents();
   loadData();
