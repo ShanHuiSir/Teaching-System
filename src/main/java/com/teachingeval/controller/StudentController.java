@@ -5,7 +5,7 @@ import com.teachingeval.entity.Student;
 import com.teachingeval.service.StudentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -29,13 +30,20 @@ public class StudentController {
         this.studentService = studentService;
     }
 
-    @Operation(summary = "查询学生列表", description = "返回系统中已录入的全部学生基础信息。")
+    @Operation(summary = "查询学生列表", description = "兼容旧页面使用，最多返回前 200 条学生记录。大量数据请使用分页接口。")
     @GetMapping("/students")
     public List<Student> listStudents() {
         return studentService.listStudents();
     }
 
-    @Operation(summary = "新增学生", description = "录入学生学号、姓名和班级信息，学号不能为空且不能重复。")
+    @Operation(summary = "分页查询学生列表", description = "按页返回学生基础信息，避免一次性加载全部学生导致内存压力。")
+    @GetMapping("/students/page")
+    public Page<Student> listStudentsPage(@RequestParam(required = false) Integer page,
+                                          @RequestParam(required = false) Integer size) {
+        return studentService.listStudentsPage(page, size);
+    }
+
+    @Operation(summary = "新增学生", description = "录入学生学号、姓名和班级信息，学号不能重复。")
     @PostMapping("/students")
     @ResponseStatus(HttpStatus.CREATED)
     public Student createStudent(@Valid @RequestBody StudentRequest request) {

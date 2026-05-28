@@ -121,31 +121,8 @@
     </div>
   </main>
 
-  <!-- Logout Dialog -->
-  <div class="md-dialog-overlay hidden" id="logout-dialog">
-    <div class="md-dialog">
-      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-      </svg>
-      <div class="md-dialog__title">确认退出</div>
-      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
-      <div class="md-dialog__actions">
-        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
-        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
-      </div>
-    </div>
-  </div>
-
+  <script src="/js/logout-dialog.js"></script>
   <script>
-    // ── Logout dialog ──
-    const logoutLink = document.querySelector('.logout-link');
-    const logoutDialog = document.getElementById('logout-dialog');
-    document.getElementById('logout-cancel').onclick = () => { logoutDialog.classList.add('hidden'); logoutLink.focus(); };
-    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
-    logoutLink.onclick = e => { e.preventDefault(); logoutDialog.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
-    logoutDialog.onclick = e => { if (e.target === logoutDialog) { logoutDialog.classList.add('hidden'); logoutLink.focus(); } };
-    document.onkeydown = e => { if (e.key === 'Escape' && !logoutDialog.classList.contains('hidden')) { logoutDialog.classList.add('hidden'); logoutLink.focus(); } };
-
     // ── DOM refs ──
     const pageStatus = document.getElementById('page-status');
     const noSubmissionHint = document.getElementById('no-submission-hint');
@@ -168,6 +145,11 @@
     const teacherCommentInput = document.getElementById('teacher-comment');
     const remarkCard = document.getElementById('remark-card');
     const remarkText = document.getElementById('remark-text');
+    const EvaluationStatus = {
+      PENDING: 0,
+      AI_REVIEWED: 1,
+      TEACHER_CONFIRMED: 2
+    };
 
     // ── Textarea auto-resize ──
     teacherCommentInput.addEventListener('input', function() {
@@ -185,6 +167,20 @@
     function setStatus(message, isError) {
       pageStatus.textContent = message;
       pageStatus.classList.toggle('error-text', !!isError);
+    }
+
+    function notifyAssignmentChanged(reason) {
+      try {
+        localStorage.setItem('assignment-data-version', JSON.stringify({
+          reason: reason,
+          submissionId: submissionId,
+          time: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function goToAssignmentStatusPage(targetMode) {
+      window.location.href = '/assignments/' + targetMode + '?_=' + Date.now();
     }
 
     function escapeHtml(value) {
@@ -232,7 +228,7 @@
         const res = await fetch('/api/submissions/' + submissionId + '/evaluation');
         if (!res.ok) return;
         const evalResult = await res.json();
-        if (evalResult && evalResult.status >= 1) {
+        if (evalResult && evalResult.status >= EvaluationStatus.AI_REVIEWED) {
           renderAiResult(evalResult);
           step2Card.classList.remove('hidden');
           step3Card.classList.remove('hidden');
@@ -292,7 +288,11 @@
         if (result.aiScore != null) {
           teacherScoreInput.value = result.aiScore;
         }
+        notifyAssignmentChanged('ai-evaluated');
         setStatus('AI 评价完成');
+        setTimeout(function() {
+          goToAssignmentStatusPage('ai-reviewed');
+        }, 500);
       } catch (e) {
         setStatus(e.message, true);
       } finally {
@@ -322,7 +322,11 @@
           throw new Error(errData.message || '保存失败');
         }
 
+        notifyAssignmentChanged('teacher-reviewed');
         setStatus('教师复核已保存');
+        setTimeout(function() {
+          goToAssignmentStatusPage('completed');
+        }, 500);
       } catch (e) {
         setStatus(e.message, true);
       } finally {

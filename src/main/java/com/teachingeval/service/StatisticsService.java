@@ -30,7 +30,7 @@ public class StatisticsService {
     public StatisticsSummaryResponse getSummary() {
         List<EvaluationResult> evaluations = evaluationRepository.findAll();
         List<BigDecimal> confirmedScores = evaluations.stream()
-                .filter(evaluation -> evaluation.getStatus() >= 2)
+                .filter(EvaluationResult::isTeacherConfirmed)
                 .map(EvaluationResult::getTeacherScore)
                 .filter(score -> score != null)
                 .toList();
@@ -45,8 +45,8 @@ public class StatisticsService {
         return new StatisticsSummaryResponse(
                 studentRepository.count(),
                 submissionRepository.count(),
-                evaluationRepository.countByStatusGreaterThanEqual(1),
-                evaluationRepository.countByStatusGreaterThanEqual(2),
+                evaluationRepository.countByStatusGreaterThanEqual(EvaluationResult.STATUS_AI_REVIEWED),
+                evaluationRepository.countByStatusGreaterThanEqual(EvaluationResult.STATUS_TEACHER_CONFIRMED),
                 average
         );
     }

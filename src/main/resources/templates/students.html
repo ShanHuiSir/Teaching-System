@@ -15,6 +15,8 @@
     .action-menu__item:hover { background: var(--md-sys-color-surface-container-low); }
     .action-menu__item--danger { color: var(--md-sys-color-error); }
     .action-menu__item--danger:hover { background: var(--md-sys-color-error-container); }
+    .pagination-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--md-space-3); padding: var(--md-space-3) var(--md-space-4); border-top: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface-variant); font: var(--md-typescale-body-medium); }
+    .pagination-bar__actions { display: flex; gap: var(--md-space-2); }
   </style>
 </head>
 <body class="has-sidebar">
@@ -24,6 +26,7 @@
     <div class="md-page-header">
       <h2>学生管理</h2>
       <div class="md-page-header__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="reset-demo-data">重置数据</button>
         <button class="md-btn md-btn--filled" type="button">新增学生</button>
       </div>
     </div>
@@ -50,6 +53,13 @@
           </tr>
         </tbody>
       </table>
+      <div class="pagination-bar">
+        <span id="student-page-info">第 -- 页 / 共 -- 页，共 -- 名学生</span>
+        <div class="pagination-bar__actions">
+          <button class="md-btn md-btn--outlined" type="button" id="student-prev-page">上一页</button>
+          <button class="md-btn md-btn--outlined" type="button" id="student-next-page">下一页</button>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -77,34 +87,24 @@
     </div>
   </div>
 
-  <div class="md-dialog-overlay hidden" id="logout-dialog">
-    <div class="md-dialog">
-      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-      </svg>
-      <div class="md-dialog__title">确认退出</div>
-      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
-      <div class="md-dialog__actions">
-        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
-        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
-      </div>
-    </div>
-  </div>
-
+  <script src="/js/toast.js"></script>
+  <script src="/js/logout-dialog.js"></script>
   <script>
-    // ── DOM refs ──
     const studentTbody = document.getElementById('student-table-body');
     const addBtn = document.querySelector('.md-page-header__actions .md-btn--filled');
+    const addSubmitBtn = document.querySelector('#add-student-form .md-btn--filled');
     const addDialog = document.getElementById('add-student-dialog');
     const addForm = document.getElementById('add-student-form');
     const addCancel = document.getElementById('add-cancel');
     const searchInput = document.querySelector('.md-toolbar__search input');
-    const logoutBtn = document.querySelector('.logout-link');
-    const logoutDialog = document.getElementById('logout-dialog');
+    const addBtnText = addSubmitBtn ? addSubmitBtn.textContent : '确认新增';
 
     let students = [];
+    let pageIndex = 0;
+    let totalPages = 1;
+    let totalElements = 0;
+    const pageSize = 20;
 
-    // ── Helpers ──
     function escapeHtml(value) {
       return String(value ?? '')
         .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -113,125 +113,93 @@
 
     function renderTable(list) {
       if (list.length === 0) {
-        studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-on-surface-variant);">暂无学生，请先新增。</td></tr>';
+        studentTbody.innerHTML = '<tr><td colspan="4"><div class="md-empty-state"><div class="md-empty-state__icon">&#128100;</div><div class="md-empty-state__text">暂无学生，请先新增</div></div></td></tr>';
         return;
       }
-      studentTbody.innerHTML = list.map(s => `
-        <tr>
-          <td>${escapeHtml(s.studentNo)}</td>
-          <td>${escapeHtml(s.name)}</td>
-          <td><span class="md-chip">${escapeHtml(s.className)}</span></td>
-          <td>
-            <div class="action-menu">
-              <button class="action-menu__trigger" data-action-trigger="${s.id}" aria-label="操作菜单">&#8942;</button>
-              <div class="action-menu__dropdown" data-action-dropdown="${s.id}">
-                <a class="action-menu__item" href="/submit?studentId=${s.id}">作业</a>
-                <button class="action-menu__item action-menu__item--danger" data-delete="${s.id}">删除</button>
-              </div>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+      studentTbody.innerHTML = list.map(function(s) {
+        return '<tr><td>' + escapeHtml(s.studentNo) + '</td><td>' + escapeHtml(s.name) + '</td><td><span class="md-chip">' + escapeHtml(s.className) + '</span></td><td><div class="action-menu"><button class="action-menu__trigger" data-action-trigger="' + s.id + '" aria-label="操作菜单">&#8942;</button><div class="action-menu__dropdown" data-action-dropdown="' + s.id + '"><a class="action-menu__item" href="/evaluation?studentId=' + s.id + '&studentName=' + encodeURIComponent(s.name) + '">评价</a><button class="action-menu__item action-menu__item--danger" data-delete="' + s.id + '">删除</button></div></div></td></tr>';
+      }).join('');
     }
 
-    // ── Data ──
     async function loadStudents() {
+      studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;"><span class="spinner"></span></td></tr>';
       try {
-        const res = await fetch('/api/students');
-        if (!res.ok) throw new Error('加载失败');
+        var res = await fetch('/api/students');
+        if (!res.ok) { var msg = await extractError(res); throw new Error(msg); }
         students = await res.json();
         renderTable(students);
+        renderPagination();
       } catch (e) {
-        studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-error);">加载失败，请刷新重试</td></tr>';
+        showError(e.message);
+        studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-error);padding:32px;">加载失败，请刷新重试</td></tr>';
       }
     }
 
-    // ── Search ──
-    searchInput.addEventListener('input', () => {
-      const q = searchInput.value.toLowerCase();
-      renderTable(students.filter(s =>
-        s.studentNo.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
-      ));
+    searchInput.addEventListener('input', function() {
+      var q = searchInput.value.toLowerCase();
+      renderTable(students.filter(function(s) { return s.studentNo.toLowerCase().includes(q) || s.name.toLowerCase().includes(q); }));
     });
 
-    // ── Add dialog ──
     function openAddDialog() { addDialog.classList.remove('hidden'); addForm.querySelector('input').focus(); }
     function closeAddDialog() { addDialog.classList.add('hidden'); addForm.reset(); addBtn.focus(); }
 
     addBtn.onclick = openAddDialog;
     addCancel.onclick = closeAddDialog;
-    addDialog.onclick = e => { if (e.target === addDialog) closeAddDialog(); };
+    addDialog.onclick = function(e) { if (e.target === addDialog) closeAddDialog(); };
 
-    addForm.addEventListener('submit', async e => {
+    addForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      const data = Object.fromEntries(new FormData(addForm));
+      if (addSubmitBtn) { addSubmitBtn.disabled = true; addSubmitBtn.textContent = '保存中...'; }
+      var data = Object.fromEntries(new FormData(addForm));
       try {
-        const res = await fetch('/api/students', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.message || '新增失败');
-        }
+        var res = await fetch('/api/students', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (!res.ok) { var err = await extractError(res); throw new Error(err); }
+        var created = await res.json();
         closeAddDialog();
+        showSuccess('已新增学生：' + created.name);
         await loadStudents();
       } catch (err) {
-        alert(err.message);
+        showError(err.message);
+      } finally {
+        if (addSubmitBtn) { addSubmitBtn.disabled = false; addSubmitBtn.textContent = addBtnText; }
       }
     });
 
-    // ── Action menu ──
-    let openMenuId = null;
-
+    var openMenuId = null;
     function closeOpenMenu() {
       if (openMenuId != null) {
-        const open = document.querySelector('[data-action-dropdown="' + openMenuId + '"]');
+        var open = document.querySelector('[data-action-dropdown="' + openMenuId + '"]');
         if (open) open.classList.remove('action-menu__dropdown--open');
         openMenuId = null;
       }
     }
 
-    studentTbody.addEventListener('click', async e => {
-      const trigger = e.target.closest('[data-action-trigger]');
-      if (trigger) {
-        e.stopPropagation();
-        const id = trigger.dataset.actionTrigger;
-        if (openMenuId === id) { closeOpenMenu(); return; }
-        closeOpenMenu();
-        const dropdown = document.querySelector('[data-action-dropdown="' + id + '"]');
-        if (dropdown) { dropdown.classList.add('action-menu__dropdown--open'); openMenuId = id; }
-        return;
-      }
+    studentTbody.addEventListener('click', async function(e) {
+      var trigger = e.target.closest('[data-action-trigger]');
+      if (trigger) { e.stopPropagation(); var id = trigger.dataset.actionTrigger; if (openMenuId === id) { closeOpenMenu(); return; } closeOpenMenu(); var dd = document.querySelector('[data-action-dropdown="' + id + '"]'); if (dd) { dd.classList.add('action-menu__dropdown--open'); openMenuId = id; } return; }
 
-      const delBtn = e.target.closest('[data-delete]');
+      var delBtn = e.target.closest('[data-delete]');
       if (delBtn) {
         closeOpenMenu();
-        const id = delBtn.dataset.delete;
+        var delId = delBtn.dataset.delete;
         if (!confirm('确定删除该学生吗？')) return;
-        await fetch('/api/students/' + id, { method: 'DELETE' });
-        await loadStudents();
+        try {
+          var delRes = await fetch('/api/students/' + delId, { method: 'DELETE' });
+          if (!delRes.ok) { var delErr = await extractError(delRes); throw new Error(delErr); }
+          showSuccess('已删除学生');
+          await loadStudents();
+        } catch (err) { showError(err.message); }
         return;
       }
     });
 
     document.addEventListener('click', closeOpenMenu);
 
-    // ── Logout dialog ──
-    document.getElementById('logout-cancel').onclick = () => { logoutDialog.classList.add('hidden'); logoutBtn.focus(); };
-    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
-    logoutBtn.onclick = e => { e.preventDefault(); logoutDialog.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
-    logoutDialog.onclick = e => { if (e.target === logoutDialog) { logoutDialog.classList.add('hidden'); logoutBtn.focus(); } };
-
-    // ── Global keyboard ──
-    document.onkeydown = e => {
+    document.onkeydown = function(e) {
       if (e.key !== 'Escape') return;
-      if (!logoutDialog.classList.contains('hidden')) { logoutDialog.classList.add('hidden'); logoutBtn.focus(); return; }
       if (!addDialog.classList.contains('hidden')) { closeAddDialog(); }
     };
 
-    // ── Init ──
     loadStudents();
   </script>
 </body>
