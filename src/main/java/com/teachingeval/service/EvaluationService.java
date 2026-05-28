@@ -1,6 +1,7 @@
 package com.teachingeval.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import com.teachingeval.entity.EvaluationResult;
@@ -62,6 +63,10 @@ public class EvaluationService {
     public EvaluationResult getBySubmissionId(Long submissionId) {
         return evaluationRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("评价结果不存在"));
+    }
+
+    public List<EvaluationResult> listEvaluations() {
+        return evaluationRepository.findAll();
     }
 
     public Optional<EvaluationResult> findBySubmissionId(Long submissionId) {

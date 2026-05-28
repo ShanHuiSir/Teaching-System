@@ -55,13 +55,13 @@ function initAssignmentPage(mode) {
       if (!sRes.ok) throw new Error('加载失败');
       var submissions = await sRes.json();
 
+      var eRes = await fetch('/api/evaluations?_=' + Date.now(), { cache: 'no-store' });
+      if (!eRes.ok) throw new Error('评价结果加载失败');
+      var evaluations = await eRes.json();
+
       var evalMap = {};
-      for (var i = 0; i < submissions.length; i++) {
-        try {
-          var er = await fetch('/api/submissions/' + submissions[i].id + '/evaluation?_=' + Date.now(), { cache: 'no-store' });
-          if (er.status === 204) continue;
-          if (er.ok) evalMap[submissions[i].id] = await er.json();
-        } catch(e) {}
+      for (var i = 0; i < evaluations.length; i++) {
+        evalMap[evaluations[i].submissionId] = evaluations[i];
       }
       if (currentSeq !== loadSeq) return;
 

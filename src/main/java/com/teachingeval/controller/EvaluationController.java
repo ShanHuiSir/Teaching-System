@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @Tag(name = "AI 评价")
 @RestController
 @RequestMapping("/api")
@@ -38,6 +40,12 @@ public class EvaluationController {
         return evaluationService.findBySubmissionId(submissionId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @Operation(summary = "查询全部评价结果", description = "返回系统中已有的评价结果，用于状态列表批量匹配作业状态。")
+    @GetMapping("/evaluations")
+    public List<EvaluationResult> listEvaluations() {
+        return evaluationService.listEvaluations();
     }
 
     @Operation(summary = "保存教师最终评价", description = "保存教师最终评分和评语，并将评价状态改为教师已确认。")
