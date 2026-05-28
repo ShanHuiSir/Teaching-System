@@ -1,19 +1,19 @@
-package com.teachingeval.service;
+package com.teachingeval.service.impl;
 
 import java.math.BigDecimal;
 
+import com.teachingeval.entity.EvaluationResult;
+import com.teachingeval.service.AIService;
 import org.springframework.stereotype.Service;
 
-import com.teachingeval.model.AIEvalRequestDTO;
-import com.teachingeval.model.AIEvaluationResult;
+import com.teachingeval.dto.AIEvalRequest;
 
 @Service
 public class FakeAIService implements AIService {
 
     @Override
-    public AIEvaluationResult evaluate(AIEvalRequestDTO request) {
-        AIEvaluationResult result = new AIEvaluationResult();
-        result.setSubmissionId(request.getSubmissionId());
+    public EvaluationResult evaluate(AIEvalRequest request) {
+        EvaluationResult result = new EvaluationResult();
         result.setAiScore(new BigDecimal("82.50"));
 
         result.setAiIssues("""

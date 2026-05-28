@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教学评价系统 - 作业提交</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="has-sidebar">
+  <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='submit')}"></th:block>
+  <main class="md-page">
+    <div class="md-page-header">
+      <h2>作业提交</h2>
+      <span class="md-page-header__status" id="work-status"></span>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__header">
+        <h3>提交作业</h3>
+      </div>
+      <div class="md-card__body">
+        <form class="md-form-grid md-form-grid--2" id="work-form">
+          <label class="md-field">
+            <span class="md-field__label">学生</span>
+            <select class="md-field__input" name="studentId" required id="student-select">
+              <option value="">请选择学生</option>
+            </select>
+          </label>
+          <label class="md-field">
+            <span class="md-field__label">作业标题</span>
+            <input class="md-field__input" name="title" value="第二天实训作业" required>
+          </label>
+          <label class="md-field">
+            <span class="md-field__label">作业文件名</span>
+            <input class="md-field__input" name="fileName" value="student-work.zip" required>
+          </label>
+          <label class="md-field">
+            <span class="md-field__label">作业类型</span>
+            <select class="md-field__input" name="workType" required>
+              <option value="代码压缩包">代码压缩包</option>
+              <option value="实验报告">实验报告</option>
+              <option value="截图材料">截图材料</option>
+              <option value="其他">其他</option>
+            </select>
+          </label>
+          <label class="md-field" style="grid-column: 1 / -1;">
+            <span class="md-field__label">备注</span>
+            <textarea class="md-field__input" name="remark" placeholder="可填写作业说明"></textarea>
+          </label>
+          <div style="grid-column: 1 / -1;">
+            <button class="md-btn md-btn--filled" type="submit">保存作业提交</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const workForm = document.querySelector("#work-form");
+    const workStatus = document.querySelector("#work-status");
+    const studentSelect = document.querySelector("#student-select");
+    const params = new URLSearchParams(window.location.search);
+    const selectedStudentId = params.get("studentId");
+
+    function setStatus(message, isError) {
+      workStatus.textContent = message;
+      if (isError) { workStatus.classList.add("error-text"); }
+      else { workStatus.classList.remove("error-text"); }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    }
+
+    async function loadStudents() {
+      var res = await fetch("/api/students");
+      if (!res.ok) throw new Error("学生列表加载失败");
+      var students = await res.json();
+      studentSelect.innerHTML = '<option value="">请选择学生</option>' + students.map(function(s) {
+        return '<option value="' + s.id + '">' + escapeHtml(s.studentNo) + ' - ' + escapeHtml(s.name) + '</option>';
+      }).join("");
+      if (selectedStudentId) studentSelect.value = selectedStudentId;
+    }
+
+    workForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      var data = Object.fromEntries(new FormData(workForm));
+      data.studentId = Number(data.studentId);
+      try {
+        var res = await fetch("/api/submissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        var result = await res.json().catch(function() { return {}; });
+        if (!res.ok) throw new Error(result.message || "保存作业失败");
+        workForm.reset();
+        setStatus("已保存作业：" + result.title);
+      } catch (err) {
+        setStatus(err.message, true);
+      }
+    });
+
+    loadStudents();
+  </script>
+</body>
+</html>
