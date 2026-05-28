@@ -15,6 +15,10 @@ import jakarta.persistence.Table;
 @Schema(description = "AI 评价结果实体，承载 AI 对一份学生作品的自动评价数据")
 public class EvaluationResult {
 
+    public static final int STATUS_PENDING = 0;
+    public static final int STATUS_AI_REVIEWED = 1;
+    public static final int STATUS_TEACHER_CONFIRMED = 2;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(description = "主键，数据库自增，新建对象时为 null", example = "1")
@@ -75,7 +79,9 @@ public class EvaluationResult {
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }
 
-    public boolean isAiEvaluated() { return status >= 1; }
+    public boolean isAiEvaluated() { return status >= STATUS_AI_REVIEWED; }
+
+    public boolean isTeacherConfirmed() { return status >= STATUS_TEACHER_CONFIRMED; }
 
     @Override
     public String toString() {
