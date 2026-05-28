@@ -28,6 +28,10 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        seedIfEmpty();
+    }
+
+    public void seedIfEmpty() {
         if (studentRepository.count() == 0) {
             seedStudents();
             seedSubmissions();
@@ -35,6 +39,16 @@ public class DataInitializer implements CommandLineRunner {
         if (evaluationRepository.count() == 0) {
             seedEvaluations();
         }
+    }
+
+    public void resetDemoData() {
+        evaluationRepository.deleteAll();
+        submissionRepository.deleteAll();
+        studentRepository.deleteAll();
+
+        seedStudents();
+        seedSubmissions();
+        seedEvaluations();
     }
 
     private void seedStudents() {

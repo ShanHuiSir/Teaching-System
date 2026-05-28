@@ -15,6 +15,8 @@
     .action-menu__item:hover { background: var(--md-sys-color-surface-container-low); }
     .action-menu__item--danger { color: var(--md-sys-color-error); }
     .action-menu__item--danger:hover { background: var(--md-sys-color-error-container); }
+    .pagination-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--md-space-3); padding: var(--md-space-3) var(--md-space-4); border-top: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface-variant); font: var(--md-typescale-body-medium); }
+    .pagination-bar__actions { display: flex; gap: var(--md-space-2); }
   </style>
 </head>
 <body class="has-sidebar">
@@ -24,6 +26,7 @@
     <div class="md-page-header">
       <h2>学生管理</h2>
       <div class="md-page-header__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="reset-demo-data">重置数据</button>
         <button class="md-btn md-btn--filled" type="button">新增学生</button>
       </div>
     </div>
@@ -50,6 +53,13 @@
           </tr>
         </tbody>
       </table>
+      <div class="pagination-bar">
+        <span id="student-page-info">第 -- 页 / 共 -- 页，共 -- 名学生</span>
+        <div class="pagination-bar__actions">
+          <button class="md-btn md-btn--outlined" type="button" id="student-prev-page">上一页</button>
+          <button class="md-btn md-btn--outlined" type="button" id="student-next-page">下一页</button>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -95,14 +105,22 @@
     // ── DOM refs ──
     const studentTbody = document.getElementById('student-table-body');
     const addBtn = document.querySelector('.md-page-header__actions .md-btn--filled');
+    const resetBtn = document.getElementById('reset-demo-data');
     const addDialog = document.getElementById('add-student-dialog');
     const addForm = document.getElementById('add-student-form');
     const addCancel = document.getElementById('add-cancel');
     const searchInput = document.querySelector('.md-toolbar__search input');
     const logoutBtn = document.querySelector('.logout-link');
     const logoutDialog = document.getElementById('logout-dialog');
+    const pageInfo = document.getElementById('student-page-info');
+    const prevPageBtn = document.getElementById('student-prev-page');
+    const nextPageBtn = document.getElementById('student-next-page');
 
     let students = [];
+    let pageIndex = 0;
+    let totalPages = 1;
+    let totalElements = 0;
+    const pageSize = 20;
 
     // ── Helpers ──
     function escapeHtml(value) {
@@ -134,17 +152,48 @@
       `).join('');
     }
 
+    function notifyAssignmentChanged(reason) {
+      try {
+        localStorage.setItem('assignment-data-version', JSON.stringify({
+          reason: reason,
+          time: Date.now()
+        }));
+      } catch (e) {}
+    }
+
     // ── Data ──
     async function loadStudents() {
       try {
-        const res = await fetch('/api/students');
+        const res = await fetch('/api/students/page?page=' + pageIndex + '&size=' + pageSize);
         if (!res.ok) throw new Error('加载失败');
-        students = await res.json();
+        const page = await res.json();
+        students = page.content || [];
+        totalPages = page.totalPages || 1;
+        totalElements = page.totalElements || 0;
         renderTable(students);
+        renderPagination();
       } catch (e) {
         studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-error);">加载失败，请刷新重试</td></tr>';
       }
     }
+
+    function renderPagination() {
+      pageInfo.textContent = '第 ' + (pageIndex + 1) + ' 页 / 共 ' + totalPages + ' 页，共 ' + totalElements + ' 名学生';
+      prevPageBtn.disabled = pageIndex <= 0;
+      nextPageBtn.disabled = pageIndex >= totalPages - 1;
+    }
+
+    prevPageBtn.onclick = async () => {
+      if (pageIndex <= 0) return;
+      pageIndex -= 1;
+      await loadStudents();
+    };
+
+    nextPageBtn.onclick = async () => {
+      if (pageIndex >= totalPages - 1) return;
+      pageIndex += 1;
+      await loadStudents();
+    };
 
     // ── Search ──
     searchInput.addEventListener('input', () => {
@@ -162,6 +211,26 @@
     addCancel.onclick = closeAddDialog;
     addDialog.onclick = e => { if (e.target === addDialog) closeAddDialog(); };
 
+    resetBtn.onclick = async () => {
+      if (!confirm('确定重置演示数据吗？当前学生、作业和评价记录会恢复为初始化测试数据。')) return;
+      resetBtn.disabled = true;
+      resetBtn.textContent = '重置中...';
+      try {
+        const res = await fetch('/api/dev/reset-demo-data', { method: 'POST' });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(result.message || '重置失败');
+        notifyAssignmentChanged('demo-data-reset');
+        pageIndex = 0;
+        await loadStudents();
+        alert(result.message || '演示数据已重置');
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        resetBtn.disabled = false;
+        resetBtn.textContent = '重置数据';
+      }
+    };
+
     addForm.addEventListener('submit', async e => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(addForm));
@@ -176,6 +245,7 @@
           throw new Error(err.message || '新增失败');
         }
         closeAddDialog();
+        pageIndex = 0;
         await loadStudents();
       } catch (err) {
         alert(err.message);
@@ -211,6 +281,7 @@
         const id = delBtn.dataset.delete;
         if (!confirm('确定删除该学生吗？')) return;
         await fetch('/api/students/' + id, { method: 'DELETE' });
+        if (students.length === 1 && pageIndex > 0) pageIndex -= 1;
         await loadStudents();
         return;
       }
