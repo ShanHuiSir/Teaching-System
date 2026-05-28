@@ -187,6 +187,16 @@
       pageStatus.classList.toggle('error-text', !!isError);
     }
 
+    function notifyAssignmentChanged(reason) {
+      try {
+        localStorage.setItem('assignment-data-version', JSON.stringify({
+          reason: reason,
+          submissionId: submissionId,
+          time: Date.now()
+        }));
+      } catch (e) {}
+    }
+
     function escapeHtml(value) {
       return String(value ?? '')
         .replaceAll('&', '&amp;')
@@ -292,6 +302,7 @@
         if (result.aiScore != null) {
           teacherScoreInput.value = result.aiScore;
         }
+        notifyAssignmentChanged('ai-evaluated');
         setStatus('AI 评价完成');
       } catch (e) {
         setStatus(e.message, true);
@@ -322,6 +333,7 @@
           throw new Error(errData.message || '保存失败');
         }
 
+        notifyAssignmentChanged('teacher-reviewed');
         setStatus('教师复核已保存');
       } catch (e) {
         setStatus(e.message, true);
