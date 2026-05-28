@@ -9,14 +9,50 @@
     .action-menu { position: relative; display: inline-block; }
     .action-menu__trigger { width: 28px; height: 28px; padding: 0; border-radius: var(--md-sys-shape-full); border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); font-size: 18px; line-height: 28px; cursor: pointer; text-align: center; transition: background var(--md-sys-duration-short) var(--md-sys-easing-standard); }
     .action-menu__trigger:hover { background: var(--md-sys-color-surface-container-highest); }
-    .action-menu__dropdown { display: none; position: absolute; right: 0; top: calc(100% + 4px); min-width: 100px; padding: var(--md-space-1); border-radius: var(--md-sys-shape-sm); background: var(--md-sys-color-surface-bright); box-shadow: var(--md-sys-elevation-3); z-index: 50; }
-    .action-menu__dropdown--open { display: block; }
     .action-menu__item { display: flex; align-items: center; gap: var(--md-space-2); height: 32px; padding: 0 var(--md-space-3); border: none; border-radius: var(--md-sys-shape-xs); background: transparent; color: var(--md-sys-color-on-surface); font: var(--md-typescale-body-medium); cursor: pointer; width: 100%; text-align: left; white-space: nowrap; }
     .action-menu__item:hover { background: var(--md-sys-color-surface-container-low); }
     .action-menu__item--danger { color: var(--md-sys-color-error); }
     .action-menu__item--danger:hover { background: var(--md-sys-color-error-container); }
     .pagination-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--md-space-3); padding: var(--md-space-3) var(--md-space-4); border-top: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface-variant); font: var(--md-typescale-body-medium); }
     .pagination-bar__actions { display: flex; gap: var(--md-space-2); }
+
+    /* Portal dropdown — rendered at body level, escapes all table clipping */
+    .portal-dropdown {
+      position: fixed;
+      z-index: 2147483647;
+      min-width: 100px;
+      padding: 4px;
+      border-radius: 8px;
+      background: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      animation: portalSlideIn .2s ease both;
+    }
+    @keyframes portalSlideIn {
+      from { opacity: 0; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(4px); }
+    }
+    .portal-dropdown--up {
+      animation-name: portalSlideInUp;
+    }
+    @keyframes portalSlideInUp {
+      from { opacity: 0; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(-4px); }
+    }
+
+    .portal-dropdown__item {
+      display: flex; align-items: center; gap: 8px;
+      height: 32px; padding: 0 12px;
+      border: none; border-radius: 4px;
+      background: transparent; color: #333;
+      font: 400 13px/1.5 "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+      cursor: pointer;
+      width: 100%; text-align: left; white-space: nowrap;
+      text-decoration: none;
+    }
+    .portal-dropdown__item svg { width: 14px; height: 14px; flex-shrink: 0; opacity: .65; }
+    .portal-dropdown__item:hover { background: #F8FAFD; }
+    .portal-dropdown__item--danger { color: var(--md-sys-color-error); }
+    .portal-dropdown__item--danger:hover { background: #FFF0F0; }
   </style>
 </head>
 <body class="has-sidebar">
@@ -87,6 +123,9 @@
     </div>
   </div>
 
+  <!-- Portal anchor — all action menus render here, outside table -->
+  <div id="global-dropdown-portal"></div>
+
   <script src="/js/toast.js"></script>
   <script src="/js/logout-dialog.js"></script>
   <script>
@@ -98,6 +137,7 @@
     const addCancel = document.getElementById('add-cancel');
     const searchInput = document.querySelector('.md-toolbar__search input');
     const addBtnText = addSubmitBtn ? addSubmitBtn.textContent : '确认新增';
+    const portal = document.getElementById('global-dropdown-portal');
 
     let students = [];
     let filteredStudents = [];
@@ -120,8 +160,9 @@
         studentTbody.innerHTML = '<tr><td colspan="4"><div class="md-empty-state"><div class="md-empty-state__icon">&#128100;</div><div class="md-empty-state__text">暂无学生，请先新增</div></div></td></tr>';
         return;
       }
+      // Menu is no longer nested in <td> — rendered via portal on click
       studentTbody.innerHTML = list.map(function(s) {
-        return '<tr><td>' + escapeHtml(s.studentNo) + '</td><td>' + escapeHtml(s.name) + '</td><td><span class="md-chip">' + escapeHtml(s.className) + '</span></td><td><div class="action-menu"><button class="action-menu__trigger" data-action-trigger="' + s.id + '" aria-label="操作菜单">&#8942;</button><div class="action-menu__dropdown" data-action-dropdown="' + s.id + '"><a class="action-menu__item" href="/evaluation?studentId=' + s.id + '&studentName=' + encodeURIComponent(s.name) + '">评价</a><button class="action-menu__item action-menu__item--danger" data-delete="' + s.id + '">删除</button></div></div></td></tr>';
+        return '<tr><td>' + escapeHtml(s.studentNo) + '</td><td>' + escapeHtml(s.name) + '</td><td><span class="md-chip">' + escapeHtml(s.className) + '</span></td><td><div class="action-menu"><button class="action-menu__trigger" data-action-trigger="' + s.id + '" data-student-name="' + escapeHtml(s.name) + '" aria-label="操作菜单">&#8942;</button></div></td></tr>';
       }).join('');
     }
 
@@ -196,40 +237,125 @@
       }
     });
 
+    // ── Portal-based action menu ──
     var openMenuId = null;
-    function closeOpenMenu() {
+
+    function closePortalMenu() {
       if (openMenuId != null) {
-        var open = document.querySelector('[data-action-dropdown="' + openMenuId + '"]');
-        if (open) open.classList.remove('action-menu__dropdown--open');
+        var el = document.getElementById('portal-menu-' + openMenuId);
+        if (el) el.remove();
         openMenuId = null;
       }
     }
 
-    studentTbody.addEventListener('click', async function(e) {
-      var trigger = e.target.closest('[data-action-trigger]');
-      if (trigger) { e.stopPropagation(); var id = trigger.dataset.actionTrigger; if (openMenuId === id) { closeOpenMenu(); return; } closeOpenMenu(); var dd = document.querySelector('[data-action-dropdown="' + id + '"]'); if (dd) { dd.classList.add('action-menu__dropdown--open'); openMenuId = id; } return; }
+    function openPortalMenu(trigger, id, studentName) {
+      closePortalMenu();
 
-      var delBtn = e.target.closest('[data-delete]');
-      if (delBtn) {
-        closeOpenMenu();
-        var delId = delBtn.dataset.delete;
-        if (!confirm('确定删除该学生吗？')) return;
-        try {
-          var delRes = await fetch('/api/students/' + delId, { method: 'DELETE' });
-          if (!delRes.ok) { var delErr = await extractError(delRes); throw new Error(delErr); }
-          showSuccess('已删除学生');
-          await loadStudents();
-        } catch (err) { showError(err.message); }
+      var rect = trigger.getBoundingClientRect();
+      var gap = 4;
+      var noOverlapMargin = 8;
+
+      // No-overlap zone: pagination bar (上一页 / 下一页)
+      var paginationBar = document.querySelector('.pagination-bar');
+      var paginationTop = paginationBar
+        ? paginationBar.getBoundingClientRect().top
+        : window.innerHeight;
+      var safeBottom = paginationTop - noOverlapMargin;
+
+      // Create menu in portal
+      var menu = document.createElement('div');
+      menu.className = 'portal-dropdown';
+      menu.id = 'portal-menu-' + id;
+      menu.innerHTML =
+        '<a class="portal-dropdown__item" href="/evaluation?studentId=' + id + '&studentName=' + encodeURIComponent(studentName) + '">' +
+          '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
+          '评价' +
+        '</a>' +
+        '<button class="portal-dropdown__item portal-dropdown__item--danger" data-delete="' + id + '">' +
+          '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
+          '删除' +
+        '</button>';
+
+      portal.appendChild(menu);
+
+      // Measure after DOM insertion
+      var menuW = menu.offsetWidth;
+      var menuH = menu.offsetHeight || 72;
+
+      // Horizontal: right-align to trigger, 16px right margin
+      var left = Math.max(gap, Math.min(rect.right - menuW, window.innerWidth - menuW - 16));
+
+      // Direction: avoid covering pagination bar
+      var bottomIfDown = rect.bottom + menuH + gap;
+      var direction = 'down';
+
+      if (bottomIfDown > safeBottom) {
+        // Downward would overlap pagination → go up
+        direction = 'up';
+      }
+
+      // Edge case: upward would overflow viewport top → fallback down + scroll
+      if (direction === 'up' && rect.top < menuH + gap) {
+        direction = 'down';
+        trigger.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+
+      if (direction === 'up') {
+        menu.style.top = (rect.top - menuH - gap) + 'px';
+        menu.classList.add('portal-dropdown--up');
+      } else {
+        menu.style.top = (rect.bottom + gap) + 'px';
+      }
+      menu.style.left = left + 'px';
+
+      openMenuId = id;
+    }
+
+    // Trigger button click → open portal menu
+    studentTbody.addEventListener('click', function(e) {
+      var trigger = e.target.closest('[data-action-trigger]');
+      if (trigger) {
+        e.stopPropagation();
+        var id = trigger.dataset.actionTrigger;
+        if (openMenuId === id) { closePortalMenu(); return; }
+        openPortalMenu(trigger, id, trigger.dataset.studentName || '');
         return;
       }
     });
 
-    document.addEventListener('click', closeOpenMenu);
+    // Delete button in portal menu
+    portal.addEventListener('click', async function(e) {
+      var delBtn = e.target.closest('[data-delete]');
+      if (!delBtn) return;
+      e.stopPropagation();
+      var delId = delBtn.dataset.delete;
+      closePortalMenu();
+      if (!confirm('确定删除该学生吗？')) return;
+      try {
+        var delRes = await fetch('/api/students/' + delId, { method: 'DELETE' });
+        if (!delRes.ok) { var delErr = await extractError(delRes); throw new Error(delErr); }
+        showSuccess('已删除学生');
+        await loadStudents();
+      } catch (err) { showError(err.message); }
+    });
 
-    document.onkeydown = function(e) {
-      if (e.key !== 'Escape') return;
-      if (!addDialog.classList.contains('hidden')) { closeAddDialog(); }
-    };
+    // Click outside closes menu
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.portal-dropdown') && !e.target.closest('[data-action-trigger]')) {
+        closePortalMenu();
+      }
+    });
+
+    // Escape closes menu
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (openMenuId != null) { closePortalMenu(); return; }
+        if (!addDialog.classList.contains('hidden')) { closeAddDialog(); }
+      }
+    });
+
+    // Close portal menu on scroll (menu stays fixed but trigger moves away)
+    window.addEventListener('scroll', function() { closePortalMenu(); }, true);
 
     loadStudents();
   </script>
