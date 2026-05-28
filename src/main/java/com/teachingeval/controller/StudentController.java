@@ -1,5 +1,6 @@
 package com.teachingeval.controller;
 
+import com.teachingeval.dto.StudentRequest;
 import com.teachingeval.entity.Student;
 import com.teachingeval.service.StudentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,8 +46,8 @@ public class StudentController {
     @Operation(summary = "新增学生", description = "录入学生学号、姓名和班级信息，学号不能重复。")
     @PostMapping("/students")
     @ResponseStatus(HttpStatus.CREATED)
-    public Student createStudent(@RequestBody Student student) {
-        return studentService.createStudent(student);
+    public Student createStudent(@Valid @RequestBody StudentRequest request) {
+        return studentService.createStudent(request);
     }
 
     @Operation(summary = "删除学生", description = "根据学生主键 ID 删除指定学生。")
