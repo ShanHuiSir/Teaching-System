@@ -59,6 +59,7 @@ function initAssignmentPage(mode) {
       for (var i = 0; i < submissions.length; i++) {
         try {
           var er = await fetch('/api/submissions/' + submissions[i].id + '/evaluation?_=' + Date.now(), { cache: 'no-store' });
+          if (er.status === 204) continue;
           if (er.ok) evalMap[submissions[i].id] = await er.json();
         } catch(e) {}
       }

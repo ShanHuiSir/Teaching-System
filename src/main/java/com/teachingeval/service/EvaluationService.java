@@ -1,6 +1,7 @@
 package com.teachingeval.service;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import com.teachingeval.entity.EvaluationResult;
 import org.springframework.stereotype.Service;
@@ -61,6 +62,10 @@ public class EvaluationService {
     public EvaluationResult getBySubmissionId(Long submissionId) {
         return evaluationRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("评价结果不存在"));
+    }
+
+    public Optional<EvaluationResult> findBySubmissionId(Long submissionId) {
+        return evaluationRepository.findBySubmissionId(submissionId);
     }
 
     private void validateScore(BigDecimal score) {
