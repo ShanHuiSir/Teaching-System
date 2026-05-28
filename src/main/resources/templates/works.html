@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>教学评价系统 - 作业列表</title>
+  <title>教学评价系统 - 作业提交记录</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="has-sidebar">
   <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='works')}"></th:block>
   <main class="md-page">
     <div class="md-page-header">
-      <h2>作业列表</h2>
+      <h2>作业提交记录</h2>
       <span class="md-page-header__status" id="work-status">正在加载...</span>
     </div>
 
@@ -80,7 +80,7 @@
     async function loadWorks() {
       try {
         const res = await fetch("/api/submissions");
-        if (!res.ok) throw new Error("作业列表加载失败");
+        if (!res.ok) throw new Error("作业提交记录加载失败");
         const works = await res.json();
         if (works.length === 0) {
           workTableBody.innerHTML = '<tr><td colspan="6">暂无作业，请先提交。</td></tr>';
