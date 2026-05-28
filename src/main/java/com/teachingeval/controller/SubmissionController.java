@@ -10,11 +10,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.teachingeval.dto.SubmissionRequest;
 import com.teachingeval.entity.WorkSubmission;
 import com.teachingeval.service.SubmissionService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "作品提交")
 @RestController
@@ -33,10 +35,10 @@ public class SubmissionController {
         return submissionService.listSubmissions();
     }
 
-    @Operation(summary = "新增作品提交", description = "录入学生作品元数据，第二天阶段暂不上传真实文件。")
+    @Operation(summary = "新增作品提交", description = "录入学生作品元数据，学生ID、标题、文件名、作品类型均为必填。")
     @PostMapping("/submissions")
     @ResponseStatus(HttpStatus.CREATED)
-    public WorkSubmission createSubmission(@RequestBody WorkSubmission submission) {
-        return submissionService.createSubmission(submission);
+    public WorkSubmission createSubmission(@Valid @RequestBody SubmissionRequest request) {
+        return submissionService.createSubmission(request);
     }
 }

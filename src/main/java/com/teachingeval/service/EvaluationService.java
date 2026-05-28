@@ -1,7 +1,5 @@
 package com.teachingeval.service;
 
-import java.math.BigDecimal;
-
 import com.teachingeval.entity.EvaluationResult;
 import org.springframework.stereotype.Service;
 
@@ -47,11 +45,6 @@ public class EvaluationService {
         EvaluationResult evaluation = evaluationRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("请先完成 AI 评价"));
 
-        validateScore(request.getTeacherScore());
-        if (isBlank(request.getTeacherComment())) {
-            throw new IllegalArgumentException("教师评语不能为空");
-        }
-
         evaluation.setTeacherScore(request.getTeacherScore());
         evaluation.setTeacherComment(request.getTeacherComment());
         evaluation.setStatus(2);
@@ -63,16 +56,4 @@ public class EvaluationService {
                 .orElseThrow(() -> new IllegalArgumentException("评价结果不存在"));
     }
 
-    private void validateScore(BigDecimal score) {
-        if (score == null) {
-            throw new IllegalArgumentException("教师分数不能为空");
-        }
-        if (score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(new BigDecimal("100")) > 0) {
-            throw new IllegalArgumentException("教师分数必须在 0 到 100 之间");
-        }
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
-    }
 }
