@@ -97,23 +97,25 @@
       btnExport.textContent = '导出中...';
       setStatus('正在生成导出文件...');
       try {
-        var res = await fetch('/api/export/excel', { method: 'POST' });
-        if (!res.ok) throw new Error('导出失败');
-        var data = await res.json();
-        // Extract filename from URL
-        var fileName = data.fileUrl ? data.fileUrl.split('/').pop() : '成绩汇总.xlsx';
-        // Trigger browser download
-        var a = document.createElement('a');
-        a.href = data.fileUrl;
-        a.download = fileName;
+        const res = await fetch('/api/export/excel', { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || '导出失败');
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const disposition = res.headers.get('Content-Disposition');
+        const match = disposition && disposition.match(/filename\*=UTF-8''(.+)/);
+        a.download = match ? decodeURIComponent(match[1]) : '成绩汇总.xlsx';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
         setStatus('');
         if (typeof showSuccess === 'function') {
-          showSuccess('导出成功：' + fileName);
-        } else {
-          setStatus('导出成功：' + fileName);
+          showSuccess('导出成功');
         }
       } catch (e) {
         setStatus(e.message, true);
