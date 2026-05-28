@@ -168,6 +168,11 @@
     const teacherCommentInput = document.getElementById('teacher-comment');
     const remarkCard = document.getElementById('remark-card');
     const remarkText = document.getElementById('remark-text');
+    const EvaluationStatus = {
+      PENDING: 0,
+      AI_REVIEWED: 1,
+      TEACHER_CONFIRMED: 2
+    };
 
     // ── Textarea auto-resize ──
     teacherCommentInput.addEventListener('input', function() {
@@ -246,7 +251,7 @@
         const res = await fetch('/api/submissions/' + submissionId + '/evaluation');
         if (!res.ok) return;
         const evalResult = await res.json();
-        if (evalResult && evalResult.status >= 1) {
+        if (evalResult && evalResult.status >= EvaluationStatus.AI_REVIEWED) {
           renderAiResult(evalResult);
           step2Card.classList.remove('hidden');
           step3Card.classList.remove('hidden');

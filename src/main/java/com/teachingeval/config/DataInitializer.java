@@ -126,14 +126,14 @@ public class DataInitializer implements CommandLineRunner {
         ai1.setAiScore(new BigDecimal("85.50"));
         ai1.setAiIssues("1. ER 图中部分关系未标注基数\n2. 缺少索引优化说明");
         ai1.setAiComment("数据库设计整体规范，ER 图表达较完整，但在关系标注和性能优化方面还有提升空间。");
-        ai1.setStatus(1);
+        ai1.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
 
         EvaluationResult ai2 = new EvaluationResult();
         ai2.setSubmissionId(5L);
         ai2.setAiScore(new BigDecimal("78.00"));
         ai2.setAiIssues("1. 进程调度算法对比不够深入\n2. 缺少死锁预防方案的讨论");
         ai2.setAiComment("实验报告内容较全面，但算法对比分析和异常场景讨论方面有待加强。");
-        ai2.setStatus(1);
+        ai2.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
 
         EvaluationResult tc = new EvaluationResult();
         tc.setSubmissionId(6L);
@@ -142,7 +142,7 @@ public class DataInitializer implements CommandLineRunner {
         tc.setAiComment("选题切合实际，论文结构清晰，建议补充更多实际项目数据来增强说服力。");
         tc.setTeacherScore(new BigDecimal("92.00"));
         tc.setTeacherComment("整体完成较好，论述逻辑清晰，建议后续补充量化数据以增强论文说服力。");
-        tc.setStatus(2);
+        tc.setStatus(EvaluationResult.STATUS_TEACHER_CONFIRMED);
 
         evaluationRepository.save(ai1);
         evaluationRepository.save(ai2);

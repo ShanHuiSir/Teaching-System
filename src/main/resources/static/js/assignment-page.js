@@ -1,4 +1,9 @@
 function initAssignmentPage(mode) {
+  var EvaluationStatus = {
+    PENDING: 0,
+    AI_REVIEWED: 1,
+    TEACHER_CONFIRMED: 2
+  };
   var statusEl = document.getElementById('page-status');
   var banner = document.getElementById('summary-banner');
   var tbody = document.getElementById('table-body');
@@ -68,10 +73,10 @@ function initAssignmentPage(mode) {
       var filtered = [];
       for (var j = 0; j < submissions.length; j++) {
         var ev = evalMap[submissions[j].id];
-        var s = ev ? ev.status : 0;
-        if (mode === 'pending' && s === 0) filtered.push(submissions[j]);
-        else if (mode === 'ai-reviewed' && s === 1) filtered.push(submissions[j]);
-        else if (mode === 'completed' && s === 2) filtered.push(submissions[j]);
+        var s = ev ? ev.status : EvaluationStatus.PENDING;
+        if (mode === 'pending' && s === EvaluationStatus.PENDING) filtered.push(submissions[j]);
+        else if (mode === 'ai-reviewed' && s === EvaluationStatus.AI_REVIEWED) filtered.push(submissions[j]);
+        else if (mode === 'completed' && s === EvaluationStatus.TEACHER_CONFIRMED) filtered.push(submissions[j]);
       }
 
       if (mode === 'pending') banner.textContent = '当前有 ' + filtered.length + ' 份作业待审批';
