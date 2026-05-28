@@ -39,8 +39,8 @@ public class EvaluationService {
         saved.setAiScore(result.getAiScore());
         saved.setAiIssues(result.getAiIssues());
         saved.setAiComment(result.getAiComment());
-        if (saved.getStatus() < 2) {
-            saved.setStatus(1);
+        if (saved.getStatus() < EvaluationResult.STATUS_TEACHER_CONFIRMED) {
+            saved.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
         }
         return evaluationRepository.save(saved);
     }
@@ -56,7 +56,7 @@ public class EvaluationService {
 
         evaluation.setTeacherScore(request.getTeacherScore());
         evaluation.setTeacherComment(request.getTeacherComment());
-        evaluation.setStatus(2);
+        evaluation.setStatus(EvaluationResult.STATUS_TEACHER_CONFIRMED);
         return evaluationRepository.save(evaluation);
     }
 
