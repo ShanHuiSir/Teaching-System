@@ -6,12 +6,15 @@ import com.teachingeval.entity.EvaluationResult;
 import com.teachingeval.service.EvaluationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(name = "AI 评价")
 @RestController
@@ -33,8 +36,16 @@ public class EvaluationController {
 
     @Operation(summary = "查询评价结果", description = "根据作品提交 ID 查询 AI 和教师评价结果。")
     @GetMapping("/submissions/{submissionId}/evaluation")
-    public EvaluationResult getEvaluation(@PathVariable Long submissionId) {
-        return evaluationService.getBySubmissionId(submissionId);
+    public ResponseEntity<EvaluationResult> getEvaluation(@PathVariable Long submissionId) {
+        return evaluationService.findBySubmissionId(submissionId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @Operation(summary = "查询全部评价结果", description = "返回系统中已有的评价结果，用于状态列表批量匹配作业状态。")
+    @GetMapping("/evaluations")
+    public List<EvaluationResult> listEvaluations() {
+        return evaluationService.listEvaluations();
     }
 
     @Operation(summary = "保存教师最终评价", description = "保存教师最终评分和评语，并将评价状态改为教师已确认。")

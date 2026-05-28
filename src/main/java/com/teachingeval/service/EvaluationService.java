@@ -1,6 +1,8 @@
 package com.teachingeval.service;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 
 import com.teachingeval.entity.EvaluationResult;
 import org.springframework.stereotype.Service;
@@ -37,8 +39,8 @@ public class EvaluationService {
         saved.setAiScore(result.getAiScore());
         saved.setAiIssues(result.getAiIssues());
         saved.setAiComment(result.getAiComment());
-        if (saved.getStatus() < 2) {
-            saved.setStatus(1);
+        if (saved.getStatus() < EvaluationResult.STATUS_TEACHER_CONFIRMED) {
+            saved.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
         }
         return evaluationRepository.save(saved);
     }
@@ -54,13 +56,21 @@ public class EvaluationService {
 
         evaluation.setTeacherScore(request.getTeacherScore());
         evaluation.setTeacherComment(request.getTeacherComment());
-        evaluation.setStatus(2);
+        evaluation.setStatus(EvaluationResult.STATUS_TEACHER_CONFIRMED);
         return evaluationRepository.save(evaluation);
     }
 
     public EvaluationResult getBySubmissionId(Long submissionId) {
         return evaluationRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("评价结果不存在"));
+    }
+
+    public List<EvaluationResult> listEvaluations() {
+        return evaluationRepository.findAll();
+    }
+
+    public Optional<EvaluationResult> findBySubmissionId(Long submissionId) {
+        return evaluationRepository.findBySubmissionId(submissionId);
     }
 
     private void validateScore(BigDecimal score) {

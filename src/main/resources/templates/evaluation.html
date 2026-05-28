@@ -145,6 +145,11 @@
     const teacherCommentInput = document.getElementById('teacher-comment');
     const remarkCard = document.getElementById('remark-card');
     const remarkText = document.getElementById('remark-text');
+    const EvaluationStatus = {
+      PENDING: 0,
+      AI_REVIEWED: 1,
+      TEACHER_CONFIRMED: 2
+    };
 
     // ── Textarea auto-resize ──
     teacherCommentInput.addEventListener('input', function() {
@@ -162,6 +167,20 @@
     function setStatus(message, isError) {
       pageStatus.textContent = message;
       pageStatus.classList.toggle('error-text', !!isError);
+    }
+
+    function notifyAssignmentChanged(reason) {
+      try {
+        localStorage.setItem('assignment-data-version', JSON.stringify({
+          reason: reason,
+          submissionId: submissionId,
+          time: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function goToAssignmentStatusPage(targetMode) {
+      window.location.href = '/assignments/' + targetMode + '?_=' + Date.now();
     }
 
     function escapeHtml(value) {
@@ -209,7 +228,7 @@
         const res = await fetch('/api/submissions/' + submissionId + '/evaluation');
         if (!res.ok) return;
         const evalResult = await res.json();
-        if (evalResult && evalResult.status >= 1) {
+        if (evalResult && evalResult.status >= EvaluationStatus.AI_REVIEWED) {
           renderAiResult(evalResult);
           step2Card.classList.remove('hidden');
           step3Card.classList.remove('hidden');
@@ -269,7 +288,11 @@
         if (result.aiScore != null) {
           teacherScoreInput.value = result.aiScore;
         }
+        notifyAssignmentChanged('ai-evaluated');
         setStatus('AI 评价完成');
+        setTimeout(function() {
+          goToAssignmentStatusPage('ai-reviewed');
+        }, 500);
       } catch (e) {
         setStatus(e.message, true);
       } finally {
@@ -299,7 +322,11 @@
           throw new Error(errData.message || '保存失败');
         }
 
+        notifyAssignmentChanged('teacher-reviewed');
         setStatus('教师复核已保存');
+        setTimeout(function() {
+          goToAssignmentStatusPage('completed');
+        }, 500);
       } catch (e) {
         setStatus(e.message, true);
       } finally {
