@@ -1,57 +1,368 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>教学评价系统 - 作品评价</title>
+  <title>教学评价系统 - 作业评价</title>
   <link rel="stylesheet" href="/style.css">
 </head>
-<body>
-  <header class="topbar">
-    <h1>教学评价系统</h1>
-    <nav>
-      <a href="/students">学生管理</a>
-      <a href="/evaluation">作品评价</a>
-      <a href="/export">导出成绩</a>
-      <a href="/">退出</a>
-    </nav>
-  </header>
-  <main class="container">
-    <section class="panel">
-      <h2>作品评价</h2>
-      <form class="form-grid">
-        <label>
-          学生
-          <input value="张三" readonly>
+<body class="has-sidebar">
+  <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='evaluation')}"></th:block>
+
+  <main class="md-page">
+    <div class="md-page-header">
+      <h2>作业评价</h2>
+      <span class="md-page-header__status" id="page-status"></span>
+    </div>
+
+    <!-- 无 submissionId 时的提示 -->
+    <div class="md-card hidden" id="no-submission-hint">
+      <div class="md-card__body">
+        <p style="text-align:center; color: var(--md-sys-color-on-surface-variant);">请从「作业列表」页面选择一个作业进入评价。</p>
+      </div>
+    </div>
+
+    <!-- Step 1 ── Student & Work Info -->
+    <div class="md-card hidden" id="step1-card">
+      <div class="md-card__header">
+        <span class="md-step__marker">1</span>
+        <h3>学生与作业信息</h3>
+      </div>
+      <div class="md-card__body">
+        <div class="md-info-grid">
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">学生姓名</span>
+            <span class="md-info-grid__value" id="info-student-name">--</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">学号</span>
+            <span class="md-info-grid__value" id="info-student-no">--</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">班级</span>
+            <span class="md-info-grid__value" id="info-class-name">--</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">作业文件</span>
+            <span class="md-info-grid__value" id="info-file-name">--</span>
+          </div>
+        </div>
+
+        <div class="md-card hidden" id="remark-card" style="background: var(--md-sys-color-tertiary-container); border-color: transparent; margin-top: var(--md-space-4);">
+          <div class="md-card__header" style="background: transparent; border-bottom-color: var(--md-sys-color-outline-variant); padding: var(--md-space-3) var(--md-space-4);">
+            <h3 style="font: var(--md-typescale-title-small); color: var(--md-sys-color-on-tertiary-container);">学生备注</h3>
+          </div>
+          <div class="md-card__body" style="padding: var(--md-space-3) var(--md-space-4);">
+            <p id="remark-text" style="font: var(--md-typescale-body-medium); color: var(--md-sys-color-on-tertiary-container); margin: 0;"></p>
+          </div>
+        </div>
+
+        <button class="md-btn md-btn--filled" type="button" id="btn-evaluate" style="margin-top: var(--md-space-4);">执行 AI 评价</button>
+      </div>
+    </div>
+
+    <!-- Step 2 ── AI Evaluation Result -->
+    <div class="md-card hidden" id="step2-card">
+      <div class="md-card__header">
+        <span class="md-step__marker">2</span>
+        <h3>AI 评价结果</h3>
+      </div>
+      <div class="md-card__body">
+        <div class="md-score" style="margin-bottom: var(--md-space-5);">
+          <span class="md-score__value" id="ai-score">--</span>
+          <span class="md-score__unit">/ 100 分</span>
+        </div>
+
+        <div class="md-form-grid md-form-grid--2">
+          <div class="md-card" style="background: var(--md-sys-color-surface-container-low); border-color: transparent;">
+            <div class="md-card__header" style="background: transparent; border-bottom-color: var(--md-sys-color-outline-variant);">
+              <h3 style="font: var(--md-typescale-title-medium);">发现的问题</h3>
+            </div>
+            <div class="md-card__body">
+              <ol id="ai-issues-list" style="margin: 0; padding-left: 20px; display: grid; gap: var(--md-space-2); font: var(--md-typescale-body-medium); color: var(--md-sys-color-on-surface-variant);">
+                <li>等待 AI 评价...</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="md-card" style="background: var(--md-sys-color-surface-container-low); border-color: transparent;">
+            <div class="md-card__header" style="background: transparent; border-bottom-color: var(--md-sys-color-outline-variant);">
+              <h3 style="font: var(--md-typescale-title-medium);">综合评语</h3>
+            </div>
+            <div class="md-card__body">
+              <p id="ai-comment" style="font: var(--md-typescale-body-medium); color: var(--md-sys-color-on-surface-variant); line-height: 1.8;">
+                等待 AI 评价...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 ── Teacher Review -->
+    <div class="md-card hidden" id="step3-card">
+      <div class="md-card__header">
+        <span class="md-step__marker">3</span>
+        <h3>教师复核</h3>
+      </div>
+      <div class="md-card__body">
+        <div class="md-form-grid md-form-grid--2" style="margin-bottom: var(--md-space-4);">
+          <label class="md-field">
+            <span class="md-field__label">最终分数（0-100）</span>
+            <input class="md-field__input" type="number" min="0" max="100" id="teacher-score">
+          </label>
+        </div>
+        <label class="md-field" style="margin-bottom: var(--md-space-4);">
+          <span class="md-field__label">最终评语</span>
+          <textarea class="md-field__input" id="teacher-comment" placeholder="请输入教师最终评语"></textarea>
         </label>
-        <label>
-          作品文件名
-          <input value="student-work.zip" readonly>
-        </label>
-        <button type="button">点击 AI 评价</button>
-      </form>
-    </section>
-    <section class="panel">
-      <h2>AI 评价结果</h2>
-      <p><strong>评分建议：</strong>85</p>
-      <p><strong>主要问题：</strong>作品结构完整，但说明文档还不够清楚。</p>
-      <p><strong>评语草稿：</strong>整体完成度较好，建议继续完善功能说明和测试截图。</p>
-    </section>
-    <section class="panel">
-      <h2>教师复核</h2>
-      <form class="form-grid">
-        <label>
-          最终分数
-          <input value="85">
-        </label>
-        <label>
-          最终评语
-          <textarea>整体完成度较好，继续优化细节。</textarea>
-        </label>
-        <button type="button">保存最终评价</button>
-      </form>
-    </section>
+        <button class="md-btn md-btn--filled md-btn--lg" type="button" id="btn-save-review">保存最终评价</button>
+      </div>
+    </div>
   </main>
+
+  <!-- Logout Dialog -->
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="md-dialog__title">确认退出</div>
+      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
+        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Logout dialog ──
+    const logoutLink = document.querySelector('.logout-link');
+    const logoutDialog = document.getElementById('logout-dialog');
+    document.getElementById('logout-cancel').onclick = () => { logoutDialog.classList.add('hidden'); logoutLink.focus(); };
+    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
+    logoutLink.onclick = e => { e.preventDefault(); logoutDialog.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
+    logoutDialog.onclick = e => { if (e.target === logoutDialog) { logoutDialog.classList.add('hidden'); logoutLink.focus(); } };
+    document.onkeydown = e => { if (e.key === 'Escape' && !logoutDialog.classList.contains('hidden')) { logoutDialog.classList.add('hidden'); logoutLink.focus(); } };
+
+    // ── DOM refs ──
+    const pageStatus = document.getElementById('page-status');
+    const noSubmissionHint = document.getElementById('no-submission-hint');
+    const step1Card = document.getElementById('step1-card');
+    const step2Card = document.getElementById('step2-card');
+    const step3Card = document.getElementById('step3-card');
+    const btnEvaluate = document.getElementById('btn-evaluate');
+    const btnSaveReview = document.getElementById('btn-save-review');
+
+    const infoStudentName = document.getElementById('info-student-name');
+    const infoStudentNo = document.getElementById('info-student-no');
+    const infoClassName = document.getElementById('info-class-name');
+    const infoFileName = document.getElementById('info-file-name');
+
+    const aiScore = document.getElementById('ai-score');
+    const aiIssuesList = document.getElementById('ai-issues-list');
+    const aiComment = document.getElementById('ai-comment');
+
+    const teacherScoreInput = document.getElementById('teacher-score');
+    const teacherCommentInput = document.getElementById('teacher-comment');
+    const remarkCard = document.getElementById('remark-card');
+    const remarkText = document.getElementById('remark-text');
+
+    // ── Textarea auto-resize ──
+    teacherCommentInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+
+    // ── URL params ──
+    const params = new URLSearchParams(window.location.search);
+    const submissionId = params.get('submissionId');
+    const studentId = params.get('studentId');
+    const studentName = params.get('studentName') || '';
+    const fileName = params.get('fileName') || '';
+
+    function setStatus(message, isError) {
+      pageStatus.textContent = message;
+      pageStatus.classList.toggle('error-text', !!isError);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    // ── Load student info ──
+    async function loadStudentInfo() {
+      if (!studentId) {
+        infoStudentName.textContent = studentName || '--';
+        infoStudentNo.textContent = '--';
+        infoClassName.textContent = '--';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/students');
+        if (!res.ok) throw new Error('学生列表加载失败');
+        const students = await res.json();
+        const student = students.find(s => String(s.id) === String(studentId));
+        if (student) {
+          infoStudentName.textContent = student.name;
+          infoStudentNo.textContent = student.studentNo;
+          infoClassName.textContent = student.className;
+        } else {
+          infoStudentName.textContent = studentName || '--';
+          infoStudentNo.textContent = '--';
+          infoClassName.textContent = '--';
+        }
+      } catch (e) {
+        infoStudentName.textContent = studentName || '--';
+        infoStudentNo.textContent = '--';
+        infoClassName.textContent = '--';
+      }
+    }
+
+    // ── Load existing evaluation ──
+    async function loadExistingEvaluation() {
+      try {
+        const res = await fetch('/api/submissions/' + submissionId + '/evaluation');
+        if (!res.ok) return;
+        const evalResult = await res.json();
+        if (evalResult && evalResult.status >= 1) {
+          renderAiResult(evalResult);
+          step2Card.classList.remove('hidden');
+          step3Card.classList.remove('hidden');
+          if (evalResult.teacherScore != null) {
+            teacherScoreInput.value = evalResult.teacherScore;
+          } else if (evalResult.aiScore != null) {
+            teacherScoreInput.value = evalResult.aiScore;
+          }
+          if (evalResult.teacherComment != null) {
+            teacherCommentInput.value = evalResult.teacherComment;
+          }
+        }
+      } catch (e) {
+        // no existing evaluation, that's fine
+      }
+    }
+
+    // ── Render AI result ──
+    function renderAiResult(result) {
+      aiScore.textContent = result.aiScore != null ? result.aiScore : '--';
+      if (result.aiIssues) {
+        var issues = result.aiIssues.split('\n').filter(function(line) { return line.trim(); });
+        aiIssuesList.innerHTML = issues.map(function(issue) {
+          return '<li>' + escapeHtml(issue.replace(/^\d+[\.\、\s]+/, '')) + '</li>';
+        }).join('');
+      } else {
+        aiIssuesList.innerHTML = '<li>暂无</li>';
+      }
+      aiComment.textContent = result.aiComment || '暂无评语';
+    }
+
+    // ── Trigger AI evaluation ──
+    btnEvaluate.addEventListener('click', async function() {
+      btnEvaluate.disabled = true;
+      btnEvaluate.textContent = 'AI 评价中...';
+      setStatus('正在执行 AI 评价...');
+
+      try {
+        var res = await fetch('/api/submissions/' + submissionId + '/evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentName: infoStudentName.textContent,
+            fileName: fileName || infoFileName.textContent
+          })
+        });
+
+        if (!res.ok) {
+          var errData = await res.json().catch(function() { return {}; });
+          throw new Error(errData.message || 'AI 评价失败');
+        }
+
+        var result = await res.json();
+        renderAiResult(result);
+        step2Card.classList.remove('hidden');
+        step3Card.classList.remove('hidden');
+        if (result.aiScore != null) {
+          teacherScoreInput.value = result.aiScore;
+        }
+        setStatus('AI 评价完成');
+      } catch (e) {
+        setStatus(e.message, true);
+      } finally {
+        btnEvaluate.disabled = false;
+        btnEvaluate.textContent = '执行 AI 评价';
+      }
+    });
+
+    // ── Save teacher review ──
+    btnSaveReview.addEventListener('click', async function() {
+      btnSaveReview.disabled = true;
+      btnSaveReview.textContent = '保存中...';
+      setStatus('正在保存教师复核...');
+
+      try {
+        var res = await fetch('/api/submissions/' + submissionId + '/teacher-review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            teacherScore: Number(teacherScoreInput.value),
+            teacherComment: teacherCommentInput.value
+          })
+        });
+
+        if (!res.ok) {
+          var errData = await res.json().catch(function() { return {}; });
+          throw new Error(errData.message || '保存失败');
+        }
+
+        setStatus('教师复核已保存');
+      } catch (e) {
+        setStatus(e.message, true);
+      } finally {
+        btnSaveReview.disabled = false;
+        btnSaveReview.textContent = '保存最终评价';
+      }
+    });
+
+    // ── Load remark ──
+    async function loadRemark() {
+      try {
+        const res = await fetch('/api/submissions');
+        if (!res.ok) return;
+        const works = await res.json();
+        const work = works.find(w => String(w.id) === String(submissionId));
+        if (work && work.remark && work.remark.trim()) {
+          remarkText.textContent = work.remark;
+          remarkCard.classList.remove('hidden');
+        }
+      } catch (e) {
+        // ignore, keep remark hidden
+      }
+    }
+
+    // ── Init ──
+    (async function init() {
+      if (!submissionId) {
+        noSubmissionHint.classList.remove('hidden');
+        return;
+      }
+
+      step1Card.classList.remove('hidden');
+      infoFileName.textContent = fileName || '--';
+
+      setStatus('正在加载...');
+      await loadStudentInfo();
+      await loadRemark();
+      await loadExistingEvaluation();
+      setStatus('');
+    })();
+  </script>
 </body>
 </html>
-

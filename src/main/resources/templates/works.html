@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教学评价系统 - 作业列表</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="has-sidebar">
+  <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='works')}"></th:block>
+  <main class="md-page">
+    <div class="md-page-header">
+      <h2>作业列表</h2>
+      <span class="md-page-header__status" id="work-status">正在加载...</span>
+    </div>
+
+    <div class="md-card">
+      <div class="md-card__header">
+        <h3>提交记录</h3>
+      </div>
+      <div class="md-card__body" style="padding: 0;">
+        <table class="md-table">
+          <thead>
+            <tr>
+              <th>学生</th>
+              <th>作业标题</th>
+              <th>文件名</th>
+              <th>类型</th>
+              <th>提交时间</th>
+              <th style="width: 100px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="work-table-body">
+            <tr>
+              <td colspan="6">正在加载...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="md-dialog__title">确认退出</div>
+      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
+        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const l = document.querySelector('.logout-link');
+    const d = document.getElementById('logout-dialog');
+    document.getElementById('logout-cancel').onclick = () => { d.classList.add('hidden'); l.focus(); };
+    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
+    l.onclick = e => { e.preventDefault(); d.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
+    d.onclick = e => { if (e.target === d) { d.classList.add('hidden'); l.focus(); } };
+    document.onkeydown = e => { if (e.key === 'Escape' && !d.classList.contains('hidden')) { d.classList.add('hidden'); l.focus(); } };
+
+    const workStatus = document.querySelector("#work-status");
+    const workTableBody = document.querySelector("#work-table-body");
+
+    function setStatus(message, isError) {
+      workStatus.textContent = message;
+      workStatus.classList.toggle("error-text", isError);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    }
+
+    async function loadWorks() {
+      try {
+        const res = await fetch("/api/submissions");
+        if (!res.ok) throw new Error("作业列表加载失败");
+        const works = await res.json();
+        if (works.length === 0) {
+          workTableBody.innerHTML = '<tr><td colspan="6">暂无作业，请先提交。</td></tr>';
+        } else {
+          workTableBody.innerHTML = works.map(work => `
+            <tr>
+              <td>${escapeHtml(work.studentName)}</td>
+              <td>${escapeHtml(work.title)}</td>
+              <td>${escapeHtml(work.fileName)}</td>
+              <td>${escapeHtml(work.workType)}</td>
+              <td>${escapeHtml((work.submittedAt || "").replace("T", " ").slice(0, 16))}</td>
+              <td>
+                <a class="md-btn md-btn--tonal md-btn--sm" href="/evaluation?submissionId=${work.id}&studentId=${work.studentId}&studentName=${encodeURIComponent(work.studentName)}&fileName=${encodeURIComponent(work.fileName)}">评价</a>
+              </td>
+            </tr>
+          `).join("");
+        }
+        setStatus(`已加载 ${works.length} 条作业提交`);
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    }
+
+    loadWorks();
+  </script>
+</body>
+</html>

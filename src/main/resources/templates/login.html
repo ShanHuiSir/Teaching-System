@@ -5,24 +5,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>教学评价系统 - 登录</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    .quick-login { margin-bottom: var(--md-space-5); }
+    .quick-login__label { font: var(--md-typescale-label-medium); color: var(--md-sys-color-on-surface-variant); margin-bottom: var(--md-space-2); display: block; }
+    .quick-login__list { display: flex; flex-wrap: wrap; gap: var(--md-space-2); }
+    .quick-login__chip { display: inline-flex; align-items: center; gap: var(--md-space-1); height: 32px; padding: 0 12px; border-radius: var(--md-sys-shape-full); font: var(--md-typescale-label-medium); background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); cursor: pointer; border: none; transition: background var(--md-sys-duration-short) var(--md-sys-easing-standard); }
+    .quick-login__chip:hover { background: #CDD6F5; }
+    .quick-login__chip-remove { width: 16px; height: 16px; border-radius: 50%; border: none; background: transparent; color: inherit; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: .5; }
+    .quick-login__chip-remove:hover { opacity: 1; }
+    .quick-login__empty { font: var(--md-typescale-body-small); color: var(--md-sys-color-on-surface-variant); }
+  </style>
 </head>
 <body class="login-page">
   <main class="login-card">
-    <h1>教学评价系统</h1>
-    <p>教师端作品评价与成绩导出</p>
-    <form method="post" action="/login">
-      <label>
-        账号
-        <input name="username" value="teacher" autocomplete="username">
+    <div class="login-card__header">
+      <h1>教学评价系统</h1>
+      <p>教师端作品评价与成绩管理</p>
+    </div>
+
+    <div class="login-error" th:if="${error}" th:text="${error}"></div>
+
+    <div class="quick-login" id="quick-login" style="display:none;">
+      <span class="quick-login__label">快捷登录</span>
+      <div class="quick-login__list" id="quick-login-list"></div>
+    </div>
+
+    <form class="login-form" method="post" action="/login" id="login-form">
+      <label class="md-field">
+        <span class="md-field__label">账号</span>
+        <input class="md-field__input" name="username" id="username" placeholder="请输入教师账号" autocomplete="username" required>
       </label>
-      <label>
-        密码
-        <input name="password" type="password" value="123456" autocomplete="current-password">
+      <label class="md-field">
+        <span class="md-field__label">密码</span>
+        <input class="md-field__input" name="password" id="password" type="password" placeholder="请输入密码" autocomplete="current-password" required>
       </label>
-      <p class="error" th:if="${error}" th:text="${error}"></p>
-      <button type="submit">登录</button>
+      <label style="display:flex;align-items:center;gap:var(--md-space-2);font:var(--md-typescale-body-small);color:var(--md-sys-color-on-surface-variant);cursor:pointer;">
+        <input type="checkbox" id="remember-me" checked> 记住账号
+      </label>
+      <button class="md-btn md-btn--filled" type="submit">登录</button>
     </form>
   </main>
+
+  <script>
+    const STORAGE_KEY = 'saved-accounts';
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const quickLogin = document.getElementById('quick-login');
+    const quickLoginList = document.getElementById('quick-login-list');
+    const rememberCheck = document.getElementById('remember-me');
+
+    function getAccounts() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function saveAccounts(accounts) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+    }
+
+    function renderChips() {
+      var accounts = getAccounts();
+      if (accounts.length === 0) {
+        quickLogin.style.display = 'none';
+        return;
+      }
+      quickLogin.style.display = '';
+      quickLoginList.innerHTML = accounts.map(function(acc) {
+        return '<button class="quick-login__chip" data-username="' + acc.replace(/"/g, '&quot;') + '">'
+          + acc + '<span class="quick-login__chip-remove" data-remove="' + acc.replace(/"/g, '&quot;') + '">&times;</span></button>';
+      }).join('');
+    }
+
+    quickLoginList.addEventListener('click', function(e) {
+      var removeBtn = e.target.closest('[data-remove]');
+      if (removeBtn) {
+        e.stopPropagation();
+        var name = removeBtn.dataset.remove;
+        var accounts = getAccounts().filter(function(a) { return a !== name; });
+        saveAccounts(accounts);
+        renderChips();
+        return;
+      }
+      var chip = e.target.closest('[data-username]');
+      if (chip) {
+        var name = chip.dataset.username;
+        usernameInput.value = name;
+        passwordInput.value = '123456';
+        passwordInput.focus();
+      }
+    });
+
+    document.getElementById('login-form').addEventListener('submit', function() {
+      if (rememberCheck.checked) {
+        var username = usernameInput.value.trim();
+        if (username) {
+          var accounts = getAccounts().filter(function(a) { return a !== username; });
+          accounts.unshift(username);
+          if (accounts.length > 5) accounts.pop();
+          saveAccounts(accounts);
+        }
+      }
+    });
+
+    renderChips();
+  </script>
 </body>
 </html>
-

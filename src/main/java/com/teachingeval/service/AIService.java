@@ -1,8 +1,8 @@
 package com.teachingeval.service;
 
-import com.teachingeval.model.AIEvalRequestDTO;
-import com.teachingeval.model.AIEvaluationResult;
+import com.teachingeval.dto.AIEvalRequest;
+import com.teachingeval.entity.EvaluationResult;
 
 public interface AIService {
-    AIEvaluationResult evaluate(AIEvalRequestDTO request);
+    EvaluationResult evaluate(AIEvalRequest request);
 }

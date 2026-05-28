@@ -1,28 +1,137 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>教学评价系统 - 导出成绩</title>
   <link rel="stylesheet" href="/style.css">
 </head>
-<body>
-  <header class="topbar">
-    <h1>教学评价系统</h1>
-    <nav>
-      <a href="/students">学生管理</a>
-      <a href="/evaluation">作品评价</a>
-      <a href="/export">导出成绩</a>
-      <a href="/">退出</a>
-    </nav>
-  </header>
-  <main class="container">
-    <section class="panel">
+<body class="has-sidebar">
+  <th:block th:replace="~{fragments/sidebar :: sidebar(activePage='export')}"></th:block>
+
+  <main class="md-page">
+    <div class="md-page-header">
       <h2>导出成绩</h2>
-      <p>这里后续放 Excel 导出功能。</p>
-      <button type="button">导出 Excel</button>
-    </section>
+      <span class="md-page-header__status" id="page-status"></span>
+      <div class="md-page-header__actions">
+        <button class="md-btn md-btn--filled" type="button" id="btn-export">导出 Excel</button>
+      </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="md-card">
+      <div class="md-card__header">
+        <h3>统计摘要</h3>
+      </div>
+      <div class="md-card__body">
+        <div class="md-info-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">学生总数</span>
+            <span class="md-info-grid__value" id="stat-student-count">--</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">作品提交数</span>
+            <span class="md-info-grid__value" id="stat-submission-count">--</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">AI 已评价</span>
+            <span class="md-info-grid__value" id="stat-ai-count">--</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">教师已确认</span>
+            <span class="md-info-grid__value" id="stat-teacher-count">--</span>
+          </div>
+          <div class="md-info-grid__item">
+            <span class="md-info-grid__label">教师平均分</span>
+            <span class="md-info-grid__value" id="stat-avg-score">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Records Placeholder -->
+    <div class="md-card">
+      <div class="md-card__header">
+        <h3>导出记录</h3>
+      </div>
+      <div class="md-card__body">
+        <div class="md-empty">
+          <p id="export-empty-text">暂无导出记录</p>
+          <span style="font: var(--md-typescale-body-small); color: var(--md-sys-color-on-surface-variant);">点击右上角按钮导出学生成绩汇总</span>
+        </div>
+      </div>
+    </div>
   </main>
+
+  <!-- Logout Dialog -->
+  <div class="md-dialog-overlay hidden" id="logout-dialog">
+    <div class="md-dialog">
+      <svg class="md-dialog__icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="md-dialog__title">确认退出</div>
+      <div class="md-dialog__body">退出后需要重新登录，确定要退出吗？</div>
+      <div class="md-dialog__actions">
+        <button class="md-btn md-btn--outlined" type="button" id="logout-cancel">取消</button>
+        <button class="md-btn md-btn--danger" type="button" id="logout-confirm">确定退出</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Logout dialog
+    const logoutLink = document.querySelector('.logout-link');
+    const logoutDialog = document.getElementById('logout-dialog');
+    document.getElementById('logout-cancel').onclick = () => { logoutDialog.classList.add('hidden'); logoutLink.focus(); };
+    document.getElementById('logout-confirm').onclick = () => { location.href = '/'; };
+    logoutLink.onclick = e => { e.preventDefault(); logoutDialog.classList.remove('hidden'); document.getElementById('logout-cancel').focus(); };
+    logoutDialog.onclick = e => { if (e.target === logoutDialog) { logoutDialog.classList.add('hidden'); logoutLink.focus(); } };
+    document.onkeydown = e => { if (e.key === 'Escape' && !logoutDialog.classList.contains('hidden')) { logoutDialog.classList.add('hidden'); logoutLink.focus(); } };
+
+    // DOM refs
+    const pageStatus = document.getElementById('page-status');
+    const btnExport = document.getElementById('btn-export');
+
+    function setStatus(message, isError) {
+      pageStatus.textContent = message;
+      pageStatus.classList.toggle('error-text', !!isError);
+    }
+
+    // Load statistics summary
+    async function loadSummary() {
+      try {
+        const res = await fetch('/api/statistics/summary');
+        if (!res.ok) throw new Error('统计摘要加载失败');
+        const data = await res.json();
+        document.getElementById('stat-student-count').textContent = data.studentCount;
+        document.getElementById('stat-submission-count').textContent = data.submissionCount;
+        document.getElementById('stat-ai-count').textContent = data.aiEvaluatedCount;
+        document.getElementById('stat-teacher-count').textContent = data.teacherConfirmedCount;
+        document.getElementById('stat-avg-score').textContent = data.averageTeacherScore != null ? data.averageTeacherScore : '--';
+      } catch (e) {
+        setStatus(e.message, true);
+      }
+    }
+
+    // Export
+    btnExport.addEventListener('click', async function() {
+      btnExport.disabled = true;
+      setStatus('正在导出...');
+      try {
+        const res = await fetch('/api/export/excel', { method: 'POST' });
+        if (!res.ok) throw new Error('导出失败');
+        const data = await res.json();
+        setStatus('导出成功: ' + data.fileUrl);
+      } catch (e) {
+        setStatus(e.message, true);
+      } finally {
+        btnExport.disabled = false;
+      }
+    });
+
+    // Init
+    setStatus('正在加载...');
+    loadSummary().then(function() { setStatus(''); });
+  </script>
 </body>
 </html>
-
