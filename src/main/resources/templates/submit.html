@@ -77,6 +77,10 @@
       } catch (e) {}
     }
 
+    function goToPendingPage() {
+      window.location.href = "/assignments/pending?_=" + Date.now();
+    }
+
     function escapeHtml(value) {
       return String(value ?? "")
         .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
@@ -108,6 +112,7 @@
         workForm.reset();
         notifyAssignmentChanged("submission-created");
         setStatus("已保存作业：" + result.title);
+        setTimeout(goToPendingPage, 500);
       } catch (err) {
         setStatus(err.message, true);
       }
