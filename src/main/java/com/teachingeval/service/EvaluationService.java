@@ -1,5 +1,7 @@
 package com.teachingeval.service;
 
+import java.util.List;
+
 import com.teachingeval.entity.EvaluationResult;
 import org.springframework.stereotype.Service;
 
@@ -56,4 +58,7 @@ public class EvaluationService {
                 .orElseThrow(() -> new IllegalArgumentException("评价结果不存在"));
     }
 
+    public List<EvaluationResult> listEvaluations() {
+        return evaluationRepository.findAll();
+    }
 }
