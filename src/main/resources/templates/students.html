@@ -100,15 +100,19 @@
     const addBtnText = addSubmitBtn ? addSubmitBtn.textContent : '确认新增';
 
     let students = [];
+    let filteredStudents = [];
     let pageIndex = 0;
-    let totalPages = 1;
-    let totalElements = 0;
-    const pageSize = 20;
+    let pageSize = 20;
 
     function escapeHtml(value) {
       return String(value ?? '')
         .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    }
+
+    function getPageData() {
+      var start = pageIndex * pageSize;
+      return filteredStudents.slice(start, start + pageSize);
     }
 
     function renderTable(list) {
@@ -121,23 +125,50 @@
       }).join('');
     }
 
+    function renderPagination() {
+      var totalPages = Math.ceil(filteredStudents.length / pageSize) || 1;
+      document.getElementById('student-page-info').textContent =
+        '第 ' + (pageIndex + 1) + ' 页 / 共 ' + totalPages + ' 页，共 ' + filteredStudents.length + ' 名学生';
+      document.getElementById('student-prev-page').disabled = pageIndex <= 0;
+      document.getElementById('student-next-page').disabled = pageIndex >= totalPages - 1;
+    }
+
+    function goToPage(newPage) {
+      pageIndex = newPage;
+      renderTable(getPageData());
+      renderPagination();
+    }
+
+    function applyFilter() {
+      var q = searchInput.value.toLowerCase();
+      filteredStudents = q ? students.filter(function(s) {
+        return s.studentNo.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
+      }) : students.slice();
+      pageIndex = 0;
+      goToPage(0);
+    }
+
     async function loadStudents() {
       studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;"><span class="spinner"></span></td></tr>';
       try {
         var res = await fetch('/api/students');
         if (!res.ok) { var msg = await extractError(res); throw new Error(msg); }
         students = await res.json();
-        renderTable(students);
-        renderPagination();
+        applyFilter();
       } catch (e) {
         showError(e.message);
         studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-error);padding:32px;">加载失败，请刷新重试</td></tr>';
       }
     }
 
-    searchInput.addEventListener('input', function() {
-      var q = searchInput.value.toLowerCase();
-      renderTable(students.filter(function(s) { return s.studentNo.toLowerCase().includes(q) || s.name.toLowerCase().includes(q); }));
+    searchInput.addEventListener('input', applyFilter);
+
+    document.getElementById('student-prev-page').addEventListener('click', function() {
+      if (pageIndex > 0) goToPage(pageIndex - 1);
+    });
+    document.getElementById('student-next-page').addEventListener('click', function() {
+      var totalPages = Math.ceil(filteredStudents.length / pageSize) || 1;
+      if (pageIndex < totalPages - 1) goToPage(pageIndex + 1);
     });
 
     function openAddDialog() { addDialog.classList.remove('hidden'); addForm.querySelector('input').focus(); }
