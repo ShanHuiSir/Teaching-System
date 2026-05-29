@@ -88,9 +88,25 @@ function initAssignmentPage(mode) {
         else if (mode === 'completed' && s === EvaluationStatus.TEACHER_CONFIRMED) filtered.push(submissions[j]);
       }
 
-      if (mode === 'pending') banner.textContent = '当前有 ' + filtered.length + ' 份作业待审批';
-      else if (mode === 'ai-reviewed') banner.textContent = '当前有 ' + filtered.length + ' 份作业待教师复核';
-      else banner.textContent = '当前有 ' + filtered.length + ' 份作业已完成';
+      if (mode === 'pending') { if (banner) banner.textContent = '当前有 ' + filtered.length + ' 份作业待审批'; }
+      else if (mode === 'ai-reviewed') { if (banner) banner.textContent = '当前有 ' + filtered.length + ' 份作业待教师复核'; }
+      else { if (banner) banner.textContent = '当前有 ' + filtered.length + ' 份作业已完成'; }
+
+      // Update status pill counts
+      var pendingCount = 0, aiCount = 0, doneCount = 0;
+      for (var k = 0; k < submissions.length; k++) {
+        var s = evalMap[submissions[k].id];
+        var st = s ? s.status : EvaluationStatus.PENDING;
+        if (st === EvaluationStatus.PENDING) pendingCount++;
+        else if (st === EvaluationStatus.AI_REVIEWED) aiCount++;
+        else if (st === EvaluationStatus.TEACHER_CONFIRMED) doneCount++;
+      }
+      var pcP = document.getElementById('pill-count-pending');
+      var pcA = document.getElementById('pill-count-ai');
+      var pcD = document.getElementById('pill-count-done');
+      if (pcP) pcP.textContent = pendingCount;
+      if (pcA) pcA.textContent = aiCount;
+      if (pcD) pcD.textContent = doneCount;
 
       if (filtered.length === 0) {
         tbody.innerHTML = emptyState();
