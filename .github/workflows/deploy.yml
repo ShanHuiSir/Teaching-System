@@ -19,8 +19,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build with Maven
-        run: mvn package -B -DskipTests
+      - name: Test and Build with Maven
+        run: mvn package -B
 
       - name: Prepare JAR
         run: |

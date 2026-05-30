@@ -136,23 +136,20 @@
     const addForm = document.getElementById('add-student-form');
     const addCancel = document.getElementById('add-cancel');
     const searchInput = document.querySelector('.md-toolbar__search input');
+    const resetDemoDataBtn = document.getElementById('reset-demo-data');
     const addBtnText = addSubmitBtn ? addSubmitBtn.textContent : '确认新增';
     const portal = document.getElementById('global-dropdown-portal');
 
-    let students = [];
-    let filteredStudents = [];
     let pageIndex = 0;
     let pageSize = 20;
+    let totalPages = 1;
+    let totalElements = 0;
+    let searchTimer = null;
 
     function escapeHtml(value) {
       return String(value ?? '')
         .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
-    }
-
-    function getPageData() {
-      var start = pageIndex * pageSize;
-      return filteredStudents.slice(start, start + pageSize);
     }
 
     function renderTable(list) {
@@ -167,48 +164,58 @@
     }
 
     function renderPagination() {
-      var totalPages = Math.ceil(filteredStudents.length / pageSize) || 1;
+      var displayTotalPages = totalPages || 1;
       document.getElementById('student-page-info').textContent =
-        '第 ' + (pageIndex + 1) + ' 页 / 共 ' + totalPages + ' 页，共 ' + filteredStudents.length + ' 名学生';
+        '第 ' + (pageIndex + 1) + ' 页 / 共 ' + displayTotalPages + ' 页，共 ' + totalElements + ' 名学生';
       document.getElementById('student-prev-page').disabled = pageIndex <= 0;
-      document.getElementById('student-next-page').disabled = pageIndex >= totalPages - 1;
+      document.getElementById('student-next-page').disabled = pageIndex >= displayTotalPages - 1;
     }
 
     function goToPage(newPage) {
-      pageIndex = newPage;
-      renderTable(getPageData());
-      renderPagination();
-    }
-
-    function applyFilter() {
-      var q = searchInput.value.toLowerCase();
-      filteredStudents = q ? students.filter(function(s) {
-        return s.studentNo.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
-      }) : students.slice();
-      pageIndex = 0;
-      goToPage(0);
+      pageIndex = Math.max(newPage, 0);
+      loadStudents();
     }
 
     async function loadStudents() {
       studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;"><span class="spinner"></span></td></tr>';
       try {
-        var res = await fetch('/api/students');
+        var params = new URLSearchParams({
+          page: String(pageIndex),
+          size: String(pageSize)
+        });
+        var keyword = searchInput.value.trim();
+        if (keyword) params.set('keyword', keyword);
+        var res = await fetch('/api/students/page?' + params.toString());
         if (!res.ok) { var msg = await extractError(res); throw new Error(msg); }
-        students = await res.json();
-        applyFilter();
+        var data = await res.json();
+        pageIndex = data.page || 0;
+        totalPages = data.totalPages || 1;
+        totalElements = data.totalElements || 0;
+        if (totalElements > 0 && pageIndex >= totalPages) {
+          pageIndex = totalPages - 1;
+          await loadStudents();
+          return;
+        }
+        renderTable(data.content || []);
+        renderPagination();
       } catch (e) {
         showError(e.message);
         studentTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--md-sys-color-error);padding:32px;">加载失败，请刷新重试</td></tr>';
       }
     }
 
-    searchInput.addEventListener('input', applyFilter);
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function() {
+        pageIndex = 0;
+        loadStudents();
+      }, 250);
+    });
 
     document.getElementById('student-prev-page').addEventListener('click', function() {
       if (pageIndex > 0) goToPage(pageIndex - 1);
     });
     document.getElementById('student-next-page').addEventListener('click', function() {
-      var totalPages = Math.ceil(filteredStudents.length / pageSize) || 1;
       if (pageIndex < totalPages - 1) goToPage(pageIndex + 1);
     });
 
@@ -218,6 +225,29 @@
     addBtn.onclick = openAddDialog;
     addCancel.onclick = closeAddDialog;
     addDialog.onclick = function(e) { if (e.target === addDialog) closeAddDialog(); };
+
+    resetDemoDataBtn.addEventListener('click', async function() {
+      if (!confirm('确定重置演示数据吗？当前学生、作业和评价数据会恢复为初始化状态。')) return;
+      resetDemoDataBtn.disabled = true;
+      try {
+        var res = await fetch('/api/dev/reset-demo-data', { method: 'POST' });
+        if (!res.ok) { var err = await extractError(res); throw new Error(err); }
+        pageIndex = 0;
+        searchInput.value = '';
+        try {
+          localStorage.setItem('assignment-data-version', JSON.stringify({
+            reason: 'demo-data-reset',
+            time: Date.now()
+          }));
+        } catch (e) {}
+        showSuccess('演示数据已重置');
+        await loadStudents();
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        resetDemoDataBtn.disabled = false;
+      }
+    });
 
     addForm.addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -267,9 +297,9 @@
       menu.className = 'portal-dropdown';
       menu.id = 'portal-menu-' + id;
       menu.innerHTML =
-        '<a class="portal-dropdown__item" href="/evaluation?studentId=' + id + '&studentName=' + encodeURIComponent(studentName) + '">' +
+        '<a class="portal-dropdown__item" href="/submit?studentId=' + id + '">' +
           '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
-          '评价' +
+          '作业' +
         '</a>' +
         '<button class="portal-dropdown__item portal-dropdown__item--danger" data-delete="' + id + '">' +
           '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
