@@ -13,6 +13,8 @@ function initAssignmentPage(mode) {
   var submitBtnText = submitBtn ? submitBtn.textContent : '保存作业提交';
   var lastReloadAt = 0;
   var loadSeq = 0;
+  var lastNotifiedCount = -1;
+  var studentCache = {};
   if (!tbody) return;
 
   function escapeHtml(v) {
@@ -47,6 +49,10 @@ function initAssignmentPage(mode) {
       var res = await fetch('/api/students?_=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) return;
       var students = await res.json();
+      studentCache = {};
+      for (var i = 0; i < students.length; i++) {
+        studentCache[students[i].id] = students[i];
+      }
       select.innerHTML = '<option value="">请选择学生</option>' + students.map(function(s) {
         return '<option value="' + s.id + '">' + escapeHtml(s.studentNo) + ' - ' + escapeHtml(s.name) + '</option>';
       }).join('');
@@ -123,6 +129,36 @@ function initAssignmentPage(mode) {
         }).join('');
       }
       setStatus('已加载 ' + filtered.length + ' 条');
+      if (mode === 'pending' || mode === 'ai-reviewed') {
+        if (filtered.length === 0) lastNotifiedCount = 0;
+        if (filtered.length > 0 && filtered.length > lastNotifiedCount) {
+          var newItems = [];
+          for (var n = 0; n < Math.min(filtered.length, 3); n++) {
+            var sub = filtered[n];
+            var stu = studentCache[sub.studentId] || {};
+            newItems.push({
+              studentName: sub.studentName,
+              studentNo: stu.studentNo || '',
+              className: stu.className || '',
+              submissionTitle: sub.title,
+              note: sub.remark || '',
+              submissionId: sub.id,
+              studentId: sub.studentId
+            });
+          }
+          var msg = filtered.length + '份新作业' + (mode === 'pending' ? '待审批' : '待复核');
+          showSnackbar({
+            message: msg,
+            items: newItems,
+            onView: function(item) {
+              if (item && item.submissionId) {
+                window.location.href = '/evaluation?submissionId=' + item.submissionId + '&studentId=' + item.studentId + '&studentName=' + encodeURIComponent(item.studentName) + '&fileName=' + encodeURIComponent(filtered[0].fileName || '');
+              }
+            }
+          });
+        }
+        lastNotifiedCount = filtered.length;
+      }
     } catch(e) {
       setStatus(e.message, true);
       showError(e.message);
