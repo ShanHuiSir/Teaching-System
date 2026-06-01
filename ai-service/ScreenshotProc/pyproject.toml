@@ -1,0 +1,23 @@
+[project]
+name = "screenshotproc"
+version = "0.1.0"
+description = "Extract text from screenshots via EasyOCR, outputting line-level JSON with bounding boxes"
+requires-python = ">=3.13"
+dependencies = [
+    "easyocr",
+    "fastapi>=0.136.3",
+    "Pillow",
+    "python-multipart>=0.0.29",
+    "uvicorn[standard]>=0.48.0",
+]
+
+[project.scripts]
+screenshotproc = "screenshotproc.__main__:main"
+screenshotproc-serve = "screenshotproc.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true

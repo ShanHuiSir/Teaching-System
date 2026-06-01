@@ -1,0 +1,26 @@
+[project]
+name = "docxconv"
+version = "0.5.0"
+description = "Convert DOCX files via LibreOffice or Pandoc+WeasyPrint pipelines, with optional structure annotation"
+requires-python = ">=3.13"
+dependencies = [
+    "PyMuPDF",
+    "fastapi>=0.136.3",
+    "lxml",
+    "Pillow",
+    "python-docx>=1.2.0",
+    "python-multipart>=0.0.29",
+    "uvicorn[standard]>=0.48.0",
+    "weasyprint",
+]
+
+[project.scripts]
+docxconv = "docxconv.__main__:main"
+docxconv-serve = "docxconv.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
