@@ -37,6 +37,18 @@ public class WorkSubmission {
     @Schema(description = "作品文件名", example = "student-work.zip")
     private String fileName;
 
+    @Column(name = "file_path", length = 1024)
+    @Schema(description = "服务器保存路径", example = "uploads/submissions/1/report.docx")
+    private String filePath;
+
+    @Column(name = "file_size")
+    @Schema(description = "文件大小，单位字节", example = "20480")
+    private Long fileSize;
+
+    @Column(name = "content_type", length = 128)
+    @Schema(description = "文件 MIME 类型", example = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    private String contentType;
+
     @Column(name = "work_type", nullable = false, length = 32)
     @Schema(description = "作品类型", example = "实验报告")
     private String workType;
@@ -94,6 +106,30 @@ public class WorkSubmission {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
     public String getWorkType() {

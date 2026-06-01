@@ -1,25 +1,31 @@
 package com.teachingeval;
 
 import com.teachingeval.config.DataInitializer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.util.FileSystemUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.upload.root=target/test-uploads")
 @AutoConfigureMockMvc
 class TeachingSystemFlowTest {
 
@@ -31,6 +37,7 @@ class TeachingSystemFlowTest {
 
     @BeforeEach
     void resetData() {
+        FileSystemUtils.deleteRecursively(Paths.get("target/test-uploads").toFile());
         dataInitializer.resetDemoData();
     }
 
@@ -148,5 +155,64 @@ class TeachingSystemFlowTest {
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .andExpect(header().exists("Content-Disposition"))
                 .andExpect(result -> assertThat(result.getResponse().getContentAsByteArray()).isNotEmpty());
+    }
+
+    @Test
+    void uploadSubmissionStoresFileAndReturnsMetadata() throws Exception {
+        String studentPageResponse = mockMvc.perform(get("/api/students/page")
+                        .param("page", "0")
+                        .param("size", "1"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Integer studentId = com.jayway.jsonpath.JsonPath.read(studentPageResponse, "$.content[0].id");
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "real-upload.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "真实上传测试内容".getBytes(StandardCharsets.UTF_8)
+        );
+
+        String response = mockMvc.perform(multipart("/api/submissions/upload")
+                        .file(file)
+                        .param("studentId", String.valueOf(studentId))
+                        .param("title", "真实文件上传作业")
+                        .param("workType", "实验报告")
+                        .param("remark", "验证真实文件上传"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.studentName").value("张三"))
+                .andExpect(jsonPath("$.fileName").value("real-upload.docx"))
+                .andExpect(jsonPath("$.fileSize").value(file.getSize()))
+                .andExpect(jsonPath("$.contentType").value(file.getContentType()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Integer submissionId = com.jayway.jsonpath.JsonPath.read(response, "$.id");
+        String filePath = com.jayway.jsonpath.JsonPath.read(response, "$.filePath");
+        assertThat(filePath).isEqualTo("target/test-uploads/submissions/" + submissionId + "/real-upload.docx");
+        Path savedPath = Paths.get(filePath);
+        assertThat(Files.exists(savedPath)).isTrue();
+        assertThat(Files.readString(savedPath)).isEqualTo("真实上传测试内容");
+    }
+
+    @Test
+    void uploadSubmissionRejectsUnsupportedFileType() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "unsafe.exe",
+                "application/octet-stream",
+                "bad".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(multipart("/api/submissions/upload")
+                        .file(file)
+                        .param("studentId", "1")
+                        .param("title", "不支持的文件")
+                        .param("workType", "实验报告"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("不支持的文件类型"));
     }
 }

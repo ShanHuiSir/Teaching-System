@@ -6,9 +6,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -32,10 +35,34 @@ public class ApiExceptionHandler {
         return new ErrorResponse(message);
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingServletRequestParameter(MissingServletRequestParameterException exception) {
+        return new ErrorResponse("缺少必要参数：" + exception.getParameterName());
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingServletRequestPart(MissingServletRequestPartException exception) {
+        return new ErrorResponse("缺少必要文件：" + exception.getRequestPartName());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMaxUploadSizeExceeded(MaxUploadSizeExceededException exception) {
+        return new ErrorResponse("上传文件不能超过50MB");
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleHttpMessageNotReadable(HttpMessageNotReadableException exception) {
         return new ErrorResponse("请求体格式错误");
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleIllegalStateException(IllegalStateException exception) {
+        return new ErrorResponse(exception.getMessage());
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
