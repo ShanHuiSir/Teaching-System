@@ -16,8 +16,7 @@ app = FastAPI(
     description="文件预处理与 AI 自动评分服务",
     version="0.7.0",
     servers=[
-        {"url": "/ai", "description": "生产环境 (通过 nginx 代理到本服务)"},
-        {"url": "http://localhost:8000", "description": "本地开发直连"},
+        {"url": "/ai", "description": "通过 nginx 代理访问"},
     ],
 )
 
