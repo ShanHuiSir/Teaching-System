@@ -46,6 +46,8 @@ desktop.ini
 # === Environment ===
 .env
 .env.local
-
 # === Runtime uploads ===
 uploads/
+
+# === DeepSeek docs (large HTML, not tracked) ===
+/docs/开发期文档/DeepSeek接入指南/
