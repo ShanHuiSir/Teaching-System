@@ -1,6 +1,6 @@
 # 教学评价系统
 
-轻量级教师端作品评价系统，使用 Spring Boot 与 Maven。当前版本已跑通教师端演示主流程，支持学生管理、作品提交登记、AI 模拟评价、教师复核、统计摘要和 Excel 导出。真实文件上传、真实大模型接入和独立前端工程仍在后续阶段推进。
+轻量级教师端作品评价系统，使用 Spring Boot 与 Maven。当前版本已跑通教师端演示主流程，支持学生管理、真实文件上传、作品提交登记、可配置 Py 预处理转发、AI 模拟评价、教师复核、统计摘要和 Excel 导出。真实大模型接入和独立前端工程仍在后续阶段推进。
 
 ## 技术栈
 
@@ -18,6 +18,8 @@
 - 固定账号登录：`teacher / 123456`
 - 学生管理：分页查询、关键字搜索、新增、删除、重置演示数据
 - 作品提交：选择学生并登记作品标题、类型、文件名和备注
+- 真实文件上传：`POST /api/submissions/upload` 保存原始文件并记录路径、大小和 MIME 类型
+- Py 预处理转发：上传成功后可配置调用 Py 侧 `/api/preprocess`，默认关闭
 - 作业状态：未审批、AI 已审批、已完成三类列表
 - AI 模拟评价：通过 `FakeAIService` 生成评分、问题和评语
 - 教师复核：保存最终分数和评语
@@ -27,8 +29,8 @@
 
 ## 当前未完成 / 后续计划
 
-- 真实文件上传尚未实现，目前保存作品元数据和文件名。
 - 真实大模型尚未接入，目前使用 `FakeAIService` 跑通流程。
+- Py 预处理接口需等待 C 同学服务稳定后开启 `app.preprocess.enabled=true` 做真实联调。
 - 登录仍是演示级固定账号，尚未接入完整认证和权限体系。
 - 独立前端工程尚未落地，目前仍以 Thymeleaf 页面作为可演示版本。
 - 自动化测试已覆盖最小主流程，后续仍需扩展更多异常场景和页面回归。
@@ -100,8 +102,10 @@ src/main/java/com/teachingeval
     ├── AIService.java
     ├── EvaluationService.java
     ├── ExportService.java
+    ├── PreprocessClient.java
     ├── StatisticsService.java
     ├── StudentService.java
+    ├── PreprocessResult.java
     ├── SubmissionService.java
     └── impl/FakeAIService.java
 
