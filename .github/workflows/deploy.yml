@@ -138,12 +138,28 @@ jobs:
             echo "=== 初始化 Python 环境 ==="
             AI_DIR="$BASE/ai-service"
             cd "$AI_DIR"
-            if [ ! -d ".venv" ]; then
+
+            # recreate venv if interpeter changed or stale
+            NEED_VENV=0
+            [ ! -d .venv ] && NEED_VENV=1
+            [ -d .venv ] && [ "$(.venv/bin/python -V 2>/dev/null || echo none)" != "Python 3.13.0" ] && NEED_VENV=1
+            if [ $NEED_VENV -eq 1 ]; then
+              rm -rf .venv
               /usr/local/bin/python3.13 -m venv .venv
             fi
             source .venv/bin/activate
-            pip install -q -r requirements.txt
-            pip install -q -e DocxConv -e Evaluator
+
+            # install deps with retry
+            for attempt in 1 2 3; do
+              echo "pip install attempt $attempt..."
+              if pip install --timeout 120 --retries 5 -r requirements.txt \
+                 && pip install --timeout 120 --retries 5 -e DocxConv -e Evaluator; then
+                echo "pip install OK"
+                break
+              fi
+              echo "pip install attempt $attempt failed, retrying..."
+              sleep 5
+            done || { echo "pip install failed after 3 attempts"; exit 1; }
 
             # DEEPSEEK_API_KEY .env
             cat > .env << 'ENVEOF'
