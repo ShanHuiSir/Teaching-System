@@ -24,7 +24,8 @@
 - `ai-service` 当前已有 `DocxConv`、`ArchiveProc`、`ScreenshotProc` 三个子模块。
 - `DocxConv` 已支持 DOCX 转 JSON，符合 AI 评价主输入方向。
 - Java 侧真实文件上传最小闭环已完成：`POST /api/submissions/upload` 保存文件并返回元数据。
-- Java 调 Py 服务和真实 AI 接入尚未完成。
+- Java 侧已具备可配置 HTTP 调 Py 预处理服务能力，默认关闭，等待 C 同学统一 `/api/preprocess` 后开启联调。
+- 真实 AI 大模型接入尚未完成。
 
 ## 队长已完成内容
 
@@ -34,7 +35,8 @@
 | 文件保存 | 上传文件保存到 `uploads/submissions/{submissionId}/原始文件名` | 测试环境写入 `target/test-uploads` |
 | 文件元数据 | 返回并保存 `filePath`、`fileSize`、`contentType` | 已在响应断言中验证 |
 | 上传错误 | 不支持文件类型返回 `{ "message": "不支持的文件类型" }` | 已通过 MockMvc 测试 |
-| 数据库字段 | `submission` 增加 `file_path`、`file_size`、`content_type` | `sql/schema.sql` 和数据库设计文档已同步 |
+| Py 预处理转发 | 上传成功后可通过 HTTP multipart 将文件和元数据转发给 Py 侧 | 默认关闭；Mock HTTP 服务联调测试已通过 |
+| 数据库字段 | `submission` 增加文件元数据和预处理状态字段 | `sql/schema.sql` 和数据库设计文档已同步 |
 
 ## B 同学任务清单
 
@@ -76,7 +78,7 @@
 | P0 | 保存文件元数据 | 记录原始文件名、保存路径、文件大小和 Content-Type；如暂不改库，也要在文档中说明临时存储规则 | 已完成 |
 | P0 | 上传异常处理 | 限制空文件、超大文件和不支持类型，返回 `{ "message": "..." }` | 已完成 |
 | P0 | 做三类样例验收 | 使用简单 DOCX、复杂 DOCX、转换失败场景验收 Py 侧返回 | 测试记录 |
-| P1 | Java 调 Py 服务方案 | 设计 HTTP 客户端，后续替换或并行保留 `FakeAIService` | Java-Py 联调方案 |
+| P1 | Java 调 Py 服务方案 | 设计 HTTP 客户端，后续替换或并行保留 `FakeAIService` | 已完成可配置 `PreprocessClient` |
 | P1 | 更新文档 | 将接口契约、测试结果和遗留问题写进开发期文档 | 开发期文档更新 |
 
 ## 建议接口契约草案
@@ -112,11 +114,29 @@ uploads/submissions/{submissionId}/原始文件名
   "filePath": "uploads/submissions/1/report.docx",
   "fileSize": 20480,
   "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "preprocessStatus": "SKIPPED",
+  "preprocessMessage": "Py预处理未启用",
+  "preprocessResult": null,
   "workType": "实验报告",
   "remark": "真实上传测试",
   "submittedAt": "2026-06-01T10:00:00"
 }
 ```
+
+Java 侧调用 Py 预处理服务配置：
+
+```properties
+app.preprocess.enabled=false
+app.preprocess.endpoint-url=http://localhost:8000/api/preprocess
+app.preprocess.connect-timeout-ms=3000
+app.preprocess.read-timeout-ms=10000
+```
+
+说明：
+
+- `app.preprocess.enabled=false` 时，上传主流程仍成功，返回 `preprocessStatus=SKIPPED`。
+- `app.preprocess.enabled=true` 时，Java 在保存文件后调用 Py 侧接口。
+- Py 服务异常不会阻断上传主流程，Java 会记录 `preprocessStatus=FAILED` 和失败说明。
 
 ### Py 侧统一预处理接口
 
@@ -125,6 +145,12 @@ POST /api/preprocess
 Content-Type: multipart/form-data
 
 file: UploadFile
+submissionId: Long
+studentId: Long
+title: String
+workType: String
+originalFilename: String
+contentType: String
 ```
 
 建议返回字段：
@@ -152,8 +178,9 @@ file: UploadFile
 | 3 | LibreOffice 渲染成功标记 `degraded` | C 同学 | 返回 `renderStatus=degraded` |
 | 4 | 渲染失败不阻断 | C 同学 | 返回结构化内容和 `renderStatus=failed` |
 | 5 | Java 上传接口可用 | 队长 | 已通过：真实文件提交后生成作业记录并保存文件 |
-| 6 | 前端文件上传联调 | B 同学 | 页面能选择文件并调用 Java 上传接口 |
-| 7 | 队长完成接口契约说明 | 队长 | Java-Py 请求和返回字段明确 |
+| 6 | Java 转发 Py 能力可用 | 队长 | 已通过：Mock Py HTTP 服务收到文件和元数据 |
+| 7 | 前端文件上传联调 | B 同学 | 页面能选择文件并调用 Java 上传接口 |
+| 8 | 队长完成接口契约说明 | 队长 | Java-Py 请求和返回字段明确 |
 
 ## 群内通知文本
 
@@ -164,5 +191,5 @@ B 同学负责前端：继续推进 frontend、请求封装、学生管理样板
 
 C 同学负责 ai-service：先同步最新 main，避免删日报；然后补 renderStatus/renderEngine/renderWarnings，LibreOffice 转换成功标记 degraded，转换失败不能阻断 DOCX JSON 主流程；同时补统一 /api/preprocess 接口、依赖说明和三类测试样例。
 
-队长负责 Java 真实文件上传最小闭环、Java-Py 接口契约、分支基线检查，以及简单 DOCX、复杂 DOCX、失败场景的联调验收。
+队长负责 Java 真实文件上传最小闭环、Java-Py 接口契约、可配置 HTTP 转发能力、分支基线检查，以及简单 DOCX、复杂 DOCX、失败场景的联调验收。
 ```
