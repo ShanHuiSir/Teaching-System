@@ -17,6 +17,7 @@ _load_dotenv(Path(__file__).resolve().parent / ".env")
 HOST = os.getenv("AI_SERVICE_HOST", "0.0.0.0")
 PORT = int(os.getenv("AI_SERVICE_PORT", "8000"))
 RELOAD = os.getenv("AI_SERVICE_RELOAD", "false").lower() == "true"
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080,https://redtree.miprota.cc").split(",")
 
 # ── DeepSeek / LLM ────────────────────────────────────────────────────
 
