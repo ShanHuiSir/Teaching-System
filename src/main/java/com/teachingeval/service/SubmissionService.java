@@ -32,14 +32,17 @@ public class SubmissionService {
 
     private final SubmissionRepository submissionRepository;
     private final StudentRepository studentRepository;
+    private final PreprocessClient preprocessClient;
     private final Path uploadRoot;
     private final String uploadRootForResponse;
 
     public SubmissionService(SubmissionRepository submissionRepository,
                              StudentRepository studentRepository,
+                             PreprocessClient preprocessClient,
                              @Value("${app.upload.root:uploads}") String uploadRoot) {
         this.submissionRepository = submissionRepository;
         this.studentRepository = studentRepository;
+        this.preprocessClient = preprocessClient;
         Path configuredUploadRoot = Paths.get(uploadRoot).normalize();
         this.uploadRoot = configuredUploadRoot.toAbsolutePath().normalize();
         this.uploadRootForResponse = configuredUploadRoot.toString().replace('\\', '/');
@@ -88,6 +91,18 @@ public class SubmissionService {
         WorkSubmission saved = submissionRepository.save(submission);
         Path savedPath = storeFile(saved.getId(), originalFileName, file);
         saved.setFilePath(toResponsePath(savedPath));
+        PreprocessResult preprocessResult = preprocessClient.submit(
+                saved.getId(),
+                saved.getStudentId(),
+                saved.getTitle(),
+                saved.getWorkType(),
+                saved.getFileName(),
+                saved.getContentType(),
+                savedPath
+        );
+        saved.setPreprocessStatus(preprocessResult.getStatus());
+        saved.setPreprocessMessage(preprocessResult.getMessage());
+        saved.setPreprocessResult(preprocessResult.getRawResponse());
         return submissionRepository.save(saved);
     }
 

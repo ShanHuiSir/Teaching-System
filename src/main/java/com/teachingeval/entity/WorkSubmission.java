@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -48,6 +49,19 @@ public class WorkSubmission {
     @Column(name = "content_type", length = 128)
     @Schema(description = "文件 MIME 类型", example = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     private String contentType;
+
+    @Column(name = "preprocess_status", length = 32)
+    @Schema(description = "Py 预处理状态", example = "SUCCESS")
+    private String preprocessStatus;
+
+    @Column(name = "preprocess_message", length = 512)
+    @Schema(description = "Py 预处理状态说明", example = "Py预处理完成")
+    private String preprocessMessage;
+
+    @Lob
+    @Column(name = "preprocess_result")
+    @Schema(description = "Py 预处理原始响应 JSON")
+    private String preprocessResult;
 
     @Column(name = "work_type", nullable = false, length = 32)
     @Schema(description = "作品类型", example = "实验报告")
@@ -130,6 +144,30 @@ public class WorkSubmission {
 
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    public String getPreprocessStatus() {
+        return preprocessStatus;
+    }
+
+    public void setPreprocessStatus(String preprocessStatus) {
+        this.preprocessStatus = preprocessStatus;
+    }
+
+    public String getPreprocessMessage() {
+        return preprocessMessage;
+    }
+
+    public void setPreprocessMessage(String preprocessMessage) {
+        this.preprocessMessage = preprocessMessage;
+    }
+
+    public String getPreprocessResult() {
+        return preprocessResult;
+    }
+
+    public void setPreprocessResult(String preprocessResult) {
+        this.preprocessResult = preprocessResult;
     }
 
     public String getWorkType() {
