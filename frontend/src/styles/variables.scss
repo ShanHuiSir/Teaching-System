@@ -1,0 +1,112 @@
+// ===================================================================
+// Design Tokens — SCSS variables (auto-injected via vite additionalData)
+// ===================================================================
+
+// ── Color: Primary ──
+$primary:            #1A56DB;
+$on-primary:         #FFFFFF;
+$primary-container:  #DBE4FF;
+$on-primary-container: #001A41;
+
+// ── Color: Secondary ──
+$secondary:          #475569;
+$secondary-container: #E2E8F0;
+$on-secondary-container: #0F172A;
+
+// ── Color: Tertiary ──
+$tertiary: #0D9488;
+
+// ── Color: Error ──
+$error:              #DC2626;
+$on-error:           #FFFFFF;
+$error-container:    #FEE2E2;
+$on-error-container: #7F1D1D;
+
+// ── Color: Warning / Success ──
+$warning:            #F59E0B;
+$warning-container:  #FEF3C7;
+$success:            #16A34A;
+
+// ── Color: Surface ──
+$surface:                    #F8FAFC;
+$surface-dim:                #E2E8F0;
+$surface-bright:             #FFFFFF;
+$surface-container-lowest:   #FFFFFF;
+$surface-container-low:      #F1F5F9;
+$surface-container:          #EEF2F6;
+$surface-container-high:     #E8ECF1;
+$surface-container-highest:  #E2E8F0;
+
+$on-surface:         #0F172A;
+$on-surface-variant: #475569;
+$outline:            #94A3B8;
+$outline-variant:    #CBD5E1;
+
+// ── Shape ──
+$shape-xs:   4px;
+$shape-sm:   8px;
+$shape-md:   12px;
+$shape-lg:   16px;
+$shape-xl:   24px;
+$shape-full: 9999px;
+
+// ── Spacing ──
+$space-1:  4px;
+$space-2:  8px;
+$space-3:  12px;
+$space-4:  16px;
+$space-5:  20px;
+$space-6:  24px;
+$space-8:  32px;
+$space-10: 40px;
+
+// ── Elevation ──
+$elevation-1: 0 1px 2px 0 rgba(0,0,0,.05), 0 1px 3px 0 rgba(0,0,0,.08);
+$elevation-2: 0 1px 2px 0 rgba(0,0,0,.06), 0 2px 6px 2px rgba(0,0,0,.04);
+$elevation-3: 0 4px 8px 3px rgba(0,0,0,.06), 0 1px 3px 0 rgba(0,0,0,.08);
+
+// ── Typography ──
+$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+
+@mixin font($size, $height, $weight: 400) {
+  font: $weight #{$size}/#{$height} $font-family;
+}
+
+// ── CSS Custom Properties (for runtime inline styles) ──
+:root {
+  --primary: #{$primary};
+  --on-primary: #{$on-primary};
+  --primary-container: #{$primary-container};
+  --on-primary-container: #{$on-primary-container};
+  --secondary: #{$secondary};
+  --secondary-container: #{$secondary-container};
+  --tertiary: #{$tertiary};
+  --error: #{$error};
+  --error-container: #{$error-container};
+  --warning: #{$warning};
+  --warning-container: #{$warning-container};
+  --surface: #{$surface};
+  --surface-bright: #{$surface-bright};
+  --surface-container-low: #{$surface-container-low};
+  --surface-container-highest: #{$surface-container-highest};
+  --on-surface: #{$on-surface};
+  --on-surface-variant: #{$on-surface-variant};
+  --outline: #{$outline};
+  --outline-variant: #{$outline-variant};
+  --shape-xs: #{$shape-xs};
+  --shape-sm: #{$shape-sm};
+  --shape-md: #{$shape-md};
+  --shape-lg: #{$shape-lg};
+  --shape-xl: #{$shape-xl};
+  --shape-full: #{$shape-full};
+  --space-1: #{$space-1};
+  --space-2: #{$space-2};
+  --space-3: #{$space-3};
+  --space-4: #{$space-4};
+  --space-5: #{$space-5};
+  --space-6: #{$space-6};
+  --space-8: #{$space-8};
+  --elevation-1: #{$elevation-1};
+  --elevation-2: #{$elevation-2};
+  --elevation-3: #{$elevation-3};
+}
