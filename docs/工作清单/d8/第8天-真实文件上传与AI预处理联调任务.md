@@ -2,11 +2,20 @@
 
 ## 今日目标
 
-第 8 天目标不是一次性完成真实 AI，而是先把真实文件上传和 Py 侧预处理服务做成可联调的基础能力：
+第 8 天目标不是一次性完成真实 AI，而是把真实文件上传从原计划第 9 天前移到今天，先完成上传最小闭环，并继续推进 Py 侧预处理服务可联调能力：
 
-1. B 同学继续推进前端工程，补作业文件上传入口和 AI 处理状态展示。
+1. B 同学继续推进前端工程，完成作业文件上传入口、上传状态和错误提示。
 2. C 同学完善 `ai-service`，补齐 DOCX 预处理降级机制、统一预处理接口和运行说明。
-3. 队长定义 Java-Py 接口契约，准备 Java 侧真实文件上传最小闭环。
+3. 队长实现或组织 Java 侧真实文件上传最小闭环，并定义 Java-Py 接口契约。
+
+## 较原第 8 天安排新增内容
+
+| 新增项 | 原安排 | 今日调整 | 影响 |
+| --- | --- | --- | --- |
+| 真实文件上传后端接口 | 原本第 8 天只准备 Java 上传接口方案，第 9 天再联调 | 今日直接做 Java 侧 `multipart/form-data` 上传接口 | 文件上传从设计前移到实现 |
+| 文件保存与提交记录关联 | 原本只明确文件路径、文件 ID 和提交记录关系 | 今日至少完成文件保存和 `submissionId` 关联 | 后续 Py 预处理可拿到真实文件 |
+| 前端上传入口 | 原本只是预留文件选择和状态展示 | 今日要求页面可选择文件并调用上传接口 | B 同学任务从 UI 预留变成上传联调 |
+| 上传异常处理 | 原本后续再完善 | 今日需要最小支持文件为空、类型不支持、大小超限、保存失败提示 | 演示时不会只保存文件名 |
 
 ## 当前基线
 
@@ -14,7 +23,7 @@
 - `origin/feature/d8-base` 已新增 `ai-service` 初版。
 - `ai-service` 当前已有 `DocxConv`、`ArchiveProc`、`ScreenshotProc` 三个子模块。
 - `DocxConv` 已支持 DOCX 转 JSON，符合 AI 评价主输入方向。
-- 真实文件上传、Java 调 Py 服务、真实 AI 接入尚未完成。
+- 真实文件上传今天进入实现目标；Java 调 Py 服务和真实 AI 接入尚未完成。
 
 ## B 同学任务清单
 
@@ -23,7 +32,8 @@
 | P0 | 继续推进独立前端工程 | 建立或完善 `frontend/`，配置本地启动命令，默认后端地址指向 `http://localhost:8080` | 前端页面能本地启动并打开 |
 | P0 | 建立请求封装 | 封装 `GET`、`POST`、`DELETE` 和后续文件上传请求，统一处理 JSON、HTTP 错误和 `{ "message": "..." }` 错误 | 页面中不重复散写 `fetch` 细节 |
 | P0 | 学生管理样板页 | 调用 `GET /api/students` 或 `GET /api/students/page` 展示学生列表 | 页面能看到学生学号、姓名、班级 |
-| P0 | 作业文件上传入口 | 在作业提交页预留文件选择控件，展示文件名、大小、上传中、上传成功、上传失败状态 | 页面能选择文件，并能展示上传状态 |
+| P0 | 作业文件上传入口 | 在作业提交页加入文件选择控件，展示文件名、大小、上传中、上传成功、上传失败状态 | 页面能选择文件，并能展示上传状态 |
+| P0 | 调用真实上传接口 | 使用 `multipart/form-data` 调用 Java 上传接口，提交学生、标题、类型、备注和文件 | 页面提交后后端能保存真实文件并返回提交记录 |
 | P1 | AI 评价状态展示 | 在评价页或作业详情区域预留 AI 评价中、评价成功、评价失败状态 | 用户能看懂当前 AI 处理进度 |
 | P1 | 预处理 warning 展示 | 后端返回 `renderWarnings` 时，在页面展示提示，例如 LibreOffice 版式可能不准 | `degraded` 或 `failed` 时页面有明确提示 |
 | P1 | AI 评价结果展示适配 | 展示 AI 分数、问题、评语，并预留预处理状态展示位置 | AI 结果和 warning 能同时显示 |
@@ -51,7 +61,9 @@
 | --- | --- | --- | --- |
 | P0 | 定 Java-Py 接口契约 | 明确 Java 上传什么、Py 返回什么，尤其是 `renderStatus`、`renderEngine`、`renderWarnings` | 接口契约说明 |
 | P0 | 控制分支基线 | 检查 `d8-base` 必须同步最新 `main`，不能误删日报和主线文档 | PR 检查结论 |
-| P0 | 准备 Java 文件上传最小闭环 | 设计或实现 `multipart/form-data` 上传接口，保存原始文件并关联 `submissionId` | Java 上传接口方案或代码 |
+| P0 | 实现 Java 文件上传最小闭环 | 新增或改造 `multipart/form-data` 上传接口，保存原始文件并关联 `submissionId` | Java 上传接口代码 |
+| P0 | 保存文件元数据 | 记录原始文件名、保存路径、文件大小和 Content-Type；如暂不改库，也要在文档中说明临时存储规则 | 文件可追踪、可传给 Py 侧 |
+| P0 | 上传异常处理 | 限制空文件、超大文件和不支持类型，返回 `{ "message": "..." }` | 前端能显示明确错误原因 |
 | P0 | 做三类样例验收 | 使用简单 DOCX、复杂 DOCX、转换失败场景验收 Py 侧返回 | 测试记录 |
 | P1 | Java 调 Py 服务方案 | 设计 HTTP 客户端，后续替换或并行保留 `FakeAIService` | Java-Py 联调方案 |
 | P1 | 更新文档 | 将接口契约、测试结果和遗留问题写进开发期文档 | 开发期文档更新 |
@@ -71,6 +83,12 @@ remark: String
 file: MultipartFile
 ```
 
+今日最小保存规则：
+
+```text
+uploads/submissions/{submissionId}/原始文件名
+```
+
 最小返回字段：
 
 ```json
@@ -80,6 +98,9 @@ file: MultipartFile
   "studentName": "张三",
   "title": "实验报告",
   "fileName": "report.docx",
+  "filePath": "uploads/submissions/1/report.docx",
+  "fileSize": 20480,
+  "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "workType": "实验报告",
   "remark": "真实上传测试",
   "submittedAt": "2026-06-01T10:00:00"
@@ -119,17 +140,18 @@ file: UploadFile
 | 2 | DOCX 转 JSON 可用 | C 同学 | 简单 DOCX 返回结构化 JSON |
 | 3 | LibreOffice 渲染成功标记 `degraded` | C 同学 | 返回 `renderStatus=degraded` |
 | 4 | 渲染失败不阻断 | C 同学 | 返回结构化内容和 `renderStatus=failed` |
-| 5 | 前端文件上传入口可见 | B 同学 | 页面能选择文件并显示状态 |
-| 6 | 队长完成接口契约说明 | 队长 | Java-Py 请求和返回字段明确 |
+| 5 | Java 上传接口可用 | 队长 | 使用真实文件提交后生成作业记录并保存文件 |
+| 6 | 前端文件上传联调 | B 同学 | 页面能选择文件并调用 Java 上传接口 |
+| 7 | 队长完成接口契约说明 | 队长 | Java-Py 请求和返回字段明确 |
 
 ## 群内通知文本
 
 ```text
-第 8 天任务重点是：真实文件上传启动 + AI 预处理服务可降级改造。
+第 8 天任务重点调整为：真实文件上传最小闭环 + AI 预处理服务可降级改造。
 
-B 同学负责前端：继续推进 frontend、请求封装、学生管理样板页，同时在作业提交页预留文件上传入口，并准备展示 AI 评价状态和 renderWarnings。
+B 同学负责前端：继续推进 frontend、请求封装、学生管理样板页，同时在作业提交页完成文件选择、上传状态、错误提示，并调用 Java 真实上传接口。
 
 C 同学负责 ai-service：先同步最新 main，避免删日报；然后补 renderStatus/renderEngine/renderWarnings，LibreOffice 转换成功标记 degraded，转换失败不能阻断 DOCX JSON 主流程；同时补统一 /api/preprocess 接口、依赖说明和三类测试样例。
 
-队长负责 Java-Py 接口契约、分支基线检查、Java 文件上传最小闭环方案，以及简单 DOCX、复杂 DOCX、失败场景的联调验收。
+队长负责 Java 真实文件上传最小闭环、Java-Py 接口契约、分支基线检查，以及简单 DOCX、复杂 DOCX、失败场景的联调验收。
 ```
