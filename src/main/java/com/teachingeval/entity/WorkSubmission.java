@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -36,6 +37,31 @@ public class WorkSubmission {
     @Column(name = "file_name", nullable = false, length = 512)
     @Schema(description = "作品文件名", example = "student-work.zip")
     private String fileName;
+
+    @Column(name = "file_path", length = 1024)
+    @Schema(description = "服务器保存路径", example = "uploads/submissions/1/report.docx")
+    private String filePath;
+
+    @Column(name = "file_size")
+    @Schema(description = "文件大小，单位字节", example = "20480")
+    private Long fileSize;
+
+    @Column(name = "content_type", length = 128)
+    @Schema(description = "文件 MIME 类型", example = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    private String contentType;
+
+    @Column(name = "preprocess_status", length = 32)
+    @Schema(description = "Py 预处理状态", example = "SUCCESS")
+    private String preprocessStatus;
+
+    @Column(name = "preprocess_message", length = 512)
+    @Schema(description = "Py 预处理状态说明", example = "Py预处理完成")
+    private String preprocessMessage;
+
+    @Lob
+    @Column(name = "preprocess_result")
+    @Schema(description = "Py 预处理原始响应 JSON")
+    private String preprocessResult;
 
     @Column(name = "work_type", nullable = false, length = 32)
     @Schema(description = "作品类型", example = "实验报告")
@@ -94,6 +120,54 @@ public class WorkSubmission {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public String getPreprocessStatus() {
+        return preprocessStatus;
+    }
+
+    public void setPreprocessStatus(String preprocessStatus) {
+        this.preprocessStatus = preprocessStatus;
+    }
+
+    public String getPreprocessMessage() {
+        return preprocessMessage;
+    }
+
+    public void setPreprocessMessage(String preprocessMessage) {
+        this.preprocessMessage = preprocessMessage;
+    }
+
+    public String getPreprocessResult() {
+        return preprocessResult;
+    }
+
+    public void setPreprocessResult(String preprocessResult) {
+        this.preprocessResult = preprocessResult;
     }
 
     public String getWorkType() {
