@@ -13,110 +13,167 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # ── Java ──────────────────────────────────────────────────────
+
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Test and Build with Maven
-        run: mvn package -B
+      - name: Maven Package
+        run: mvn package -B -DskipTests
 
       - name: Prepare JAR
         run: |
           JAR=$(ls target/Teaching-System-*.jar | grep -v '\.original$' | head -1)
           cp "$JAR" target/app.jar
 
-      - name: Deploy JAR to Server
+      # ── Frontend ──────────────────────────────────────────────────
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      # ── Stage artifacts ──────────────────────────────────────────
+
+      - name: Stage Deploy Directory
+        run: |
+          mkdir -p deploy
+          cp target/app.jar deploy/
+          cp -r frontend/dist deploy/
+          cp -r ai-service deploy/
+
+      # ── Deploy to server ─────────────────────────────────────────
+
+      - name: Upload to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          source: "target/app.jar"
-          target: "/usr/share/teaching-system"
+          source: deploy/
+          target: /usr/share/teaching-system
           strip_components: 1
+          rm: false
 
-      - name: Restart Service
+      # ── Restart all services ──────────────────────────────────────
+
+      - name: Restart Services
         uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          # 服务器默认 Shell 是 Fish（< 3.5 不支持 heredoc），通过 bash -c 配合单引号多行字符串切换至 Bash
           script: |
             bash -c '
             set -euo pipefail
 
-            APP_DIR="/usr/share/teaching-system"
-            JAR_FILE="$APP_DIR/app.jar"
-            LOG_FILE="$APP_DIR/app.log"
-            PORT=8080
+            BASE="/usr/share/teaching-system"
+            JAVA_PORT=8080
+            AI_PORT=8000
             MAX_WAIT=30
 
-            # ── 停止占用端口的旧进程 ──
-            echo "=== 检查端口 $PORT 上的旧进程 ==="
-            OLD_PIDS=$(lsof -t -i:$PORT 2>/dev/null || true)
-
-            if [ -n "$OLD_PIDS" ]; then
-              for OLD_PID in $OLD_PIDS; do
-                echo "发现旧进程 PID: $OLD_PID，发送 SIGTERM..."
-                kill -15 "$OLD_PID" 2>/dev/null || true
+            # ── Stop Java ──────────────────────────────────────────
+            stop_port() {
+              local PORT=$1 NAME=$2
+              echo "=== 停止 $NAME (端口 $PORT) ==="
+              PIDS=$(lsof -t -i:$PORT 2>/dev/null || true)
+              if [ -z "$PIDS" ]; then
+                echo "端口 $PORT 无运行中进程。"
+                return
+              fi
+              for PID in $PIDS; do
+                echo "终止 PID $PID..."
+                kill -15 "$PID" 2>/dev/null || true
               done
-
-              RETRY=0
-              while [ $RETRY -lt 10 ]; do
-                STILL_ALIVE=$(lsof -t -i:$PORT 2>/dev/null || true)
-                if [ -z "$STILL_ALIVE" ]; then
-                  break
-                fi
+              for i in $(seq 1 10); do
+                STILL=$(lsof -t -i:$PORT 2>/dev/null || true)
+                [ -z "$STILL" ] && break
                 sleep 1
-                RETRY=$((RETRY + 1))
               done
-
               STUBBORN=$(lsof -t -i:$PORT 2>/dev/null || true)
               if [ -n "$STUBBORN" ]; then
-                echo "进程未响应 SIGTERM，强制终止..."
-                for P in $STUBBORN; do
-                  kill -9 "$P" 2>/dev/null || true
-                done
+                for P in $STUBBORN; do kill -9 "$P" 2>/dev/null || true; done
                 sleep 1
               fi
+              LEFTOVER=$(lsof -t -i:$PORT 2>/dev/null || true)
+              if [ -n "$LEFTOVER" ]; then
+                echo "错误：无法释放端口 $PORT，残留 PID: $LEFTOVER"
+                exit 1
+              fi
+              echo "端口 $PORT 已释放。"
+            }
+
+            stop_port $JAVA_PORT "Java"
+            stop_port $AI_PORT   "AI 服务"
+
+            # ── Python venv + deps ─────────────────────────────────
+            echo "=== 初始化 Python 环境 ==="
+            AI_DIR="$BASE/ai-service"
+            cd "$AI_DIR"
+            if [ ! -d ".venv" ]; then
+              python3 -m venv .venv
             fi
+            source .venv/bin/activate
+            pip install -q -r requirements.txt
+            pip install -q -e DocxConv -e Evaluator
 
-            LEFTOVER=$(lsof -t -i:$PORT 2>/dev/null || true)
-            if [ -n "$LEFTOVER" ]; then
-              echo "错误：无法释放端口 $PORT，残留进程 PID: $LEFTOVER"
-              exit 1
-            fi
+            # DEEPSEEK_API_KEY .env
+            cat > .env << 'ENVEOF'
+            DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
+            DEEPSEEK_BASE_URL=https://api.deepseek.com
+            DEEPSEEK_MODEL=deepseek-chat
+            AI_SERVICE_HOST=0.0.0.0
+            AI_SERVICE_PORT=8000
+            ENVEOF
+            chmod 600 .env
 
-            echo "端口 $PORT 已释放。"
-
-            # ── 启动新服务并轮询端口 ──
-            echo "=== 启动新服务 ==="
-            nohup java -jar "$JAR_FILE" > "$LOG_FILE" 2>&1 &
-
-            ELAPSED=0
-            STARTED=0
-
-            while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # ── Start AI Service ───────────────────────────────────
+            echo "=== 启动 AI 服务 (端口 $AI_PORT) ==="
+            nohup .venv/bin/python -m docxconv serve > "$BASE/ai-service.log" 2>&1 &
+            AI_STARTED=0
+            for i in $(seq 1 $MAX_WAIT); do
               sleep 1
-              ELAPSED=$((ELAPSED + 1))
-              NEW_PID=$(lsof -t -i:$PORT 2>/dev/null || true)
-              if [ -n "$NEW_PID" ]; then
-                STARTED=1
+              if lsof -t -i:$AI_PORT >/dev/null 2>&1; then
+                AI_STARTED=1
                 break
               fi
             done
-
-            if [ $STARTED -eq 1 ]; then
-              echo "部署成功！新服务 PID: $NEW_PID，监听端口: $PORT"
-            else
-              echo "启动失败！等待了 $MAX_WAIT 秒后端口 $PORT 仍未监听。"
-              echo "--- 最近日志 ---"
-              tail -50 "$LOG_FILE"
+            if [ $AI_STARTED -eq 0 ]; then
+              echo "AI 服务启动失败！"
+              tail -30 "$BASE/ai-service.log"
               exit 1
             fi
+            echo "AI 服务启动成功。"
+
+            # ── Start Java ─────────────────────────────────────────
+            echo "=== 启动 Java (端口 $JAVA_PORT) ==="
+            nohup java -jar "$BASE/app.jar" > "$BASE/app.log" 2>&1 &
+            JAVA_STARTED=0
+            for i in $(seq 1 $MAX_WAIT); do
+              sleep 1
+              if lsof -t -i:$JAVA_PORT >/dev/null 2>&1; then
+                JAVA_STARTED=1
+                break
+              fi
+            done
+            if [ $JAVA_STARTED -eq 0 ]; then
+              echo "Java 启动失败！"
+              tail -30 "$BASE/app.log"
+              exit 1
+            fi
+            echo "Java 启动成功。"
+            echo "=== 部署完成 ==="
             '

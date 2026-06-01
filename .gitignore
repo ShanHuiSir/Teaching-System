@@ -51,3 +51,7 @@ uploads/
 
 # === DeepSeek docs (large HTML, not tracked) ===
 /docs/开发期文档/DeepSeek接入指南/
+
+# === nodejs ===
+/frontend/node_modules
+package-lock.json
