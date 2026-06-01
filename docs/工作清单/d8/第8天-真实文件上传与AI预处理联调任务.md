@@ -23,7 +23,18 @@
 - `origin/feature/d8-base` 已新增 `ai-service` 初版。
 - `ai-service` 当前已有 `DocxConv`、`ArchiveProc`、`ScreenshotProc` 三个子模块。
 - `DocxConv` 已支持 DOCX 转 JSON，符合 AI 评价主输入方向。
-- 真实文件上传今天进入实现目标；Java 调 Py 服务和真实 AI 接入尚未完成。
+- Java 侧真实文件上传最小闭环已完成：`POST /api/submissions/upload` 保存文件并返回元数据。
+- Java 调 Py 服务和真实 AI 接入尚未完成。
+
+## 队长已完成内容
+
+| 完成项 | 说明 | 验收结果 |
+| --- | --- | --- |
+| Java 上传接口 | 新增 `POST /api/submissions/upload`，支持 `multipart/form-data` | 已通过 MockMvc 测试 |
+| 文件保存 | 上传文件保存到 `uploads/submissions/{submissionId}/原始文件名` | 测试环境写入 `target/test-uploads` |
+| 文件元数据 | 返回并保存 `filePath`、`fileSize`、`contentType` | 已在响应断言中验证 |
+| 上传错误 | 不支持文件类型返回 `{ "message": "不支持的文件类型" }` | 已通过 MockMvc 测试 |
+| 数据库字段 | `submission` 增加 `file_path`、`file_size`、`content_type` | `sql/schema.sql` 和数据库设计文档已同步 |
 
 ## B 同学任务清单
 
@@ -61,9 +72,9 @@
 | --- | --- | --- | --- |
 | P0 | 定 Java-Py 接口契约 | 明确 Java 上传什么、Py 返回什么，尤其是 `renderStatus`、`renderEngine`、`renderWarnings` | 接口契约说明 |
 | P0 | 控制分支基线 | 检查 `d8-base` 必须同步最新 `main`，不能误删日报和主线文档 | PR 检查结论 |
-| P0 | 实现 Java 文件上传最小闭环 | 新增或改造 `multipart/form-data` 上传接口，保存原始文件并关联 `submissionId` | Java 上传接口代码 |
-| P0 | 保存文件元数据 | 记录原始文件名、保存路径、文件大小和 Content-Type；如暂不改库，也要在文档中说明临时存储规则 | 文件可追踪、可传给 Py 侧 |
-| P0 | 上传异常处理 | 限制空文件、超大文件和不支持类型，返回 `{ "message": "..." }` | 前端能显示明确错误原因 |
+| P0 | 实现 Java 文件上传最小闭环 | 新增或改造 `multipart/form-data` 上传接口，保存原始文件并关联 `submissionId` | 已完成 |
+| P0 | 保存文件元数据 | 记录原始文件名、保存路径、文件大小和 Content-Type；如暂不改库，也要在文档中说明临时存储规则 | 已完成 |
+| P0 | 上传异常处理 | 限制空文件、超大文件和不支持类型，返回 `{ "message": "..." }` | 已完成 |
 | P0 | 做三类样例验收 | 使用简单 DOCX、复杂 DOCX、转换失败场景验收 Py 侧返回 | 测试记录 |
 | P1 | Java 调 Py 服务方案 | 设计 HTTP 客户端，后续替换或并行保留 `FakeAIService` | Java-Py 联调方案 |
 | P1 | 更新文档 | 将接口契约、测试结果和遗留问题写进开发期文档 | 开发期文档更新 |
@@ -140,7 +151,7 @@ file: UploadFile
 | 2 | DOCX 转 JSON 可用 | C 同学 | 简单 DOCX 返回结构化 JSON |
 | 3 | LibreOffice 渲染成功标记 `degraded` | C 同学 | 返回 `renderStatus=degraded` |
 | 4 | 渲染失败不阻断 | C 同学 | 返回结构化内容和 `renderStatus=failed` |
-| 5 | Java 上传接口可用 | 队长 | 使用真实文件提交后生成作业记录并保存文件 |
+| 5 | Java 上传接口可用 | 队长 | 已通过：真实文件提交后生成作业记录并保存文件 |
 | 6 | 前端文件上传联调 | B 同学 | 页面能选择文件并调用 Java 上传接口 |
 | 7 | 队长完成接口契约说明 | 队长 | Java-Py 请求和返回字段明确 |
 
