@@ -11,7 +11,7 @@ import json
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from PIL import Image
 
@@ -28,9 +28,9 @@ class ImageInfo:
     width: int
     height: int
     raw_bytes: bytes
-    page: int | None = None
-    bbox: list[float] | None = None
-    context: str | None = None
+    page: Optional[int] = None
+    bbox: Optional[list[float]] = None
+    context: Optional[str] = None
 
     # Not serialised — handled separately in the ZIP
     _metadata_only: bool = field(default=False, repr=False)
@@ -161,7 +161,7 @@ def _extract_from_docx(path: Path) -> list[ImageInfo]:
     return result
 
 
-def _inline_shape_context(shape) -> str | None:
+def _inline_shape_context(shape) -> Optional[str]:
     """Try to get text from paragraph(s) surrounding this inline shape."""
     try:
         # shape._inline is <wp:inline>, parent chain:
@@ -266,7 +266,7 @@ def _extract_from_pdf(path: Path) -> list[ImageInfo]:
     return result
 
 
-def _pdf_nearby_text(page, rect, margin: float = 50) -> str | None:
+def _pdf_nearby_text(page, rect, margin: float = 50) -> Optional[str]:
     if rect is None:
         return None
     try:
