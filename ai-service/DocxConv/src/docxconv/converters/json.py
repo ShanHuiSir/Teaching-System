@@ -1,6 +1,7 @@
 import json
 import re
 from pathlib import Path
+from typing import Optional, Tuple, Union
 
 from docx import Document
 from docx.shared import Pt
@@ -60,7 +61,7 @@ def _clean_item_text(text: str, ordered: bool) -> str:
     return text
 
 
-def _detect_level(paragraph) -> int | None:
+def _detect_level(paragraph) -> Optional[int]:
     style_name = paragraph.style.name if paragraph.style else ""
     if style_name.startswith("Heading "):
         try:
@@ -78,7 +79,7 @@ def _detect_level(paragraph) -> int | None:
 # Word native list detection
 # ---------------------------------------------------------------------------
 
-def _get_word_list_info(paragraph) -> tuple[str | None, int]:
+def _get_word_list_info(paragraph) -> Tuple[Optional[str], int]:
     pPr = paragraph._element.find(f"{NS}pPr")
     if pPr is None:
         return None, 0
@@ -130,7 +131,7 @@ def _list_is_ordered(num_fmt_cache: dict[str, str], num_id: str) -> bool:
 # Manual list detection
 # ---------------------------------------------------------------------------
 
-def _detect_manual_list(text: str) -> tuple[str, str] | None:
+def _detect_manual_list(text: str) -> Optional[Tuple[str, str]]:
     if _RE_ORDERED_DECIMAL.match(text):
         return "ordered:decimal", _RE_ORDERED_DECIMAL.sub("", text, count=1)
     if _RE_ORDERED_PAREN.match(text):
@@ -338,13 +339,13 @@ def _build_tree(doc):
 # Public API
 # ---------------------------------------------------------------------------
 
-def convert(filepath: str | Path) -> str:
+def convert(filepath: Union[str, Path]) -> str:
     doc = Document(str(filepath))
     tree = _build_tree(doc)
     return json.dumps(tree, ensure_ascii=False, indent=2)
 
 
-def convert_obj(filepath: str | Path):
+def convert_obj(filepath: Union[str, Path]):
     """Return Python object (list/dict) instead of JSON string."""
     doc = Document(str(filepath))
     return _build_tree(doc)

@@ -5,6 +5,7 @@ import tarfile
 import tempfile
 import zipfile
 from pathlib import Path
+from typing import Optional
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -68,7 +69,7 @@ def classify(path: Path) -> str:
     return "unsupported"
 
 
-def _read_text(path: Path) -> str | None:
+def _read_text(path: Path) -> Optional[str]:
     """Read file as UTF-8 text. Returns None if too large or not valid UTF-8."""
     if path.stat().st_size > MAX_TEXT_SIZE:
         return None

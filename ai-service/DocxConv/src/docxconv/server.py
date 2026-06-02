@@ -1,7 +1,7 @@
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,7 +39,7 @@ class PreprocessResponse(BaseModel):
     renderStatus: str = Field("none", description="渲染状态：ok / degraded / failed / none")
     renderEngine: str = Field("none", description="渲染引擎：libreoffice / word / onlyoffice / none")
     renderWarnings: list[str] = Field(default_factory=list, description="渲染过程中的警告信息")
-    structuredContent: Optional[List[Any]] = Field(None, description="仅 .docx 返回：标题/段落/列表/表格的结构化 JSON")
+    structuredContent: Optional[list[Any]] = Field(None, description="仅 .docx 返回：标题/段落/列表/表格的结构化 JSON")
 
 class EvaluateResponse(BaseModel):
     aiScore: float = Field(description="AI 评分，0-100")

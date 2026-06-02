@@ -10,6 +10,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from docxconv.converters.img import find_soffice  # not used here, kept for symmetry
 
@@ -250,7 +251,7 @@ def convert(
     output_dir: Path,
     *,
     dpi: int = 200,
-    annotate: str | None = None,
+    annotate: Optional[str] = None,
 ) -> list[Path]:
     """DOCX → Pandoc → HTML → [annotate] → WeasyPrint → PDF → PyMuPDF → images.
 

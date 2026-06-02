@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from PIL import Image
 
@@ -22,7 +23,7 @@ _TS_PATTERNS = [
 ]
 
 
-def _extract_timestamp(filename: str) -> datetime | None:
+def _extract_timestamp(filename: str) -> Optional[datetime]:
     for pat in _TS_PATTERNS:
         m = pat.search(filename)
         if m:
@@ -49,7 +50,7 @@ def _extract_timestamp(filename: str) -> datetime | None:
 
 def ocr_images(
     paths: list[Path],
-    filenames: list[str] | None = None,
+    filenames: Optional[list[str]] = None,
 ) -> dict:
     """OCR one or more images and return a structured JSON-serializable dict.
 
