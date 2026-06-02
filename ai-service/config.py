@@ -87,6 +87,7 @@ TOOL_EXTENSIONS = frozenset(
 
 # ── OCR ───────────────────────────────────────────────────────────────
 
+OCR_ENABLED = os.getenv("OCR_ENABLED", "false").lower() == "true"
 OCR_LANGUAGES = os.getenv("OCR_LANGUAGES", "ch_sim,en").split(",")
 OCR_GPU = os.getenv("OCR_GPU", "false").lower() == "true"
 
