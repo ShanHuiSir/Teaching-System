@@ -20,7 +20,7 @@
         >
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm1 3.8h-1.2v-2.5h-1.2v3.7h2.4v-1.2zM14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2H6V4h7v5h5v3h2V8l-6-6z"/></svg>
           <span>未审批</span>
-          <span class="nav-item__badge">{{ badges.pending }}</span>
+          <span class="nav-item__badge">{{ stats.unapproved }}</span>
         </router-link>
         <router-link
           to="/assignments/ai-reviewed"
@@ -29,7 +29,7 @@
         >
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12.5c-2.67 0-4.85 2.03-4.85 4.5h1.8c0-1.66 1.34-3 3.05-3 1.66 0 3.05 1.32 3.05 3h1.8c0-2.47-2.18-4.5-4.85-4.5z"/></svg>
           <span>AI 已审批</span>
-          <span class="nav-item__badge">{{ badges.ai }}</span>
+          <span class="nav-item__badge">{{ stats.aiReviewed }}</span>
         </router-link>
         <router-link
           to="/assignments/completed"
@@ -38,7 +38,7 @@
         >
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
           <span>已完成</span>
-          <span class="nav-item__badge">{{ badges.done }}</span>
+          <span class="nav-item__badge">{{ stats.completed }}</span>
         </router-link>
       </div>
 
@@ -69,15 +69,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
-import { get } from '@/utils/request';
+import { useSubmissionStore } from '@/stores/submission';
 
 const route = useRoute();
 const router = useRouter();
 const collapsed = ref(false);
 
-const badges = reactive({ pending: '--', ai: '--', done: '--' });
+const store = useSubmissionStore();
+const { stats } = storeToRefs(store);
 
 function isActive(name: string) {
   return route.path.includes(name);
@@ -92,16 +94,8 @@ function handleLogout() {
   router.push('/');
 }
 
-onMounted(async () => {
-  try {
-    const data = await get<{ submissionCount: number; aiEvaluatedCount: number; teacherConfirmedCount: number }>('/statistics/summary');
-    const sc = Number(data.submissionCount) || 0;
-    const ac = Number(data.aiEvaluatedCount) || 0;
-    const tc = Number(data.teacherConfirmedCount) || 0;
-    badges.pending = String(Math.max(0, sc - ac));
-    badges.ai = String(Math.max(0, ac - tc));
-    badges.done = String(Math.max(0, tc));
-  } catch { /* ignore */ }
+onMounted(() => {
+  store.fetchAll();
 });
 </script>
 
