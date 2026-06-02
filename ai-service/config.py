@@ -18,23 +18,35 @@ HOST = os.getenv("AI_SERVICE_HOST", "0.0.0.0")
 PORT = int(os.getenv("AI_SERVICE_PORT", "8000"))
 RELOAD = os.getenv("AI_SERVICE_RELOAD", "false").lower() == "true"
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080,https://redtree.miprota.cc").split(",")
+SERVER_URL = os.getenv("AI_SERVICE_SERVER_URL", "http://localhost:8000")
 
 # ── DeepSeek / LLM ────────────────────────────────────────────────────
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+
+# Model: deepseek-v4-pro (premium, 1.6T MoE, 49B active) or
+#        deepseek-v4-flash (fast, 284B MoE, 13B active)
+# Legacy deepseek-chat / deepseek-reasoner will be retired 2026-07-24
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+
+# Thinking mode: when enabled, the model produces an internal reasoning
+# trace before answering. Only supported on v4-pro (v4-flash ignores it).
+DEEPSEEK_THINKING = os.getenv("DEEPSEEK_THINKING", "false").lower() == "true"
+
+# Reasoning depth: "high" (default, balanced) or "max" (best quality,
+# burns more tokens). low/medium → high; xhigh → max.
+DEEPSEEK_REASONING_EFFORT = os.getenv("DEEPSEEK_REASONING_EFFORT", "high")
+
 DEEPSEEK_TEMPERATURE = float(os.getenv("DEEPSEEK_TEMPERATURE", "0.3"))
-DEEPSEEK_MAX_TOKENS = int(os.getenv("DEEPSEEK_MAX_TOKENS", "800"))
+DEEPSEEK_MAX_TOKENS = int(os.getenv("DEEPSEEK_MAX_TOKENS", "4096"))
 
 EVAL_SYSTEM_PROMPT = os.getenv("EVAL_SYSTEM_PROMPT", """\
 你是一位严格但公正的教学评价专家。根据学生提交的作业内容进行评分。
 
 评分规则：
 - 满分 100 分，从 60 分基准开始
-- 内容充实度（30 分）：论述深度、字数、信息量
-- 结构清晰度（20 分）：章节划分、逻辑连贯、段落组织
-- 格式规范性（-10~+5 分）：标题层级、排版格式等
+
 
 按以下 JSON 格式输出，不要输出其他内容：
 {
