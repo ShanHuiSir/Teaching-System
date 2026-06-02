@@ -1,8 +1,8 @@
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, List, Optional
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -16,7 +16,7 @@ app = FastAPI(
     description="文件预处理与 AI 自动评分服务",
     version="0.7.0",
     servers=[
-        {"url": "/ai", "description": "通过 nginx 代理访问"},
+        {"url": config.SERVER_URL, "description": "当前环境"},
     ],
 )
 
@@ -34,7 +34,7 @@ class PreprocessResponse(BaseModel):
     originalFilename: str = Field(description="上传时的原始文件名")
     extractedText: str = Field(description="提取的纯文本内容，供 AI 评分使用")
     warnings: list[str] = Field(default_factory=list, description="预处理过程中的警告信息")
-    structuredContent: list[Any] | None = Field(None, description="仅 .docx 返回：标题/段落/列表/表格的结构化 JSON")
+    structuredContent: Optional[List[Any]] = Field(None, description="仅 .docx 返回：标题/段落/列表/表格的结构化 JSON")
 
 class EvaluateResponse(BaseModel):
     aiScore: float = Field(description="AI 评分，0-100")
@@ -90,6 +90,56 @@ def _extract_docx_text(content: bytes) -> tuple[str, list]:
             _flatten_content(item, lines)
         return "\n\n".join(lines), structured
     return _with_temp(content, ".docx", _do)
+
+def _extract_docx_images_ocr(content: bytes) -> list[dict]:
+    """Extract embedded images from a DOCX file and run OCR on each.
+
+    Returns a list of {"context": str|None, "ocr_text": str} dicts.
+    context is the surrounding paragraph text used for position matching.
+    """
+    import io as _io
+    from PIL import Image as PILImage
+    from docxconv.converters.extract_images import extract_images
+    from screenshotproc.ocr import ocr_image
+
+    def _do(tmp_path):
+        images = extract_images(tmp_path)
+        results = []
+        for img_info in images:
+            ocr_text = ""
+            try:
+                pil_img = PILImage.open(_io.BytesIO(img_info.raw_bytes))
+                ocr_results = ocr_image(pil_img)
+                if ocr_results:
+                    ocr_results.sort(key=lambda r: (round(r["bbox"][1] / 30) * 30, r["bbox"][0]))
+                    lines = [r["text"] for r in ocr_results if r["text"].strip()]
+                    if lines:
+                        ocr_text = "\n".join(lines)
+            except Exception:
+                pass
+            if ocr_text:
+                results.append({
+                    "context": img_info.context,
+                    "ocr_text": f"[图片 {img_info.index} ({img_info.width}x{img_info.height})]\n{ocr_text}",
+                })
+        return results
+
+    return _with_temp(content, ".docx", _do)
+
+
+def _insert_ocr_at_context(text: str, context: Optional[str], ocr_block: str) -> str:
+    """Insert ocr_block into text near the matching context string.
+
+    If context is given and found in text, inserts right after the last
+    occurrence. Otherwise appends at the end.
+    """
+    if context:
+        idx = text.rfind(context.strip())
+        if idx != -1:
+            insert_at = idx + len(context.strip())
+            return text[:insert_at] + "\n\n" + ocr_block + "\n" + text[insert_at:]
+    return text + "\n\n" + ocr_block
+
 
 def _flatten_content(item: dict, lines: list):
     if "heading" in item:
@@ -280,17 +330,33 @@ async def preprocess(file: UploadFile = File(..., description="要预处理的�
             "warnings": ["文件内容为空"],
         }
     ft = _file_type(file.filename)
-    text, warnings = _extract_text(content, file.filename)
+    is_docx = Path(file.filename).suffix.lower() == ".docx"
+
+    if is_docx:
+        text, structured = _extract_docx_text(content)
+        warnings = []
+    else:
+        text, warnings = _extract_text(content, file.filename)
+        structured = None
+
     result = {
         "fileType": ft,
         "originalFilename": file.filename,
         "extractedText": text,
         "warnings": warnings,
     }
-    if Path(file.filename).suffix.lower() == ".docx":
+    if structured is not None:
+        result["structuredContent"] = structured
+
+    if is_docx:
         try:
-            _, structured = _extract_docx_text(content)
-            result["structuredContent"] = structured
+            ocr_results = _extract_docx_images_ocr(content)
+            if ocr_results:
+                text = result["extractedText"]
+                for img in ocr_results:
+                    text = _insert_ocr_at_context(text, img["context"], img["ocr_text"])
+                result["extractedText"] = text
+                warnings.append("文档中的图片内容由 OCR 识别，可能存在错字")
         except Exception:
             pass
     return result
@@ -332,7 +398,7 @@ async def evaluate(
 )
 async def evaluate_real(
     file: UploadFile = File(..., description="学生提交的作业文件"),
-    studentName: str = "",
+    studentName: str = Form(""),
 ):
     if not studentName.strip():
         raise HTTPException(400, "studentName is required")
