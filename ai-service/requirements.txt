@@ -27,4 +27,5 @@ Pillow>=10.0.0
 easyocr>=1.7.0
 
 # Archive processing
-patool>=2.4.0
+py7zr>=0.20.0
+rarfile>=4.0

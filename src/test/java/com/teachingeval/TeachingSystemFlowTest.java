@@ -271,12 +271,96 @@ class TeachingSystemFlowTest {
         }
     }
 
+    @Test
+    void evaluateSubmissionCanCallRealAiServiceWhenEnabled() throws Exception {
+        AtomicReference<String> capturedRequestBody = new AtomicReference<>("");
+        HttpServer server = HttpServer.create(new java.net.InetSocketAddress(0), 0);
+        server.createContext("/api/evaluate/real", exchange -> respondWithRealAiResult(exchange, capturedRequestBody));
+        server.start();
+
+        try {
+            System.setProperty("app.ai.real.enabled", "true");
+            System.setProperty("app.ai.real.endpoint-url",
+                    "http://localhost:" + server.getAddress().getPort() + "/api/evaluate/real");
+
+            String studentPageResponse = mockMvc.perform(get("/api/students/page")
+                            .param("page", "0")
+                            .param("size", "1"))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            Integer studentId = com.jayway.jsonpath.JsonPath.read(studentPageResponse, "$.content[0].id");
+
+            MockMultipartFile file = new MockMultipartFile(
+                    "file",
+                    "real-ai-upload.docx",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "真实 AI 评价文件内容".getBytes(StandardCharsets.UTF_8)
+            );
+
+            String uploadResponse = mockMvc.perform(multipart("/api/submissions/upload")
+                            .file(file)
+                            .param("studentId", String.valueOf(studentId))
+                            .param("title", "真实 AI 联调作业")
+                            .param("workType", "实验报告"))
+                    .andExpect(status().isCreated())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            Integer submissionId = com.jayway.jsonpath.JsonPath.read(uploadResponse, "$.id");
+
+            mockMvc.perform(post("/api/submissions/{submissionId}/evaluate", submissionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "studentName": "张三",
+                                      "fileName": "real-ai-upload.docx"
+                                    }
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.submissionId").value(submissionId))
+                    .andExpect(jsonPath("$.aiScore").value(88.00))
+                    .andExpect(jsonPath("$.aiIssues").value("1. Mock Py 返回的问题"))
+                    .andExpect(jsonPath("$.aiComment").value("Mock Py 真实 AI 评价完成。"))
+                    .andExpect(jsonPath("$.status").value(1));
+
+            assertThat(capturedRequestBody.get()).contains("studentName");
+            assertThat(capturedRequestBody.get()).contains("张三");
+            assertThat(capturedRequestBody.get()).contains("real-ai-upload.docx");
+            assertThat(capturedRequestBody.get()).contains("真实 AI 评价文件内容");
+        } finally {
+            System.clearProperty("app.ai.real.enabled");
+            System.clearProperty("app.ai.real.endpoint-url");
+            server.stop(0);
+        }
+    }
+
     private void respondWithPreprocessResult(HttpExchange exchange,
                                              AtomicReference<String> capturedRequestBody) throws java.io.IOException {
         assertThat(exchange.getRequestMethod()).isEqualTo("POST");
         assertThat(exchange.getRequestHeaders().getFirst("Content-Type")).contains("multipart/form-data");
         capturedRequestBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
         byte[] response = "{\"renderStatus\":\"ok\"}".getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        exchange.sendResponseHeaders(200, response.length);
+        exchange.getResponseBody().write(response);
+        exchange.close();
+    }
+
+    private void respondWithRealAiResult(HttpExchange exchange,
+                                         AtomicReference<String> capturedRequestBody) throws java.io.IOException {
+        assertThat(exchange.getRequestMethod()).isEqualTo("POST");
+        assertThat(exchange.getRequestHeaders().getFirst("Content-Type")).contains("multipart/form-data");
+        capturedRequestBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+        byte[] response = """
+                {
+                  "aiScore": 88.00,
+                  "aiIssues": "1. Mock Py 返回的问题",
+                  "aiComment": "Mock Py 真实 AI 评价完成。",
+                  "status": 1
+                }
+                """.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().add("Content-Type", "application/json");
         exchange.sendResponseHeaders(200, response.length);
         exchange.getResponseBody().write(response);

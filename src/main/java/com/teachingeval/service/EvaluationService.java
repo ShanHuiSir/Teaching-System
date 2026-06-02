@@ -3,6 +3,7 @@ package com.teachingeval.service;
 import java.util.List;
 
 import com.teachingeval.entity.EvaluationResult;
+import com.teachingeval.entity.WorkSubmission;
 import org.springframework.stereotype.Service;
 
 import com.teachingeval.dto.AIEvalRequest;
@@ -26,10 +27,10 @@ public class EvaluationService {
     }
 
     public EvaluationResult evaluate(Long submissionId, AIEvalRequest request) {
-        submissionRepository.findById(submissionId)
+        WorkSubmission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("作品提交不存在"));
 
-        EvaluationResult result = aiService.evaluate(request);
+        EvaluationResult result = aiService.evaluate(submission, request);
         EvaluationResult saved = evaluationRepository.findBySubmissionId(submissionId)
                 .orElseGet(EvaluationResult::new);
 
