@@ -145,6 +145,7 @@ def _insert_ocr_at_context(text: str, context: Optional[str], ocr_block: str) ->
             return text[:insert_at] + "\n\n" + ocr_block + "\n" + text[insert_at:]
     return text + "\n\n" + ocr_block
 
+
 def _probe_docx_render(content: bytes) -> tuple[str, str, list[str]]:
     def _do(tmp_path):
         output_dir = tmp_path.parent / f"{tmp_path.stem}_render"
@@ -158,6 +159,7 @@ def _probe_docx_render(content: bytes) -> tuple[str, str, list[str]]:
         return _with_temp(content, ".docx", _do)
     except Exception as e:
         return "failed", "libreoffice", [f"DOCX 渲染失败，已继续使用结构化文本进行预处理: {e}"]
+
 
 def _flatten_content(item: dict, lines: list):
     if "heading" in item:
@@ -377,6 +379,7 @@ async def preprocess(file: UploadFile = File(..., description="要预处理的�
         result["renderStatus"] = render_status
         result["renderEngine"] = render_engine
         result["renderWarnings"] = render_warnings
+    if is_docx and config.OCR_ENABLED:
         try:
             ocr_results = _extract_docx_images_ocr(content)
             if ocr_results:
@@ -426,7 +429,7 @@ async def evaluate(
 )
 async def evaluate_real(
     file: UploadFile = File(..., description="学生提交的作业文件"),
-    studentName: str = Form("", description="学生姓名"),
+    studentName: str = Form(""),
 ):
     if not studentName.strip():
         raise HTTPException(400, "studentName is required")
