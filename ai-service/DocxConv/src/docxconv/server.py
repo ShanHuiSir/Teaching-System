@@ -377,6 +377,7 @@ async def preprocess(file: UploadFile = File(..., description="要预处理的�
         result["renderStatus"] = render_status
         result["renderEngine"] = render_engine
         result["renderWarnings"] = render_warnings
+    if is_docx and config.OCR_ENABLED:
         try:
             ocr_results = _extract_docx_images_ocr(content)
             if ocr_results:
