@@ -65,6 +65,22 @@
             </el-button>
           </div>
         </el-form>
+
+        <div v-if="uploadedSubmission" class="upload-result">
+          <div class="upload-result__title">提交结果</div>
+          <div class="upload-result__grid">
+            <span>文件名</span><strong>{{ uploadedSubmission.fileName }}</strong>
+            <span>文件大小</span><strong>{{ formatFileSize(uploadedSubmission.fileSize) }}</strong>
+            <span>保存路径</span><strong>{{ uploadedSubmission.filePath || '未返回' }}</strong>
+            <span>预处理状态</span><strong :class="preprocessClass">{{ preprocessText }}</strong>
+          </div>
+          <div v-if="uploadedSubmission.preprocessMessage" class="upload-result__message">
+            {{ uploadedSubmission.preprocessMessage }}
+          </div>
+          <ul v-if="preprocessWarnings.length" class="upload-result__warnings">
+            <li v-for="(warning, index) in preprocessWarnings" :key="index">{{ warning }}</li>
+          </ul>
+        </div>
       </div>
     </div>
     <Snackbar
@@ -102,6 +118,7 @@ const notice = ref<{ visible: boolean; message: string; type: 'info' | 'success'
 });
 const form = reactive({ studentId: '', title: '', workType: '代码压缩包', remark: '' });
 const file = ref<File | null>(null);
+const uploadedSubmission = ref<WorkSubmission | null>(null);
 const status = ref<'idle' | 'uploading' | 'success' | 'error'>('idle');
 const errorMsg = ref('');
 const progress = ref(0);
@@ -117,6 +134,32 @@ const dropzoneClass = computed(() => ({
   'dropzone--error': status.value === 'error',
   'dropzone--success': status.value === 'success',
 }));
+const preprocessText = computed(() => {
+  const current = uploadedSubmission.value;
+  if (!current) return '';
+  if (current.preprocessStatus === 'SUCCESS') return '预处理成功';
+  if (current.preprocessStatus === 'FAILED') return '预处理失败';
+  if (current.preprocessStatus === 'SKIPPED') return 'Py 预处理未启用';
+  return current.preprocessStatus || '未返回';
+});
+const preprocessClass = computed(() => ({
+  'text-success': uploadedSubmission.value?.preprocessStatus === 'SUCCESS',
+  'text-warning': uploadedSubmission.value?.preprocessStatus === 'SKIPPED',
+  'text-error': uploadedSubmission.value?.preprocessStatus === 'FAILED',
+}));
+const preprocessWarnings = computed(() => {
+  const raw = uploadedSubmission.value?.preprocessResult;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return [
+      ...(Array.isArray(parsed.renderWarnings) ? parsed.renderWarnings : []),
+      ...(Array.isArray(parsed.warnings) ? parsed.warnings : []),
+    ].filter(Boolean);
+  } catch {
+    return [];
+  }
+});
 
 onMounted(async () => {
   try { students.value = await get<Student[]>('/students'); } catch { /* ignore */ }
@@ -126,6 +169,14 @@ function onFileChange(uploadFile: UploadFile) {
   file.value = uploadFile.raw || null;
   status.value = 'idle';
   errorMsg.value = '';
+  uploadedSubmission.value = null;
+}
+
+function formatFileSize(size?: number) {
+  if (!size) return '未返回';
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
 async function handleSubmit() {
@@ -146,12 +197,13 @@ async function handleSubmit() {
     if (form.remark) fd.append('remark', form.remark);
     fd.append('file', file.value);
 
-    await post<WorkSubmission>('/submissions/upload', fd, {
+    const result = await post<WorkSubmission>('/submissions/upload', fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     clearInterval(timer);
     progress.value = 100;
     status.value = 'success';
+    uploadedSubmission.value = result;
     ElMessage.success('上传成功');
     form.studentId = ''; form.title = ''; form.remark = '';
     file.value = null;
@@ -167,6 +219,9 @@ async function handleSubmit() {
 <style lang="scss" scoped>
 .submit-card { max-width: 640px; }
 .form-full { grid-column: 1 / -1; }
+.text-success { color: $success; }
+.text-warning { color: #B7791F; }
+.text-error { color: $error; }
 
 .dropzone {
   border: 2px dashed $outline-variant;
@@ -185,5 +240,46 @@ async function handleSubmit() {
     color: $on-surface-variant;
   }
   &__fileinfo { color: $on-surface; font-size: 13px; margin-bottom: 8px; }
+}
+
+.upload-result {
+  margin-top: $space-4;
+  padding: $space-4;
+  border: 1px solid $outline-variant;
+  border-radius: $shape-md;
+  background: #FAFDF8;
+
+  &__title {
+    margin-bottom: $space-3;
+    font: 600 16px/24px $font-family;
+    color: $on-surface;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px 12px;
+    font: 400 13px/20px $font-family;
+
+    span { color: $on-surface-variant; }
+    strong {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      color: $on-surface;
+    }
+  }
+
+  &__message {
+    margin-top: $space-3;
+    color: $on-surface-variant;
+    font: 400 13px/20px $font-family;
+  }
+
+  &__warnings {
+    margin: $space-3 0 0;
+    padding-left: 18px;
+    color: #92400E;
+    font: 400 13px/20px $font-family;
+  }
 }
 </style>
