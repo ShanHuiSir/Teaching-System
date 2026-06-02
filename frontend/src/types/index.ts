@@ -21,6 +21,12 @@ export interface WorkSubmission {
   studentName: string;
   title: string;
   fileName: string;
+  filePath?: string;
+  fileSize?: number;
+  contentType?: string;
+  preprocessStatus?: 'SKIPPED' | 'SUCCESS' | 'FAILED' | string;
+  preprocessMessage?: string;
+  preprocessResult?: string;
   workType: string;
   remark?: string;
   submittedAt: string;
