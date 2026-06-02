@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from PIL import Image, ImageOps
@@ -19,7 +19,7 @@ DARK_THEME_RATIO = 0.4  # if >40% of pixels are dark, treat as dark theme
 # ---------------------------------------------------------------------------
 
 _lock = threading.Lock()
-_reader: Any | None = None
+_reader: Optional[Any] = None
 
 
 def _load_reader():
