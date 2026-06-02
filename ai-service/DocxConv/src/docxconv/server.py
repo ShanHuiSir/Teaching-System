@@ -1,7 +1,6 @@
-import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +8,6 @@ from pydantic import BaseModel, Field
 
 import config
 from docxconv.converters.img import find_soffice
-from docxconv.converters.img import convert as convert_docx_to_images
 from docxconv.converters.json import convert_obj
 from evaluator.deepseek import evaluate as evaluate_content
 
@@ -36,10 +34,7 @@ class PreprocessResponse(BaseModel):
     originalFilename: str = Field(description="上传时的原始文件名")
     extractedText: str = Field(description="提取的纯文本内容，供 AI 评分使用")
     warnings: list[str] = Field(default_factory=list, description="预处理过程中的警告信息")
-    renderStatus: str = Field("none", description="渲染状态：ok / degraded / failed / none")
-    renderEngine: str = Field("none", description="渲染引擎：libreoffice / word / onlyoffice / none")
-    renderWarnings: list[str] = Field(default_factory=list, description="渲染过程中的警告信息")
-    structuredContent: Optional[list[Any]] = Field(None, description="仅 .docx 返回：标题/段落/列表/表格的结构化 JSON")
+    structuredContent: Optional[List[Any]] = Field(None, description="仅 .docx 返回：标题/段落/列表/表格的结构化 JSON")
 
 class EvaluateResponse(BaseModel):
     aiScore: float = Field(description="AI 评分，0-100")
@@ -145,19 +140,6 @@ def _insert_ocr_at_context(text: str, context: Optional[str], ocr_block: str) ->
             return text[:insert_at] + "\n\n" + ocr_block + "\n" + text[insert_at:]
     return text + "\n\n" + ocr_block
 
-def _probe_docx_render(content: bytes) -> tuple[str, str, list[str]]:
-    def _do(tmp_path):
-        output_dir = tmp_path.parent / f"{tmp_path.stem}_render"
-        try:
-            convert_docx_to_images(tmp_path, output_dir)
-            return "degraded", "libreoffice", ["DOCX 由 LibreOffice 渲染，复杂排版可能与 Word 存在差异"]
-        finally:
-            shutil.rmtree(output_dir, ignore_errors=True)
-
-    try:
-        return _with_temp(content, ".docx", _do)
-    except Exception as e:
-        return "failed", "libreoffice", [f"DOCX 渲染失败，已继续使用结构化文本进行预处理: {e}"]
 
 def _flatten_content(item: dict, lines: list):
     if "heading" in item:
@@ -346,9 +328,6 @@ async def preprocess(file: UploadFile = File(..., description="要预处理的�
             "originalFilename": file.filename,
             "extractedText": "",
             "warnings": ["文件内容为空"],
-            "renderStatus": "none",
-            "renderEngine": "none",
-            "renderWarnings": [],
         }
     ft = _file_type(file.filename)
     is_docx = Path(file.filename).suffix.lower() == ".docx"
@@ -365,19 +344,11 @@ async def preprocess(file: UploadFile = File(..., description="要预处理的�
         "originalFilename": file.filename,
         "extractedText": text,
         "warnings": warnings,
-        "renderStatus": "none",
-        "renderEngine": "none",
-        "renderWarnings": [],
     }
     if structured is not None:
         result["structuredContent"] = structured
 
     if is_docx:
-        render_status, render_engine, render_warnings = _probe_docx_render(content)
-        result["renderStatus"] = render_status
-        result["renderEngine"] = render_engine
-        result["renderWarnings"] = render_warnings
-    if is_docx and config.OCR_ENABLED:
         try:
             ocr_results = _extract_docx_images_ocr(content)
             if ocr_results:
@@ -427,7 +398,7 @@ async def evaluate(
 )
 async def evaluate_real(
     file: UploadFile = File(..., description="学生提交的作业文件"),
-    studentName: str = Form("", description="学生姓名"),
+    studentName: str = Form(""),
 ):
     if not studentName.strip():
         raise HTTPException(400, "studentName is required")
@@ -442,9 +413,6 @@ async def evaluate_real(
         "fileType": preprocess_result["fileType"],
         "extractedText": preprocess_result["extractedText"],
         "warnings": preprocess_result["warnings"],
-        "renderStatus": preprocess_result["renderStatus"],
-        "renderEngine": preprocess_result["renderEngine"],
-        "renderWarnings": preprocess_result["renderWarnings"],
         "aiScore": eval_result["aiScore"],
         "aiIssues": eval_result["aiIssues"],
         "aiComment": eval_result["aiComment"],
