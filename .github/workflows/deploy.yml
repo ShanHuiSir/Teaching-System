@@ -38,7 +38,7 @@ jobs:
           MVNEOF
 
       - name: Maven Package
-        run: mvn package -B -DskipTests
+        run: mvn package -B
 
       - name: Prepare JAR
         run: |

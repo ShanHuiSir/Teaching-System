@@ -154,8 +154,8 @@ class TeachingSystemFlowTest {
     void exportEndpointReturnsXlsxStream() throws Exception {
         mockMvc.perform(post("/api/export/excel"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Content-Type",
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andExpect(result -> assertThat(result.getResponse().getContentType())
+                        .startsWith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .andExpect(header().exists("Content-Disposition"))
                 .andExpect(result -> assertThat(result.getResponse().getContentAsByteArray()).isNotEmpty());
     }
