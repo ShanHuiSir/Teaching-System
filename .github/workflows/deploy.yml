@@ -171,7 +171,6 @@ jobs:
             AI_SERVICE_HOST=0.0.0.0
             AI_SERVICE_PORT=8000
             AI_SERVICE_SERVER_URL=/ai
-            OCR_ENABLED=false
             ENVEOF
             chmod 600 .env
 
