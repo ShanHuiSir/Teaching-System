@@ -24,7 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
+import usePolling from '@/composables/usePolling';
 import { storeToRefs } from 'pinia';
 import { ElMessage } from 'element-plus';
 import { get } from '@/utils/request';
@@ -46,7 +47,6 @@ const submitting = ref(false);
 const form = reactive({ studentId: '', title: '第二天实训作业', fileName: 'student-work.zip', workType: '代码压缩包', remark: '' });
 const notice = ref<{ visible: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({ visible: false, message: '', type: 'info' });
 
-let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 function fmt(d: string) { return (d || '').replace('T', ' ').slice(0, 16); }
 function evalLink(s: { id: number; studentId: number; studentName: string; fileName: string }) {
@@ -77,9 +77,8 @@ async function handleSubmit() {
 onMounted(async () => {
   try { students.value = await get<Student[]>('/students'); } catch { /* ignore */ }
   await loadData();
-  pollTimer = setInterval(() => { if (!document.hidden) store.fetchAll(); }, 3000);
+  usePolling(() => store.fetchAll(), { interval: 5000 });
 });
-onBeforeUnmount(() => { if (pollTimer) clearInterval(pollTimer); });
 </script>
 
 <style lang="scss" scoped>
