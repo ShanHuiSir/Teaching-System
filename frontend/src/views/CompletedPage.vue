@@ -24,29 +24,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
+import { storeToRefs } from 'pinia';
 import { ElMessage } from 'element-plus';
-import { get, post } from '@/utils/request';
+import { get } from '@/utils/request';
+import { useSubmissionStore } from '@/stores/submission';
 import AppNotice from '@/components/AppNotice.vue';
-import type { Student, WorkSubmission, EvaluationResult } from '@/types';
+import type { Student } from '@/types';
 
 const workTypes = ['代码压缩包', '实验报告', '截图材料', '其他'];
-const STATUS = { PENDING: 0, AI_REVIEWED: 1, TEACHER_CONFIRMED: 2 };
+
+const store = useSubmissionStore();
+const { loading, evalMap } = storeToRefs(store);
 
 const students = ref<Student[]>([]);
-const submissions = ref<WorkSubmission[]>([]);
-const evaluations = ref<EvaluationResult[]>([]);
-const filtered = ref<WorkSubmission[]>([]);
-const loading = ref(true);
+const filtered = computed(() => store.filteredByStatus(2));
 const error = ref<string | null>(null);
 const statusMsg = ref('加载中...');
 const submitting = ref(false);
-
-const evalMap = computed(() => {
-  const m: Record<number, EvaluationResult> = {};
-  evaluations.value.forEach(e => { m[e.submissionId] = e; });
-  return m;
-});
 
 const form = reactive({ studentId: '', title: '第二天实训作业', fileName: 'student-work.zip', workType: '代码压缩包', remark: '' });
 const notice = ref<{ visible: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({ visible: false, message: '', type: 'info' });
@@ -54,33 +49,27 @@ const notice = ref<{ visible: boolean; message: string; type: 'info' | 'success'
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 function fmt(d: string) { return (d || '').replace('T', ' ').slice(0, 16); }
-function evalLink(s: WorkSubmission) { return `/evaluation/${s.id}?studentId=${s.studentId}&studentName=${encodeURIComponent(s.studentName)}&fileName=${encodeURIComponent(s.fileName)}`; }
-
-function filterData() {
-  filtered.value = submissions.value.filter(s => {
-    const ev = evalMap.value[s.id];
-    return (ev ? ev.status : STATUS.PENDING) === STATUS.TEACHER_CONFIRMED;
-  });
-  statusMsg.value = `已加载 ${filtered.value.length} 条`;
+function evalLink(s: { id: number; studentId: number; studentName: string; fileName: string }) {
+  return `/evaluation/${s.id}?studentId=${s.studentId}&studentName=${encodeURIComponent(s.studentName)}&fileName=${encodeURIComponent(s.fileName)}`;
 }
 
 async function loadData() {
-  loading.value = true;
   try {
-    const [subs, evals] = await Promise.all([get<WorkSubmission[]>('/submissions'), get<EvaluationResult[]>('/evaluations')]);
-    submissions.value = subs; evaluations.value = evals;
-    filterData();
+    await store.fetchAll();
+    statusMsg.value = `已加载 ${store.stats.completed} 条`;
   } catch (e: any) { error.value = e.message; ElMessage.error(e.message); }
-  finally { loading.value = false; }
 }
 
 async function handleSubmit() {
   submitting.value = true;
   try {
-    await post<WorkSubmission>('/submissions', { studentId: Number(form.studentId), title: form.title, fileName: form.fileName, workType: form.workType, remark: form.remark });
+    await store.addSubmission({
+      studentId: Number(form.studentId), title: form.title,
+      fileName: form.fileName, workType: form.workType, remark: form.remark,
+    });
     ElMessage.success('已保存');
     form.studentId = ''; form.title = '第二天实训作业'; form.remark = '';
-    await loadData();
+    statusMsg.value = `已加载 ${store.stats.completed} 条`;
   } catch (e: any) { ElMessage.error(e.message); }
   finally { submitting.value = false; }
 }
@@ -88,7 +77,7 @@ async function handleSubmit() {
 onMounted(async () => {
   try { students.value = await get<Student[]>('/students'); } catch { /* ignore */ }
   await loadData();
-  pollTimer = setInterval(() => { if (!document.hidden) loadData(); }, 3000);
+  pollTimer = setInterval(() => { if (!document.hidden) store.fetchAll(); }, 3000);
 });
 onBeforeUnmount(() => { if (pollTimer) clearInterval(pollTimer); });
 </script>
