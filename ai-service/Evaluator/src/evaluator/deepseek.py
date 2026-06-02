@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+from typing import Optional
 
 from openai import OpenAI
 
 import config
 
-_client: OpenAI | None = None
+_client: Optional[OpenAI] = None
 
 
 def _get_client() -> OpenAI:
