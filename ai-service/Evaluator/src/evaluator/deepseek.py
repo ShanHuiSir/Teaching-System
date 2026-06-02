@@ -1,4 +1,10 @@
-"""AI evaluator — DeepSeek-powered scoring via OpenAI-compatible API."""
+"""AI evaluator — DeepSeek v4 scoring via OpenAI-compatible API.
+
+Supports:
+- deepseek-v4-pro (1.6T MoE, 49B active, with optional thinking mode)
+- deepseek-v4-flash (284B MoE, 13B active, fast/cheap)
+- thinking mode + reasoning_effort control for deeper analysis
+"""
 
 from __future__ import annotations
 
@@ -25,7 +31,12 @@ def _get_client() -> OpenAI:
 
 
 def evaluate(text: str, student_name: str = "") -> dict:
-    """Call DeepSeek API to score the extracted text content."""
+    """Call DeepSeek v4 API to score the extracted text content.
+
+    Uses the model from config.DEEPSEEK_MODEL (default: deepseek-v4-pro).
+    When config.DEEPSEEK_THINKING is True, enables thinking mode with
+    reasoning_effort from config (default: high).
+    """
     if not text.strip():
         return {
             "aiScore": 0,
@@ -40,6 +51,11 @@ def evaluate(text: str, student_name: str = "") -> dict:
         else f"作业内容：\n{text}"
     )
 
+    extra_body: dict = {}
+    if config.DEEPSEEK_THINKING:
+        extra_body["thinking"] = {"type": "enabled"}
+        extra_body["reasoning_effort"] = config.DEEPSEEK_REASONING_EFFORT
+
     try:
         response = client.chat.completions.create(
             model=config.DEEPSEEK_MODEL,
@@ -50,6 +66,7 @@ def evaluate(text: str, student_name: str = "") -> dict:
             response_format={"type": "json_object"},
             temperature=config.DEEPSEEK_TEMPERATURE,
             max_tokens=config.DEEPSEEK_MAX_TOKENS,
+            extra_body=extra_body if extra_body else None,
         )
     except Exception as e:
         raise RuntimeError(f"DeepSeek API call failed: {e}")
