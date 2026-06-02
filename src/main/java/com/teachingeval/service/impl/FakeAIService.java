@@ -3,15 +3,13 @@ package com.teachingeval.service.impl;
 import java.math.BigDecimal;
 
 import com.teachingeval.entity.EvaluationResult;
-import com.teachingeval.service.AIService;
 import org.springframework.stereotype.Service;
 
 import com.teachingeval.dto.AIEvalRequest;
 
 @Service
-public class FakeAIService implements AIService {
+public class FakeAIService {
 
-    @Override
     public EvaluationResult evaluate(AIEvalRequest request) {
         EvaluationResult result = new EvaluationResult();
         result.setAiScore(new BigDecimal("82.50"));
