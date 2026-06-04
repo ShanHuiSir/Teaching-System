@@ -2,6 +2,16 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/LoginPage.vue'),
+  },
+  {
+    path: '/class-selection',
+    name: 'ClassSelection',
+    component: () => import('../views/ClassSelectionPage.vue'),
+  },
+  {
     path: '/',
     component: () => import('../layouts/MainLayout.vue'),
     children: [
@@ -14,6 +24,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'assignments/completed', name: 'Completed', component: () => import('../views/CompletedPage.vue') },
       { path: 'evaluation/:submissionId', name: 'Evaluation', component: () => import('../views/EvaluationPage.vue') },
       { path: 'export', name: 'Export', component: () => import('../views/ExportPage.vue') },
+      { path: 'classes', name: 'Classes', component: () => import('../views/ClassManagementPage.vue') },
     ],
   },
 ];

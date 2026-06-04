@@ -1,6 +1,5 @@
 <template>
   <div class="page">
-    <AppNotice v-if="notice.visible" :message="notice.message" :type="notice.type" @close="notice.visible = false" />
     <div class="page-header"><h1>导出成绩</h1></div>
 
     <!-- Stats -->
@@ -21,6 +20,16 @@
         </el-button>
       </div>
     </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card__header"><h2>导出记录</h2></div>
+      <div class="card__body">
+        <div class="empty-state">
+          <p class="empty-state__text">暂无导出记录</p>
+          <span class="export-hint">点击上方按钮导出学生成绩汇总</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -28,12 +37,10 @@
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { get } from '@/utils/request';
-import AppNotice from '@/components/AppNotice.vue';
 
 const stats = reactive({ studentCount: 0, submissionCount: 0, aiEvaluatedCount: 0, teacherConfirmedCount: 0, avgTeacherScore: null as number | null });
 const statsLoading = ref(true);
 const exporting = ref(false);
-const notice = ref<{ visible: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({ visible: false, message: '', type: 'info' });
 
 onMounted(async () => {
   try {
@@ -68,4 +75,5 @@ async function doExport() {
 .stat-card { text-align: center; padding: 20px 12px; }
 .stat-value { font: 700 32px/1.2 $font-family; color: $primary; }
 .stat-label { font: 400 13px/20px $font-family; color: $on-surface-variant; margin-top: 4px; }
+.export-hint { font: 400 12px/18px $font-family; color: $on-surface-variant; margin-top: 4px; }
 </style>
