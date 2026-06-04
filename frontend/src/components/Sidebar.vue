@@ -53,6 +53,10 @@
         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
         <span>作业提交</span>
       </router-link>
+      <router-link to="/classes" class="nav-item nav-item--func" :class="{ active: isActive('classes') }">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+        <span>班级管理</span>
+      </router-link>
       <router-link to="/export" class="nav-item nav-item--func" :class="{ active: isActive('export') }">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
         <span>导出成绩</span>
@@ -71,7 +75,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
+import { ElMessageBox } from 'element-plus';
 import { useRoute, useRouter } from 'vue-router';
+import { clearAuthCookies } from '@/utils/cookie';
 import { useSubmissionStore } from '@/stores/submission';
 
 const route = useRoute();
@@ -90,8 +96,21 @@ function toggle() {
   document.body.classList.toggle('has-sidebar--collapsed', collapsed.value);
 }
 
-function handleLogout() {
-  router.push('/');
+async function handleLogout() {
+  try {
+    await ElMessageBox.confirm(
+      '确定要退出系统吗？您将被重定向到登录页面。',
+      '退出确认',
+      { confirmButtonText: '确认退出', cancelButtonText: '取消', type: 'warning' },
+    );
+  } catch {
+    return; // user cancelled
+  }
+  // Clear auth cookies
+  clearAuthCookies();
+  localStorage.removeItem('saved-accounts');
+  // Replace history and redirect to login
+  router.replace('/login');
 }
 
 onMounted(() => {
