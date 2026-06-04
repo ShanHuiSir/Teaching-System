@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="page submit-page">
     <AppNotice
       v-if="notice.visible"
       :message="notice.message"
@@ -217,7 +217,15 @@ async function handleSubmit() {
 </script>
 
 <style lang="scss" scoped>
-.submit-card { max-width: 640px; }
+.submit-page .page-header,
+.submit-card {
+  width: 100%;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.submit-card { margin-bottom: $space-6; }
 .form-full { grid-column: 1 / -1; }
 .text-success { color: $success; }
 .text-warning { color: #B7791F; }
