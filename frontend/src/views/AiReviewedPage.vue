@@ -1,7 +1,13 @@
 <template>
   <div class="page">
-    <AppNotice v-if="notice.visible" :message="notice.message" :type="notice.type" @close="notice.visible = false" />
-    <div class="page-header"><h1>AI 已审批</h1><span :class="['status-text', error ? 'error-text' : '']">{{ statusMsg }}</span></div>
+    <div class="page-header">
+      <h1>AI 已审批</h1>
+      <div class="page-header__actions">
+        <button class="btn btn--filled btn--sm" :disabled="!filtered.length" @click="batchAction('review')">人工复核</button>
+        <button class="btn btn--outlined btn--sm" :disabled="!filtered.length" @click="batchAction('re-evaluate')">重新 AI 评价</button>
+      </div>
+      <span :class="['status-text', error ? 'error-text' : '']">{{ statusMsg }}</span>
+    </div>
     <div class="card" style="margin-bottom:16px;">
       <div class="card__header"><h2>提交作业</h2></div>
       <div class="card__body">
@@ -31,7 +37,6 @@ import { ElMessage } from 'element-plus';
 import { storeToRefs } from 'pinia';
 import { get } from '@/utils/request';
 import { useSubmissionStore } from '@/stores/submission';
-import AppNotice from '@/components/AppNotice.vue';
 import Snackbar from '@/components/Snackbar.vue';
 import type { Student } from '@/types';
 
@@ -48,7 +53,6 @@ const submitting = ref(false);
 const lastNotifiedCount = ref(-1);
 
 const form = reactive({ studentId: '', title: '第二天实训作业', fileName: 'student-work.zip', workType: '代码压缩包', remark: '' });
-const notice = ref<{ visible: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({ visible: false, message: '', type: 'info' });
 const snackbar = ref<{ visible: boolean; message: string; actionText?: string; duration?: number }>({ visible: false, message: '', actionText: '', duration: 3000 });
 
 
@@ -57,6 +61,10 @@ function evalLink(s: { id: number; studentId: number; studentName: string; fileN
   return `/evaluation/${s.id}?studentId=${s.studentId}&studentName=${encodeURIComponent(s.studentName)}&fileName=${encodeURIComponent(s.fileName)}`;
 }
 function handleSnackbarAction() { snackbar.value.visible = false; }
+
+function batchAction(action: string) {
+  ElMessage.info(`批量操作「${action}」— 待实现`);
+}
 
 watch(() => store.stats.aiReviewed, (now, prev) => {
   if (now > 0 && now > prev && prev >= 0) {
@@ -96,4 +104,5 @@ onMounted(async () => {
 .form-full { grid-column: 1 / -1; }
 .status-text { font: 400 13px/20px $font-family; color: $on-surface-variant; }
 .error-text { color: $error !important; }
+.page-header__actions { display: flex; gap: $space-2; align-items: center; }
 </style>

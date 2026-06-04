@@ -1,7 +1,14 @@
 <template>
   <div class="page">
-    <AppNotice v-if="notice.visible" :message="notice.message" :type="notice.type" @close="notice.visible = false" />
-    <div class="page-header"><h1>已完成</h1><span :class="['status-text', error ? 'error-text' : '']">{{ statusMsg }}</span></div>
+    <div class="page-header">
+      <h1>已完成</h1>
+      <div class="page-header__actions">
+        <button class="btn btn--filled btn--sm" :disabled="!filtered.length" @click="batchAction('export-excel')">导出 Excel</button>
+        <button class="btn btn--outlined btn--sm" :disabled="!filtered.length" @click="batchAction('export-pdf')">导出 PDF</button>
+        <button class="btn btn--tonal btn--sm" :disabled="!filtered.length" @click="batchAction('archive')">归档</button>
+      </div>
+      <span :class="['status-text', error ? 'error-text' : '']">{{ statusMsg }}</span>
+    </div>
     <div class="card" style="margin-bottom:16px;">
       <div class="card__header"><h2>提交作业</h2></div>
       <div class="card__body">
@@ -30,7 +37,6 @@ import { storeToRefs } from 'pinia';
 import { ElMessage } from 'element-plus';
 import { get } from '@/utils/request';
 import { useSubmissionStore } from '@/stores/submission';
-import AppNotice from '@/components/AppNotice.vue';
 import type { Student } from '@/types';
 
 const workTypes = ['代码压缩包', '实验报告', '截图材料', '其他'];
@@ -45,12 +51,13 @@ const statusMsg = ref('加载中...');
 const submitting = ref(false);
 
 const form = reactive({ studentId: '', title: '第二天实训作业', fileName: 'student-work.zip', workType: '代码压缩包', remark: '' });
-const notice = ref<{ visible: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({ visible: false, message: '', type: 'info' });
-
-
 function fmt(d: string) { return (d || '').replace('T', ' ').slice(0, 16); }
 function evalLink(s: { id: number; studentId: number; studentName: string; fileName: string }) {
   return `/evaluation/${s.id}?studentId=${s.studentId}&studentName=${encodeURIComponent(s.studentName)}&fileName=${encodeURIComponent(s.fileName)}`;
+}
+
+function batchAction(action: string) {
+  ElMessage.info(`批量操作「${action}」— 待实现`);
 }
 
 async function loadData() {
@@ -85,4 +92,5 @@ onMounted(async () => {
 .form-full { grid-column: 1 / -1; }
 .status-text { font: 400 13px/20px $font-family; color: $on-surface-variant; }
 .error-text { color: $error !important; }
+.page-header__actions { display: flex; gap: $space-2; align-items: center; }
 </style>

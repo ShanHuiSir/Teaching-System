@@ -1,7 +1,6 @@
 <template>
   <div class="page">
-    <AppNotice v-if="notice.visible" :message="notice.message" :type="notice.type" @close="notice.visible = false" />
-    <div class="page-header"><h1>作业提交记录</h1></div>
+    <div class="page-header"><h1>作业提交记录</h1><span class="status-text" v-if="!loading && !error">已加载 {{ submissions.length }} 条作业提交</span></div>
     <div class="card">
       <div class="card__body" style="padding:0;">
         <div v-if="loading" class="empty-state"><div class="spinner" /><div class="empty-state__text" style="margin-top:12px;">加载中...</div></div>
@@ -30,14 +29,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { get } from '@/utils/request';
-import AppNotice from '@/components/AppNotice.vue';
 import type { WorkSubmission } from '@/types';
 
 const submissions = ref<WorkSubmission[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
-const notice = ref<{ visible: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({ visible: false, message: '', type: 'info' });
-
 function formatDate(d: string) { return (d || '').replace('T', ' ').slice(0, 16); }
 
 onMounted(async () => {
@@ -46,3 +42,7 @@ onMounted(async () => {
   finally { loading.value = false; }
 });
 </script>
+
+<style lang="scss" scoped>
+.status-text { font: 400 13px/20px $font-family; color: $on-surface-variant; }
+</style>

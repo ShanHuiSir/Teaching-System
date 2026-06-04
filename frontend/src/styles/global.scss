@@ -14,20 +14,27 @@ body {
 
 a { color: $primary; text-decoration: none; }
 
-// ── Card ──
+// ── Card (uniform: max-width 840px → header visible ≈ 814px) ──
 .card {
-  background: $surface-bright;
+  width: 100%;
+  max-width: 840px;
+  margin: 0;
+  padding: 0 16px;
+  background: #fff;
   border: 1px solid $outline-variant;
-  border-radius: $shape-lg;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
   overflow: hidden;
+  box-sizing: border-box;
 
   &__header {
     display: flex;
     align-items: center;
     gap: $space-3;
-    padding: $space-4 $space-5;
+    padding: 16px 20px;
     border-bottom: 1px solid $outline-variant;
     background: $surface-container-low;
+    box-sizing: border-box;
 
     h2 {
       @include font(16px, 24px, 500);
@@ -36,7 +43,7 @@ a { color: $primary; text-decoration: none; }
     }
   }
 
-  &__body { padding: $space-5; }
+  &__body { padding: 24px; }
 }
 
 // ── Buttons ──
@@ -134,8 +141,8 @@ textarea.field__input { height: auto; min-height: 80px; padding: 8px 12px; resiz
 // ── Page layout ──
 .page {
   position: relative;
-  max-width: 1080px;
-  margin: 24px auto 40px;
+  max-width: 100%;
+  margin: 24px 0 40px;
   padding: 0 24px;
 
   &-header {
@@ -181,7 +188,7 @@ textarea.field__input { height: auto; min-height: 80px; padding: 8px 12px; resiz
   &--2 { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .form-grid--2 { grid-template-columns: 1fr; }
-  .page { padding: 0 12px; }
+  .page { padding: 0 16px; }
 }
