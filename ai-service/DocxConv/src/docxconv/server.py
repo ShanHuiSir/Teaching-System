@@ -1,14 +1,17 @@
+import logging
 import shutil
 import tempfile
+import time
 from pathlib import Path
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import config
-from docxconv.converters.img import find_soffice
 from docxconv.converters.img import convert as convert_docx_to_images
 from docxconv.converters.json import convert_obj
 from evaluator.deepseek import evaluate as evaluate_content
@@ -54,9 +57,21 @@ class EvaluateRealResponse(PreprocessResponse):
     aiComment: str = Field(description="50-150 字综合评价")
     status: int = Field(description="固定为 1，表示正常返回")
 
+class FeatureStatus(BaseModel):
+    available: bool = Field(description="该功能是否可用")
+    detail: str = Field("", description="补充说明，不可用时描述原因")
+
 class HealthResponse(BaseModel):
-    status: str = Field(description="degraded = LibreOffice 可用 / unavailable = 不可用")
-    libreofficeAvailable: bool = Field(description="LibreOffice 是否已安装并可用")
+    status: str = Field(description="ok = 全部就绪 / degraded = 部分可选功能不可用 / unavailable = 核心功能不可用")
+    version: str = Field(description="服务版本号")
+    modules: dict[str, str] = Field(description="各子模块及其版本")
+    features: dict[str, FeatureStatus] = Field(description="各功能/依赖的可用状态")
+
+class DeepSeekHealthResponse(BaseModel):
+    connected: bool = Field(description="是否成功连接到 DeepSeek API")
+    model: str = Field(description="当前使用的模型")
+    latencyMs: int = Field(0, description="API 调用耗时（毫秒），未连接时为 0")
+    detail: str = Field("", description="补充说明")
 
 # ── supported file types ──────────────────────────────────────────────
 
@@ -243,7 +258,6 @@ def _extract_image_text(content: bytes) -> str:
     return "\n".join(r["text"] for r in results)
 
 def _extract_archive_text(content: bytes, filename: str) -> tuple[str, list[str]]:
-    import shutil
     from archiveproc.extractors import process
 
     tmpdir = Path(tempfile.mkdtemp())
@@ -251,15 +265,62 @@ def _extract_archive_text(content: bytes, filename: str) -> tuple[str, list[str]
         arc_path = tmpdir / filename
         arc_path.write_bytes(content)
         result = process(arc_path)
-        texts = []
-        warnings = result.get("warnings", [])
-        for extracted in result.get("files", []):
-            epath = Path(extracted.get("path", ""))
-            if epath.suffix.lower() in config.TEXT_EXTENSIONS:
-                try:
-                    texts.append(f"--- {epath.name} ---\n{epath.read_text(encoding='utf-8')}")
-                except Exception:
-                    pass
+        texts: list[str] = []
+        warnings: list[str] = []
+
+        for entry in result.get("files", []):
+            name = entry.get("path", "")
+            ftype = entry.get("type", "")
+            suffix = Path(name).suffix.lower()
+
+            if ftype == "text":
+                text = entry.get("text", "")
+                if text:
+                    texts.append(f"--- {name} ---\n{text}")
+                elif entry.get("text_truncated"):
+                    warnings.append(f"{name}: 文件过大或非 UTF-8 编码，已跳过")
+            else:
+                raw = entry.get("bytes")
+                if raw is None:
+                    continue
+                if suffix == ".docx":
+                    try:
+                        t, _ = _extract_docx_text(raw)
+                        if t:
+                            texts.append(f"--- {name} ---\n{t}")
+                    except Exception:
+                        warnings.append(f"{name}: DOCX 解析失败")
+                elif suffix in (".xlsx", ".xls"):
+                    try:
+                        t = _extract_xlsx_text(raw)
+                        if t:
+                            texts.append(f"--- {name} ---\n{t}")
+                    except Exception:
+                        warnings.append(f"{name}: 表格解析失败")
+                elif suffix in (".pptx", ".ppt"):
+                    try:
+                        t = _extract_pptx_text(raw)
+                        if t:
+                            texts.append(f"--- {name} ---\n{t}")
+                    except Exception:
+                        warnings.append(f"{name}: 演示文稿解析失败")
+                elif suffix == ".pdf":
+                    try:
+                        t = _extract_pdf_text(raw)
+                        if t:
+                            texts.append(f"--- {name} ---\n{t}")
+                    except Exception:
+                        warnings.append(f"{name}: PDF 解析失败")
+                elif suffix in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
+                    if not config.OCR_ENABLED:
+                        continue
+                    try:
+                        t = _extract_image_text(raw)
+                        if t:
+                            texts.append(f"--- {name} ---\n{t}")
+                    except Exception:
+                        warnings.append(f"{name}: 图片 OCR 失败")
+
         return "\n\n".join(texts), warnings
     except Exception as e:
         return "", [f"解压失败: {e}"]
@@ -295,6 +356,8 @@ def _extract_text(content: bytes, filename: str) -> tuple[str, list]:
         except Exception as e:
             return "", [f"演示文稿解析失败: {e}"]
     if suffix in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
+        if not config.OCR_ENABLED:
+            return "", ["OCR 功能已禁用，无法识别图片中的文字"]
         try:
             text = _extract_image_text(content)
             if not text.strip():
@@ -316,17 +379,132 @@ def _extract_text(content: bytes, filename: str) -> tuple[str, list]:
     "/api/health",
     response_model=HealthResponse,
     summary="健康检查",
-    description="返回服务运行状态及 LibreOffice 是否可用。",
+    description="返回服务运行状态、版本信息及各功能/依赖的可用状态。status 取值：ok（全部就绪）/ degraded（部分可选功能不可用）/ unavailable（核心功能不可用）。",
     tags=["系统"],
 )
 async def health():
-    libre_ok = Path(find_soffice()).exists()
+    # ── core dependencies ────────────────────────────────────────────
+    libreoffice_ok = bool(config.SOFFICE_PATH) and Path(config.SOFFICE_PATH).exists()
+    pandoc_ok = bool(config.PANDOC_PATH)
+    deepseek_ok = bool(config.DEEPSEEK_API_KEY)
+
+    # ── optional dependencies ────────────────────────────────────────
+    easyocr_ok = False
+    try:
+        import easyocr  # noqa: F401
+        easyocr_ok = True
+    except ImportError:
+        pass
+
+    archive_7z_ok = False
+    try:
+        import py7zr  # noqa: F401
+        archive_7z_ok = True
+    except ImportError:
+        pass
+
+    archive_rar_ok = False
+    try:
+        import rarfile  # noqa: F401
+        archive_rar_ok = bool(rarfile.tool_setup())
+    except Exception:
+        pass
+
+    # ── status ───────────────────────────────────────────────────────
+    core_ok = libreoffice_ok and pandoc_ok and deepseek_ok
+    all_ok = core_ok and easyocr_ok and archive_7z_ok and archive_rar_ok
+    if all_ok:
+        status = "ok"
+    elif core_ok:
+        status = "degraded"
+    else:
+        status = "unavailable"
+
     return {
-        "status": "degraded" if libre_ok else "unavailable",
-        "libreofficeAvailable": libre_ok,
+        "status": status,
+        "version": "0.7.0",
+        "modules": {
+            "docxconv": "0.5.0",
+            "screenshotproc": "0.1.0",
+            "archiveproc": "0.1.0",
+            "evaluator": "0.1.0",
+        },
+        "features": {
+            "libreoffice": {
+                "available": libreoffice_ok,
+                "detail": "" if libreoffice_ok else "LibreOffice 未安装或路径不可用，DOCX 页面渲染不可用（结构化提取仍可用）",
+            },
+            "pandoc": {
+                "available": pandoc_ok,
+                "detail": "" if pandoc_ok else "Pandoc 未安装，备用渲染管线不可用",
+            },
+            "deepseek": {
+                "available": deepseek_ok,
+                "detail": "" if deepseek_ok else "DEEPSEEK_API_KEY 未配置，AI 评分不可用",
+            },
+            "easyocr": {
+                "available": easyocr_ok,
+                "detail": "" if easyocr_ok else "EasyOCR 未安装，截图 OCR 不可用",
+            },
+            "archive_7z": {
+                "available": archive_7z_ok,
+                "detail": "" if archive_7z_ok else "py7zr 未安装，7z 压缩包解压不可用",
+            },
+            "archive_rar": {
+                "available": archive_rar_ok,
+                "detail": "" if archive_rar_ok else "rarfile 或 unrar 未安装，RAR 解压不可用",
+            },
+        },
     }
 
+# ── /api/health/deepseek ──────────────────────────────────────────────
+
+@app.get(
+    "/api/health/deepseek",
+    response_model=DeepSeekHealthResponse,
+    summary="DeepSeek 连通性深度检查",
+    description="发起真实的 DeepSeek API 调用（max_tokens=1），测量连通性与延迟。与 /api/health 不同，此端点会消耗 API 配额。",
+    tags=["系统"],
+)
+async def health_deepseek():
+    if not config.DEEPSEEK_API_KEY:
+        return {
+            "connected": False,
+            "model": config.DEEPSEEK_MODEL,
+            "latencyMs": 0,
+            "detail": "DEEPSEEK_API_KEY 未配置",
+        }
+
+    from evaluator.deepseek import _get_client
+
+    client = _get_client()
+    start = time.perf_counter()
+    try:
+        client.chat.completions.create(
+            model=config.DEEPSEEK_MODEL,
+            messages=[{"role": "user", "content": "ping"}],
+            max_tokens=1,
+            temperature=0,
+        )
+        elapsed = round((time.perf_counter() - start) * 1000)
+        return {
+            "connected": True,
+            "model": config.DEEPSEEK_MODEL,
+            "latencyMs": elapsed,
+            "detail": "",
+        }
+    except Exception as e:
+        elapsed = round((time.perf_counter() - start) * 1000)
+        return {
+            "connected": False,
+            "model": config.DEEPSEEK_MODEL,
+            "latencyMs": elapsed,
+            "detail": f"API 调用失败: {e}",
+        }
+
 # ── /api/preprocess ───────────────────────────────────────────────────
+
+MAX_UPLOAD_SIZE_MB = 200
 
 @app.post(
     "/api/preprocess",
@@ -338,6 +516,8 @@ async def health():
 async def preprocess(file: UploadFile = File(..., description="要预处理的文件")):
     if not file.filename:
         raise HTTPException(400, "No filename provided")
+    if file.size and file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024:
+        raise HTTPException(413, f"文件过大（最大 {MAX_UPLOAD_SIZE_MB} MB）")
     try:
         content = await file.read()
     except Exception:
@@ -437,7 +617,17 @@ async def evaluate_real(
     try:
         eval_result = evaluate_content(preprocess_result["extractedText"], studentName)
     except RuntimeError as e:
-        raise HTTPException(503, f"AI evaluation failed: {e}")
+        logger.warning("AI evaluation failed, falling back to default scores: %s", e)
+        preprocess_result["warnings"].append(f"DeepSeek 评分失败，已降级为默认评分: {e}")
+        preprocess_result["aiScore"] = 82.50
+        preprocess_result["aiIssues"] = (
+            "1. AI 评分服务暂时不可用，以下为默认提示\n"
+            "2. 请稍后重试或联系教师人工评阅"
+        )
+        preprocess_result["aiComment"] = "AI 评分服务暂时不可用，当前分数为系统默认值（不代表真实评价）。请稍后重试或联系教师。"
+        preprocess_result["status"] = 1
+        preprocess_result["studentName"] = studentName
+        return preprocess_result
     return {
         "studentName": studentName,
         "originalFilename": preprocess_result["originalFilename"],
