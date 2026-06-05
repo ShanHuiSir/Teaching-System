@@ -12,6 +12,7 @@ from typing import Optional
 # ---------------------------------------------------------------------------
 
 MAX_TEXT_SIZE = 5 * 1024 * 1024  # 5 MB
+INLINE_BYTES_MAX = 50 * 1024 * 1024  # 50 MB — raw bytes kept inline in result
 
 TEXT_EXTENSIONS = {
     ".txt", ".java", ".py", ".js", ".ts", ".jsx", ".tsx", ".html", ".htm",
@@ -183,6 +184,11 @@ def process(path: Path) -> dict:
                     entry["text"] = text
                 else:
                     entry["text_truncated"] = True
+            elif size <= INLINE_BYTES_MAX:
+                try:
+                    entry["bytes"] = fp.read_bytes()
+                except OSError:
+                    pass
 
             files.append(entry)
             counts[ftype] += 1
