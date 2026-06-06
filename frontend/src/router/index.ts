@@ -1,7 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { getCookie } from '../utils/cookie.js'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { getCookie } from '../utils/cookie'
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',

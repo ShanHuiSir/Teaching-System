@@ -95,12 +95,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { setCookie, getCookie, delCookie } from '../utils/cookie.js'
-import { CATEGORIES, loadPrefs, savePrefs, clearCategory } from '../utils/cookiePrefs.js'
-import { useSnackbar } from '../composables/useSnackbar.js'
+import { setCookie, getCookie, delCookie } from '../utils/cookie'
+import { CATEGORIES, loadPrefs, savePrefs, clearCategory } from '../utils/cookiePrefs'
+import { useSnackbar } from '../composables/useSnackbar'
 
 const router = useRouter()
 const snackbar = useSnackbar()

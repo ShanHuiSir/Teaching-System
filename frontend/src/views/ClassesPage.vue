@@ -193,18 +193,19 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch, watchEffect, inject, onMounted, onActivated, onDeactivated, nextTick } from 'vue'
-import http from '../utils/request.js'
-import { getCookie, setCookie } from '../utils/cookie.js'
-import { useSnackbar } from '../composables/useSnackbar.js'
-import { startRecoveryPoll } from '../utils/recoveryPoll.js'
+import http from '../utils/request'
+import { getCookie, setCookie } from '../utils/cookie'
+import { useSnackbar } from '../composables/useSnackbar'
+import { startRecoveryPoll } from '../utils/recoveryPoll'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import HedgehogButton from '../components/HedgehogButton.vue'
 
 const snackbar = useSnackbar()
 
 const loading = ref(false)
-const classes = ref([])
+const classes = ref<any[]>([])
 const activeId = ref(null)
 const editing = ref(false)
 const isCreate = ref(true)
@@ -400,8 +401,8 @@ function undoDelete() {
   snackbar.show('已撤销删除', { variant: 'info' })
 }
 
-const refreshTick = inject('refreshTick', ref(0))
-const rightButtons = inject('rightButtons', ref([]))
+const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
+const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
   rightButtons.value = [
@@ -417,16 +418,16 @@ async function fetchClasses() {
     const students = await http.get('/students')
 
     // Group students by className
-    const classMap = {}
-    ;(students || []).forEach(s => {
+    const classMap: Record<string, any[]> = {}
+    ;(students || []).forEach((s: any) => {
       const cls = s.className || '未分班'
       if (!classMap[cls]) classMap[cls] = []
       classMap[cls].push(s)
     })
 
     // Preserve locally-created classes and edited fields
-    const manualMap = {}
-    classes.value.forEach(c => {
+    const manualMap: Record<string, any> = {}
+    classes.value.forEach((c: any) => {
       if (c.id.startsWith('cls-')) {
         manualMap[c.name] = c
       }
@@ -467,8 +468,8 @@ async function fetchClasses() {
   }
 }
 
-const magicBar = inject('magicBar')
-const triggerRipple = inject('triggerRipple')
+const magicBar = inject(MAGIC_BAR_KEY)!
+const triggerRipple = inject(TRIGGER_RIPPLE_KEY)!
 
 watch(active, (c) => {
   magicBar.sub = c?.name || ''

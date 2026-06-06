@@ -184,14 +184,17 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, onActivated, onDeactivated, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getCookie, setCookie } from '../utils/cookie.js'
-import { startRecoveryPoll } from '../utils/recoveryPoll.js'
-import http from '../utils/request.js'
+import { getCookie, setCookie } from '../utils/cookie'
+import { startRecoveryPoll } from '../utils/recoveryPoll'
+import { useSnackbar } from '../composables/useSnackbar'
+import http from '../utils/request'
+import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 
 const router = useRouter()
+const snackbar = useSnackbar()
 
 const teacherName = computed(() => getCookie('user_name') || 'teacher')
 
@@ -240,7 +243,7 @@ function toggleVis(ref) {
   buildRightButtons()
 }
 
-const rightButtons = inject('rightButtons', ref([]))
+const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
   rightButtons.value = [
@@ -281,7 +284,7 @@ const pieGradient = computed(() => {
   return `conic-gradient(${stops.join(', ')})`
 })
 
-const refreshTick = inject('refreshTick', ref(0))
+const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
 
 async function fetchAll() {
   try {
@@ -306,8 +309,8 @@ async function fetchAll() {
     ;(students || []).forEach(s => { studentMap[s.id] = s })
 
     // Class stats
-    const classMap = {}
-    ;(students || []).forEach(s => {
+    const classMap: Record<string, any> = {}
+    ;(students || []).forEach((s: any) => {
       const cls = s.className || '未分班'
       if (!classMap[cls]) classMap[cls] = { count: 0, submitted: 0, reviewed: 0, scores: [] }
       classMap[cls].count++
@@ -331,8 +334,8 @@ async function fetchAll() {
     }))
 
     // Work type stats
-    const workMap = {}
-    ;(subs || []).forEach(s => {
+    const workMap: Record<string, any> = {}
+    ;(subs || []).forEach((s: any) => {
       const type = s.workType || '其他'
       if (!workMap[type]) workMap[type] = { count: 0, scores: [] }
       workMap[type].count++
@@ -406,8 +409,8 @@ async function fetchAll() {
       const ev = evalMap[s.id]
       if (ev?.status >= 2 && s.submittedAt) {
         const subDate = new Date(s.submittedAt)
-        const reviewDate = ev.updatedAt ? new Date(ev.updatedAt) : new Date()
-        const days = Math.round((reviewDate - subDate) / 864e5)
+        const reviewDate: any = ev.updatedAt ? new Date(ev.updatedAt) : new Date()
+        const days = Math.round((reviewDate - (subDate as any)) / 864e5)
         const d = s.submittedAt.slice(0, 10)
         effMap[d] = (effMap[d] || 0) + days
         effCountMap[d] = (effCountMap[d] || 0) + 1
@@ -440,8 +443,8 @@ async function fetchAll() {
   }
 }
 
-const magicBar = inject('magicBar')
-const showGreeting = inject('showGreeting')
+const magicBar = inject(MAGIC_BAR_KEY)!
+const showGreeting = inject(SHOW_GREETING_KEY)!
 
 onMounted(async () => {
   magicBar.primary = '仪表盘'
