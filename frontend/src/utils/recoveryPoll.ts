@@ -44,7 +44,9 @@ export function startRecoveryPoll(onRecover?: RecoverCallback): void {
 export function onConnectionChange(fn: ChangeCallback): () => void {
   onChangeCbs.add(fn)
   ensurePolling()
-  return () => { onChangeCbs.delete(fn) }
+  return () => {
+    onChangeCbs.delete(fn)
+  }
 }
 
 export function isConnected(): boolean {

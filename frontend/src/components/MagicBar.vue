@@ -1,7 +1,7 @@
 <template>
   <div class="magic-bar">
     <Transition name="magic" mode="out-in">
-      <div class="magic-bar__text" :key="magicKey">
+      <div :key="magicKey" class="magic-bar__text">
         <template v-if="magicBar.status">
           <span class="magic-bar__dot" :class="`magic-bar__dot--${magicBar.statusType}`" />
           <span class="magic-bar__status">{{ magicBar.status }}</span>
@@ -15,7 +15,9 @@
           </template>
           <template v-if="magicBar.suffix">
             <span class="magic-bar__sep">&middot;</span>
-            <span class="magic-bar__suffix" :class="`magic-bar__suffix--${magicBar.suffixType}`">{{ magicBar.suffix }}</span>
+            <span class="magic-bar__suffix" :class="`magic-bar__suffix--${magicBar.suffixType}`">{{
+              magicBar.suffix
+            }}</span>
           </template>
         </template>
       </div>
@@ -50,7 +52,7 @@ defineProps<{
   &__primary {
     @include font(18px, 24px, 500);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .02em;
+    letter-spacing: 0.02em;
   }
 
   &__sep {
@@ -126,22 +128,37 @@ defineProps<{
 }
 
 @keyframes magic-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .35; transform: scale(.75); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
 }
 
 @keyframes magic-breathe {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .6; transform: scale(.94); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.94);
+  }
 }
-
 </style>
 
 <style>
 /* Transition classes must be unscoped for Vue <Transition> */
 .magic-enter-active,
 .magic-leave-active {
-  transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .25s ease;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease;
 }
 .magic-leave-to {
   transform: translateY(-120%);

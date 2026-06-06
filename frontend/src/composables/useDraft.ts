@@ -16,7 +16,9 @@ export function useDraft(draftKey: string, editing: Ref<boolean>): DraftApi {
     if (!raw) return false
     try {
       const saved = JSON.parse(raw) as Record<string, unknown>
-      keys.forEach(k => { delete saved[k] })
+      keys.forEach(k => {
+        delete saved[k]
+      })
       return true
     } catch {
       clearDraft()

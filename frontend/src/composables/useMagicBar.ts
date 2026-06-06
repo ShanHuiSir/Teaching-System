@@ -54,16 +54,15 @@ export function useMagicBar(teacherName: Ref<string>): MagicBarApi {
 
   // ── Greeting ──
   const greeting = ref('')
-  const magicKey = computed(() =>
-    `${magicBar.primary}|${magicBar.sub}|${magicBar.status}|${magicBar.suffix}|${greeting.value}`
+  const magicKey = computed(
+    () => `${magicBar.primary}|${magicBar.sub}|${magicBar.status}|${magicBar.suffix}|${greeting.value}`,
   )
 
   function pickGreeting(): string {
     const h = new Date().getHours()
     const name = teacherName.value
     const timeGreet =
-      h < 6 ? '夜深了' : h < 9 ? '早上好' : h < 12 ? '上午好' :
-      h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好'
+      h < 6 ? '夜深了' : h < 9 ? '早上好' : h < 12 ? '上午好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好'
     const poem = POEMS[Math.floor(Math.random() * POEMS.length)]
     const count = magicBar.count
     const countPart = count > 0 ? `今天还有 ${count} 份作业待批改。` : ''

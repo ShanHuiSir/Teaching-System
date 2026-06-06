@@ -3,7 +3,13 @@
     <!-- Top App Bar -->
     <header class="top-bar" :class="{ 'top-bar--ripple': ripple > 0 }">
       <span class="top-bar__ripple-clip">
-        <i v-if="ripple > 0" class="top-bar__ripple" :style="{ left: rippleLeft, top: rippleTop }" :key="ripple" @animationend="ripple = 0" />
+        <i
+          v-if="ripple > 0"
+          :key="ripple"
+          class="top-bar__ripple"
+          :style="{ left: rippleLeft, top: rippleTop }"
+          @animationend="ripple = 0"
+        />
       </span>
       <MagicBar :magic-bar="magicBar" :greeting="greeting" :magic-key="magicKey" />
       <div class="top-bar__right">
@@ -18,14 +24,30 @@
               <span class="user-menu__account">{{ accountName }}</span>
             </div>
             <button class="user-menu__btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                />
               </svg>
               <span>账户设置</span>
             </button>
             <button class="user-menu__btn" :disabled="resetting" @click="onResetDemo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <polyline points="1 4 1 10 7 10" />
                 <polyline points="23 20 23 14 17 14" />
                 <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
@@ -34,16 +56,60 @@
             </button>
             <hr class="user-menu__divider" />
             <button class="user-menu__btn user-menu__btn--debug" @click="forceCrash">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
               <span>强制组件错误</span>
             </button>
             <button class="user-menu__btn" @click="toggleTheme">
-              <svg v-if="isDark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
-              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+              <svg
+                v-if="isDark"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+              <svg
+                v-else
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
               <span>{{ isDark ? '浅色模式' : '深色模式' }}</span>
             </button>
             <button class="user-menu__btn" @click="logout">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
@@ -67,7 +133,9 @@
             <path d="M21 18v2H3v-2h18zM12 11v2H3v-2h9zm0-7v2H3V4h9z" />
           </svg>
           <svg v-else viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M21 18v2H3v-2h18zM20.01 5.318L16.828 8.5l3.182 3.182-1.414 1.414L14 8.5l4.596-4.596 1.414 1.414zM12 11v2H3v-2h9zm0-7v2H3V4h9z" />
+            <path
+              d="M21 18v2H3v-2h18zM20.01 5.318L16.828 8.5l3.182 3.182-1.414 1.414L14 8.5l4.596-4.596 1.414 1.414zM12 11v2H3v-2h9zm0-7v2H3V4h9z"
+            />
           </svg>
         </button>
         <div class="rail__items">
@@ -85,7 +153,15 @@
               }"
               @click="go(item.route)"
             >
-              <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                class="nav-item__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <template v-if="item.icon === 'dashboard'">
                   <rect x="3" y="3" width="7" height="7" rx="1" />
                   <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -129,7 +205,9 @@
       <aside class="rail rail--right" :class="{ 'rail--expanded': rightExpanded }">
         <button class="rail__toggle rail__toggle--right" @click="rightExpanded = !rightExpanded">
           <svg v-if="!rightExpanded" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M20.01 5.318L16.828 8.5l3.182 3.182-1.414 1.414L14 8.5l4.596-4.596 1.414 1.414zM12 11v2H3v-2h9zm0-7v2H3V4h9zM21 18v2H3v-2h18z" />
+            <path
+              d="M20.01 5.318L16.828 8.5l3.182 3.182-1.414 1.414L14 8.5l4.596-4.596 1.414 1.414zM12 11v2H3v-2h9zm0-7v2H3V4h9zM21 18v2H3v-2h18z"
+            />
           </svg>
           <svg v-else viewBox="0 0 24 24" fill="currentColor" stroke="none">
             <path d="M17.404 13.096L22 8.5l-4.596-4.596-1.414 1.414L19.172 8.5 15.99 11.682l1.414 1.414z" />
@@ -139,7 +217,15 @@
         <div class="rail__items">
           <!-- Persistent buttons -->
           <button class="nav-item" data-tooltip="刷新" @click="doRefresh">
-            <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              class="nav-item__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <polyline points="23 4 23 10 17 10" />
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
             </svg>
@@ -158,53 +244,82 @@
                 :data-tooltip="btn.label"
                 @click="btn.action"
               >
-              <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <template v-if="btn.icon === 'sort-class'">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </template>
-                <template v-else-if="btn.icon === 'sort-time'">
-                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                </template>
-                <template v-else-if="btn.icon === 'sort-completion'">
-                  <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                </template>
-                <template v-else-if="btn.icon === 'sort-count'">
-                  <line x1="4" y1="9" x2="20" y2="9" /><line x1="4" y1="15" x2="20" y2="15" /><line x1="8" y1="5" x2="6" y2="19" /><line x1="16" y1="5" x2="14" y2="19" />
-                </template>
-                <template v-else-if="btn.icon === 'sort-rate'">
-                  <rect x="2" y="2" width="20" height="20" rx="2" /><path d="M7 16l3-6 4 4 3-8" />
-                </template>
-                <template v-else-if="btn.icon === 'filter-pending'">
-                  <circle cx="12" cy="12" r="10" /><polyline points="8 12 11 15 16 9" />
-                </template>
-                <template v-else-if="btn.icon === 'filter-none'">
-                  <circle cx="12" cy="12" r="10" /><line x1="8" y1="12" x2="16" y2="12" />
-                </template>
-                <template v-else-if="btn.icon === 'filter-unsub'">
-                  <circle cx="12" cy="12" r="10" /><line x1="8" y1="8" x2="16" y2="16" /><line x1="16" y1="8" x2="8" y2="16" />
-                </template>
-                <template v-else-if="btn.icon === 'dash-class'">
-                  <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
-                </template>
-                <template v-else-if="btn.icon === 'dash-work'">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
-                </template>
-                <template v-else-if="btn.icon === 'dash-score'">
-                  <line x1="4" y1="20" x2="18" y2="20" /><polyline points="6 20 6 14 10 10 14 16 18 8" />
-                </template>
-                <template v-else-if="btn.icon === 'dash-dev'">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </template>
-                <template v-else-if="btn.icon === 'dash-tw'">
-                  <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /><line x1="12" y1="2" x2="12" y2="8" />
-                </template>
-                <template v-else-if="btn.icon === 'dash-trend'">
-                  <polyline points="2 18 6 10 10 14 14 6 18 12 22 12" />
-                </template>
-              </svg>
-              <span class="nav-item__label">{{ btn.label }}</span>
-            </button>
-          </template>
+                <svg
+                  class="nav-item__icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <template v-if="btn.icon === 'sort-class'">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </template>
+                  <template v-else-if="btn.icon === 'sort-time'">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </template>
+                  <template v-else-if="btn.icon === 'sort-completion'">
+                    <path d="M9 11l3 3L22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                  </template>
+                  <template v-else-if="btn.icon === 'sort-count'">
+                    <line x1="4" y1="9" x2="20" y2="9" />
+                    <line x1="4" y1="15" x2="20" y2="15" />
+                    <line x1="8" y1="5" x2="6" y2="19" />
+                    <line x1="16" y1="5" x2="14" y2="19" />
+                  </template>
+                  <template v-else-if="btn.icon === 'sort-rate'">
+                    <rect x="2" y="2" width="20" height="20" rx="2" />
+                    <path d="M7 16l3-6 4 4 3-8" />
+                  </template>
+                  <template v-else-if="btn.icon === 'filter-pending'">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="8 12 11 15 16 9" />
+                  </template>
+                  <template v-else-if="btn.icon === 'filter-none'">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                  </template>
+                  <template v-else-if="btn.icon === 'filter-unsub'">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="8" y1="8" x2="16" y2="16" />
+                    <line x1="16" y1="8" x2="8" y2="16" />
+                  </template>
+                  <template v-else-if="btn.icon === 'dash-class'">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </template>
+                  <template v-else-if="btn.icon === 'dash-work'">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                  </template>
+                  <template v-else-if="btn.icon === 'dash-score'">
+                    <line x1="4" y1="20" x2="18" y2="20" />
+                    <polyline points="6 20 6 14 10 10 14 16 18 8" />
+                  </template>
+                  <template v-else-if="btn.icon === 'dash-dev'">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </template>
+                  <template v-else-if="btn.icon === 'dash-tw'">
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="12" r="4" />
+                    <line x1="12" y1="2" x2="12" y2="8" />
+                  </template>
+                  <template v-else-if="btn.icon === 'dash-trend'">
+                    <polyline points="2 18 6 10 10 14 14 6 18 12 22 12" />
+                  </template>
+                </svg>
+                <span class="nav-item__label">{{ btn.label }}</span>
+              </button>
+            </template>
           </template>
         </div>
       </aside>
@@ -253,8 +368,12 @@ const {
 provide(MAGIC_BAR_KEY, magicBar)
 provide(TRIGGER_RIPPLE_KEY, triggerRipple)
 
-onMounted(() => { setupLifecycle() })
-onUnmounted(() => { teardownLifecycle() })
+onMounted(() => {
+  setupLifecycle()
+})
+onUnmounted(() => {
+  teardownLifecycle()
+})
 
 // Expose helpers for pages
 provide(SHOW_GREETING_KEY, showGreeting)
@@ -379,18 +498,23 @@ function go(path) {
     margin-left: -5px;
     margin-top: -5px;
     border-radius: 50%;
-    background: rgb(var(--md-sys-color-primary) / .28);
+    background: rgb(var(--md-sys-color-primary) / 0.28);
     transform: scale(0);
-    animation: magic-ripple .7s ease-out forwards;
+    animation: magic-ripple 0.7s ease-out forwards;
   }
 }
 
 @keyframes magic-ripple {
-  0% { transform: scale(0); opacity: 1; }
-  100% { transform: scale(220); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(220);
+    opacity: 0;
+  }
 }
 .top-bar {
-
   &__avatar {
     width: 40px;
     height: 40px;
@@ -415,7 +539,7 @@ function go(path) {
   padding: 12px;
   background: rgb(var(--md-sys-color-surface-container-lowest));
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0 0 0 / .12);
+  box-shadow: 0 4px 16px rgba(0 0 0 / 0.12);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -451,7 +575,7 @@ function go(path) {
   &__account {
     @include font(13px, 20px);
     color: rgb(var(--md-sys-color-on-primary-container));
-    opacity: .7;
+    opacity: 0.7;
     margin-top: 2px;
   }
 
@@ -467,7 +591,7 @@ function go(path) {
     background: transparent;
     color: rgb(var(--md-sys-color-on-surface));
     cursor: pointer;
-    transition: background .15s ease;
+    transition: background 0.15s ease;
 
     svg {
       width: 18px;
@@ -480,14 +604,14 @@ function go(path) {
     }
 
     &:hover {
-      background: rgb(var(--md-sys-color-on-surface) / .08);
+      background: rgb(var(--md-sys-color-on-surface) / 0.08);
     }
 
     &--debug {
       color: rgb(var(--md-sys-color-error));
 
       &:hover {
-        background: rgb(var(--md-sys-color-error) / .08);
+        background: rgb(var(--md-sys-color-error) / 0.08);
       }
     }
   }
@@ -509,18 +633,22 @@ function go(path) {
 
 /* ── Menu transition ── */
 .menu-enter-active {
-  transition: opacity .2s ease, transform .2s cubic-bezier(.4, 0, .2, 1);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .menu-leave-active {
-  transition: opacity .15s ease, transform .15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 .menu-enter-from {
   opacity: 0;
-  transform: translateY(-8px) scale(.96);
+  transform: translateY(-8px) scale(0.96);
 }
 .menu-leave-to {
   opacity: 0;
-  transform: translateY(-4px) scale(.98);
+  transform: translateY(-4px) scale(0.98);
 }
 
 /* ── Body ── */
@@ -537,7 +665,7 @@ function go(path) {
   flex-shrink: 0;
   background: rgb(var(--md-sys-color-surface-container-lowest));
   border-right: 1px solid rgb(var(--md-sys-color-outline-variant));
-  transition: width .25s cubic-bezier(.4, 0, .2, 1);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
   &--left {
@@ -568,17 +696,17 @@ function go(path) {
       padding: 0 11px;
       border-radius: 50%;
       transition:
-        width .25s cubic-bezier(.4, 0, .2, 1),
-        padding .25s cubic-bezier(.4, 0, .2, 1),
-        border-radius .25s cubic-bezier(.4, 0, .2, 1);
+        width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        padding 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        border-radius 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
       &__label {
-        transition: opacity .2s cubic-bezier(.4, 0, .2, 1);
+        transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
     }
 
     .nav-item--active {
-      background: rgb(var(--md-sys-color-on-surface) / .12);
+      background: rgb(var(--md-sys-color-on-surface) / 0.12);
     }
 
     &:not(.rail--expanded) {
@@ -596,7 +724,7 @@ function go(path) {
         border-radius: 4px;
         background: rgb(var(--md-sys-color-inverse-surface));
         color: rgb(var(--md-sys-color-inverse-on-surface));
-        box-shadow: 0 1px 3px rgb(var(--md-sys-color-shadow) / .2);
+        box-shadow: 0 1px 3px rgb(var(--md-sys-color-shadow) / 0.2);
         @include font(12px, 18px, 500);
         white-space: nowrap;
         z-index: 10;
@@ -628,7 +756,7 @@ function go(path) {
     background: transparent;
     color: rgb(var(--md-sys-color-on-surface-variant));
     cursor: pointer;
-    transition: background .15s ease;
+    transition: background 0.15s ease;
     flex-shrink: 0;
 
     svg {
@@ -677,7 +805,9 @@ function go(path) {
   right: 8px;
   border-radius: 28px;
   background: rgb(var(--md-sys-color-on-surface-variant) / 0.2);
-  transition: top .35s cubic-bezier(.4, 0, .2, 1), height .35s cubic-bezier(.4, 0, .2, 1);
+  transition:
+    top 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 2;
 }
@@ -697,7 +827,7 @@ function go(path) {
   background: transparent;
   color: rgb(var(--md-sys-color-on-surface-variant));
   cursor: pointer;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
   white-space: nowrap;
 
   &:hover {
@@ -720,7 +850,7 @@ function go(path) {
     color: rgb(var(--md-sys-color-on-error-container));
 
     &:hover {
-      filter: brightness(.95);
+      filter: brightness(0.95);
     }
   }
 

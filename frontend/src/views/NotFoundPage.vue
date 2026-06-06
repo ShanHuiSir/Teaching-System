@@ -6,7 +6,17 @@
       <h2 class="nf__subtitle">隔水问樵夫</h2>
       <p class="nf__hint">或许我们可以带你回家？</p>
       <button class="nf__btn" @click="goHome">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
         <span>返回仪表盘</span>
       </button>
     </div>
@@ -42,8 +52,8 @@ function goHome() {
 
   &__code {
     @include font(96px, 1, 300);
-    color: rgb(var(--md-sys-color-primary) / .18);
-    letter-spacing: .04em;
+    color: rgb(var(--md-sys-color-primary) / 0.18);
+    letter-spacing: 0.04em;
     margin-bottom: 16px;
     user-select: none;
   }
@@ -51,13 +61,13 @@ function goHome() {
   &__title {
     @include font(28px, 40px, 500);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .06em;
+    letter-spacing: 0.06em;
   }
 
   &__subtitle {
     @include font(28px, 40px, 500);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .06em;
+    letter-spacing: 0.06em;
   }
 
   &__hint {
@@ -79,12 +89,15 @@ function goHome() {
     color: rgb(var(--md-sys-color-on-primary));
     cursor: pointer;
     @include font(15px, 24px, 500);
-    transition: box-shadow .2s ease;
+    transition: box-shadow 0.2s ease;
 
-    svg { width: 18px; height: 18px; }
+    svg {
+      width: 18px;
+      height: 18px;
+    }
 
     &:hover {
-      box-shadow: 0 0 20px rgb(var(--md-sys-color-primary) / .35);
+      box-shadow: 0 0 20px rgb(var(--md-sys-color-primary) / 0.35);
     }
   }
 }

@@ -1,6 +1,15 @@
 <template>
   <span class="stat-chip" :class="{ 'stat-chip--push': push }" :data-tooltip="tooltip || undefined">
-    <svg v-if="icon" class="stat-chip__icon" :viewBox="iconViewBox" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <svg
+      v-if="icon"
+      class="stat-chip__icon"
+      :viewBox="iconViewBox"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
       <path v-for="(p, i) in iconPaths" :key="i" v-bind="p" />
     </svg>
     <span><slot /></span>
@@ -11,13 +20,18 @@
 import { computed } from 'vue'
 import { FILE_ICONS } from '../utils/fileIcons'
 
-const props = withDefaults(defineProps<{
-  icon?: string
-  tooltip?: string
-  push?: boolean
-}>(), {
-  push: false,
-})
+const props = withDefaults(
+  defineProps<{
+    icon?: string
+    tooltip?: string
+    push?: boolean
+  }>(),
+  {
+    icon: '',
+    tooltip: '',
+    push: false,
+  },
+)
 
 const iconViewBox = computed(() => {
   if (!props.icon) return '0 0 24 24'
@@ -27,7 +41,7 @@ const iconViewBox = computed(() => {
 const iconPaths = computed(() => {
   if (!props.icon) return []
   const raw = FILE_ICONS[props.icon]?.paths || []
-  return raw.map((p: any) => typeof p === 'string' ? { d: p } : p)
+  return raw.map((p: any) => (typeof p === 'string' ? { d: p } : p))
 })
 </script>
 

@@ -1,6 +1,17 @@
 <template>
   <div class="search-input">
-    <svg class="search-input__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+    <svg
+      class="search-input__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
     <input
       :value="modelValue"
       class="search-input__input"
@@ -9,7 +20,17 @@
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <button v-if="modelValue" class="search-input__clear" @click="$emit('update:modelValue', '')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
     </button>
   </div>
 </template>
@@ -52,10 +73,12 @@ defineEmits<{
     color: rgb(var(--md-sys-color-on-surface));
     @include font(13px, 20px);
     outline: none;
-    transition: border-color .2s ease, background .2s ease;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
 
     &::placeholder {
-      color: rgb(var(--md-sys-color-on-surface-variant) / .5);
+      color: rgb(var(--md-sys-color-on-surface-variant) / 0.5);
     }
 
     &:focus {
@@ -77,12 +100,15 @@ defineEmits<{
     background: transparent;
     color: rgb(var(--md-sys-color-on-surface-variant));
     cursor: pointer;
-    transition: background .15s ease;
+    transition: background 0.15s ease;
 
-    svg { width: 14px; height: 14px; }
+    svg {
+      width: 14px;
+      height: 14px;
+    }
 
     &:hover {
-      background: rgb(var(--md-sys-color-on-surface-variant) / .12);
+      background: rgb(var(--md-sys-color-on-surface-variant) / 0.12);
     }
   }
 }

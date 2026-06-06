@@ -6,12 +6,15 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  emoji?: string
-  text: string
-}>(), {
-  emoji: '¯\\_(ツ)_/¯',
-})
+withDefaults(
+  defineProps<{
+    emoji?: string
+    text: string
+  }>(),
+  {
+    emoji: '¯\\_(ツ)_/¯',
+  },
+)
 </script>
 
 <style lang="scss" scoped>

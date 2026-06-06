@@ -6,22 +6,78 @@
       <div class="stat-card" @click="router.push('/review?filter=pending')">
         <span class="stat-card__title">待复审</span>
         <span class="stat-card__num stat-card__num--primary">{{ stats.aiReviewed }}</span>
-        <div class="stat-card__overlay"><button class="stat-card__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg><span>查看</span></button></div>
+        <div class="stat-card__overlay">
+          <button class="stat-card__btn">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" /></svg
+            ><span>查看</span>
+          </button>
+        </div>
       </div>
       <div class="stat-card" @click="router.push('/review?filter=none')">
         <span class="stat-card__title">未审批</span>
         <span class="stat-card__num stat-card__num--error">{{ stats.pending }}</span>
-        <div class="stat-card__overlay"><button class="stat-card__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg><span>查看</span></button></div>
+        <div class="stat-card__overlay">
+          <button class="stat-card__btn">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" /></svg
+            ><span>查看</span>
+          </button>
+        </div>
       </div>
       <div class="stat-card" @click="router.push('/review?filter=all')">
         <span class="stat-card__title">已提交</span>
         <span class="stat-card__num">{{ stats.submitted }}</span>
-        <div class="stat-card__overlay"><button class="stat-card__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg><span>查看</span></button></div>
+        <div class="stat-card__overlay">
+          <button class="stat-card__btn">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" /></svg
+            ><span>查看</span>
+          </button>
+        </div>
       </div>
       <div class="stat-card" @click="router.push('/classes')">
         <span class="stat-card__title">学生总数</span>
         <span class="stat-card__num stat-card__num--primary">{{ stats.studentCount }}</span>
-        <div class="stat-card__overlay"><button class="stat-card__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg><span>查看</span></button></div>
+        <div class="stat-card__overlay">
+          <button class="stat-card__btn">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" /></svg
+            ><span>查看</span>
+          </button>
+        </div>
       </div>
       <div class="stat-card">
         <span class="stat-card__title">教师均分</span>
@@ -38,12 +94,16 @@
           <div class="class-card__bars">
             <div class="class-card__bar-row">
               <span class="class-card__bar-label">提交率</span>
-              <div class="class-card__bar-track"><div class="class-card__bar-fill" :style="{ width: c.submitRate + '%' }" /></div>
+              <div class="class-card__bar-track">
+                <div class="class-card__bar-fill" :style="{ width: c.submitRate + '%' }" />
+              </div>
               <span class="class-card__bar-val">{{ c.submitRate }}%</span>
             </div>
             <div class="class-card__bar-row">
               <span class="class-card__bar-label">审批率</span>
-              <div class="class-card__bar-track"><div class="class-card__bar-fill class-card__bar-fill--alt" :style="{ width: c.reviewRate + '%' }" /></div>
+              <div class="class-card__bar-track">
+                <div class="class-card__bar-fill class-card__bar-fill--alt" :style="{ width: c.reviewRate + '%' }" />
+              </div>
               <span class="class-card__bar-val">{{ c.reviewRate }}%</span>
             </div>
           </div>
@@ -70,14 +130,18 @@
       <div class="dash__section-head">
         <h2 class="dash__section-title">分数段分布</h2>
         <div class="toggle-group">
-          <button class="toggle-btn" :class="{ 'toggle-btn--active': chartMode === 'bar' }" @click="chartMode = 'bar'">直方图</button>
-          <button class="toggle-btn" :class="{ 'toggle-btn--active': chartMode === 'pie' }" @click="chartMode = 'pie'">饼图</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': chartMode === 'bar' }" @click="chartMode = 'bar'">
+            直方图
+          </button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': chartMode === 'pie' }" @click="chartMode = 'pie'">
+            饼图
+          </button>
         </div>
       </div>
       <div v-if="chartMode === 'bar'" class="histogram">
         <div v-for="b in scoreBuckets" :key="b.label" class="histogram__bar">
           <span class="histogram__count">{{ b.count }}</span>
-          <div class="histogram__fill" :style="{ height: maxBucket ? (b.count / maxBucket * 160) + 'px' : '0' }" />
+          <div class="histogram__fill" :style="{ height: maxBucket ? (b.count / maxBucket) * 160 + 'px' : '0' }" />
           <span class="histogram__label">{{ b.label }}</span>
         </div>
       </div>
@@ -94,12 +158,16 @@
     <!-- AI vs Teacher deviation -->
     <section v-if="showDeviation" class="dash__section">
       <h2 class="dash__section-title">AI vs 教师评分偏差</h2>
-      <div class="dev-grid" v-if="deviations.length">
+      <div v-if="deviations.length" class="dev-grid">
         <div v-for="d in deviations" :key="d.title" class="dev-item">
           <span class="dev-item__title">{{ d.title }}</span>
           <div class="dev-item__scores">
             <span class="dev-item__score dev-item__score--ai">AI {{ d.aiScore }}</span>
-            <span class="dev-item__diff" :class="{ 'dev-item__diff--up': d.diff > 0, 'dev-item__diff--down': d.diff < 0 }">{{ d.diff > 0 ? '+' : '' }}{{ d.diff }}</span>
+            <span
+              class="dev-item__diff"
+              :class="{ 'dev-item__diff--up': d.diff > 0, 'dev-item__diff--down': d.diff < 0 }"
+              >{{ d.diff > 0 ? '+' : '' }}{{ d.diff }}</span
+            >
             <span class="dev-item__score dev-item__score--teacher">教师 {{ d.teacherScore }}</span>
           </div>
         </div>
@@ -115,10 +183,10 @@
         <!-- Review trend -->
         <div class="twd-card">
           <h3 class="twd-card__title">审批量趋势</h3>
-          <div class="trend-bars" v-if="trendData.length">
+          <div v-if="trendData.length" class="trend-bars">
             <div v-for="t in trendData" :key="t.date" class="trend-bar">
               <span class="trend-bar__count">{{ t.count }}</span>
-              <div class="trend-bar__fill" :style="{ height: trendMax ? (t.count / trendMax * 120) + 'px' : '0' }" />
+              <div class="trend-bar__fill" :style="{ height: trendMax ? (t.count / trendMax) * 120 + 'px' : '0' }" />
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
@@ -128,23 +196,31 @@
         <!-- Score comparison -->
         <div class="twd-card">
           <h3 class="twd-card__title">评分分布对比</h3>
-          <div class="compare-chart" v-if="scoreCompare.length">
+          <div v-if="scoreCompare.length" class="compare-chart">
             <div v-for="s in scoreCompare" :key="s.label" class="compare-row">
               <span class="compare-row__label">{{ s.label }}</span>
               <div class="compare-row__bars">
                 <div class="compare-row__bar-wrap">
-                  <div class="compare-row__bar compare-row__bar--ai" :style="{ width: cmpMax ? (s.ai / cmpMax * 100) + '%' : '0%' }" />
+                  <div
+                    class="compare-row__bar compare-row__bar--ai"
+                    :style="{ width: cmpMax ? (s.ai / cmpMax) * 100 + '%' : '0%' }"
+                  />
                   <span class="compare-row__val">{{ s.ai }}</span>
                 </div>
                 <div class="compare-row__bar-wrap">
-                  <div class="compare-row__bar compare-row__bar--teacher" :style="{ width: cmpMax ? (s.teacher / cmpMax * 100) + '%' : '0%' }" />
+                  <div
+                    class="compare-row__bar compare-row__bar--teacher"
+                    :style="{ width: cmpMax ? (s.teacher / cmpMax) * 100 + '%' : '0%' }"
+                  />
                   <span class="compare-row__val">{{ s.teacher }}</span>
                 </div>
               </div>
             </div>
             <div class="compare-legend">
               <span class="compare-legend__item"><i class="compare-legend__dot compare-legend__dot--ai" />AI 评分</span>
-              <span class="compare-legend__item"><i class="compare-legend__dot compare-legend__dot--teacher" />教师评分</span>
+              <span class="compare-legend__item"
+                ><i class="compare-legend__dot compare-legend__dot--teacher" />教师评分</span
+              >
             </div>
           </div>
           <p v-else class="dash__empty">暂无数据</p>
@@ -158,10 +234,13 @@
       <div class="twd-grid">
         <div class="twd-card">
           <h3 class="twd-card__title">提交量趋势</h3>
-          <div class="trend-bars" v-if="subTrendData.length">
+          <div v-if="subTrendData.length" class="trend-bars">
             <div v-for="t in subTrendData" :key="t.date" class="trend-bar">
               <span class="trend-bar__count">{{ t.count }}</span>
-              <div class="trend-bar__fill trend-bar__fill--sub" :style="{ height: subTrendMax ? (t.count / subTrendMax * 120) + 'px' : '0' }" />
+              <div
+                class="trend-bar__fill trend-bar__fill--sub"
+                :style="{ height: subTrendMax ? (t.count / subTrendMax) * 120 + 'px' : '0' }"
+              />
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
@@ -170,10 +249,13 @@
 
         <div class="twd-card">
           <h3 class="twd-card__title">审批效率（提交→确认 · 天）</h3>
-          <div class="trend-bars" v-if="efficiencyData.length">
+          <div v-if="efficiencyData.length" class="trend-bars">
             <div v-for="t in efficiencyData" :key="t.date" class="trend-bar">
               <span class="trend-bar__count">{{ t.days }}d</span>
-              <div class="trend-bar__fill trend-bar__fill--eff" :style="{ height: effMax ? (t.days / effMax * 120) + 'px' : '0' }" />
+              <div
+                class="trend-bar__fill trend-bar__fill--eff"
+                :style="{ height: effMax ? (t.days / effMax) * 120 + 'px' : '0' }"
+              />
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
@@ -185,7 +267,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, onActivated, onDeactivated, inject, watch } from 'vue'
+import { ref, computed, onMounted, onActivated, onDeactivated, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCookie, setCookie } from '../utils/cookie'
 import { startRecoveryPoll } from '../utils/recoveryPoll'
@@ -211,7 +293,11 @@ const stats = ref({ pending: 0, aiReviewed: 0, submitted: 0, studentCount: 0, av
 const classStats = ref([])
 const workTypeStats = ref([])
 const scoreBuckets = ref([
-  { label: '0-59', count: 0 }, { label: '60-69', count: 0 }, { label: '70-79', count: 0 }, { label: '80-89', count: 0 }, { label: '90-100', count: 0 },
+  { label: '0-59', count: 0 },
+  { label: '60-69', count: 0 },
+  { label: '70-79', count: 0 },
+  { label: '80-89', count: 0 },
+  { label: '90-100', count: 0 },
 ])
 const deviations = ref([])
 const trendData = ref([])
@@ -247,12 +333,48 @@ const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
   rightButtons.value = [
-    { key: 'dash-class', icon: 'dash-class', label: '班级统计', active: showClassStats.value, action: () => toggleVis(showClassStats) },
-    { key: 'dash-work', icon: 'dash-work', label: '作业类型排行', active: showWorkType.value, action: () => toggleVis(showWorkType) },
-    { key: 'dash-score', icon: 'dash-score', label: '分数段分布', active: showScoreDist.value, action: () => toggleVis(showScoreDist) },
-    { key: 'dash-dev', icon: 'dash-dev', label: '评分偏差', active: showDeviation.value, action: () => toggleVis(showDeviation) },
-    { key: 'dash-tw', icon: 'dash-tw', label: '教师工作数据', active: showTeacherWork.value, action: () => toggleVis(showTeacherWork) },
-    { key: 'dash-trend', icon: 'dash-trend', label: '时间趋势分析', active: showTrends.value, action: () => toggleVis(showTrends) },
+    {
+      key: 'dash-class',
+      icon: 'dash-class',
+      label: '班级统计',
+      active: showClassStats.value,
+      action: () => toggleVis(showClassStats),
+    },
+    {
+      key: 'dash-work',
+      icon: 'dash-work',
+      label: '作业类型排行',
+      active: showWorkType.value,
+      action: () => toggleVis(showWorkType),
+    },
+    {
+      key: 'dash-score',
+      icon: 'dash-score',
+      label: '分数段分布',
+      active: showScoreDist.value,
+      action: () => toggleVis(showScoreDist),
+    },
+    {
+      key: 'dash-dev',
+      icon: 'dash-dev',
+      label: '评分偏差',
+      active: showDeviation.value,
+      action: () => toggleVis(showDeviation),
+    },
+    {
+      key: 'dash-tw',
+      icon: 'dash-tw',
+      label: '教师工作数据',
+      active: showTeacherWork.value,
+      action: () => toggleVis(showTeacherWork),
+    },
+    {
+      key: 'dash-trend',
+      icon: 'dash-trend',
+      label: '时间趋势分析',
+      active: showTrends.value,
+      action: () => toggleVis(showTrends),
+    },
   ]
 }
 
@@ -304,9 +426,13 @@ async function fetchAll() {
     magicBar.count = stats.value.aiReviewed || 0
 
     const evalMap = {}
-    ;(evals || []).forEach(e => { evalMap[e.submissionId] = e })
+    ;(evals || []).forEach(e => {
+      evalMap[e.submissionId] = e
+    })
     const studentMap = {}
-    ;(students || []).forEach(s => { studentMap[s.id] = s })
+    ;(students || []).forEach(s => {
+      studentMap[s.id] = s
+    })
 
     // Class stats
     const classMap: Record<string, any> = {}
@@ -328,8 +454,8 @@ async function fetchAll() {
     })
     classStats.value = Object.entries(classMap).map(([name, d]) => ({
       name,
-      submitRate: d.count ? Math.round(d.submitted / d.count * 100) : 0,
-      reviewRate: d.submitted ? Math.round(d.reviewed / d.submitted * 100) : 0,
+      submitRate: d.count ? Math.round((d.submitted / d.count) * 100) : 0,
+      reviewRate: d.submitted ? Math.round((d.reviewed / d.submitted) * 100) : 0,
       avgScore: d.scores.length ? (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(1) : '—',
     }))
 
@@ -343,7 +469,11 @@ async function fetchAll() {
       if (ev?.teacherScore != null) workMap[type].scores.push(ev.teacherScore)
     })
     workTypeStats.value = Object.entries(workMap)
-      .map(([type, d]) => ({ type, count: d.count, avgScore: d.scores.length ? (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(1) : '—' }))
+      .map(([type, d]) => ({
+        type,
+        count: d.count,
+        avgScore: d.scores.length ? (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(1) : '—',
+      }))
       .sort((a, b) => b.count - a.count)
 
     // Score distribution (teacherScore)
@@ -424,12 +554,14 @@ async function fetchAll() {
 
     // Score comparison — AI vs Teacher in same buckets
     const cmp = [
-      { label: '0-59', ai: 0, teacher: 0 }, { label: '60-69', ai: 0, teacher: 0 },
-      { label: '70-79', ai: 0, teacher: 0 }, { label: '80-89', ai: 0, teacher: 0 },
+      { label: '0-59', ai: 0, teacher: 0 },
+      { label: '60-69', ai: 0, teacher: 0 },
+      { label: '70-79', ai: 0, teacher: 0 },
+      { label: '80-89', ai: 0, teacher: 0 },
       { label: '90-100', ai: 0, teacher: 0 },
     ]
     ;(evals || []).forEach(e => {
-      const bucket = (s) => s < 60 ? 0 : s < 70 ? 1 : s < 80 ? 2 : s < 90 ? 3 : 4
+      const bucket = s => (s < 60 ? 0 : s < 70 ? 1 : s < 80 ? 2 : s < 90 ? 3 : 4)
       if (e.aiScore != null) cmp[bucket(e.aiScore)].ai++
       if (e.teacherScore != null) cmp[bucket(e.teacherScore)].teacher++
     })
@@ -457,7 +589,9 @@ onActivated(() => {
   magicBar.sub = ''
   buildRightButtons()
 })
-onDeactivated(() => { rightButtons.value = [] })
+onDeactivated(() => {
+  rightButtons.value = []
+})
 watch(refreshTick, fetchAll)
 </script>
 
@@ -466,7 +600,7 @@ watch(refreshTick, fetchAll)
   &__greeting {
     @include font(24px, 32px, 500);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .02em;
+    letter-spacing: 0.02em;
   }
 
   &__cards {
@@ -500,146 +634,439 @@ watch(refreshTick, fetchAll)
 }
 
 .stat-card {
-  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 12px; width: 180px; height: 180px; border-radius: 24px;
-  background: rgb(var(--md-sys-color-surface-container-lowest)); overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 180px;
+  height: 180px;
+  border-radius: 24px;
+  background: rgb(var(--md-sys-color-surface-container-lowest));
+  overflow: hidden;
 
-  &:hover .stat-card__overlay { transform: translateY(0); }
+  &:hover .stat-card__overlay {
+    transform: translateY(0);
+  }
 
   &__overlay {
-    position: absolute; bottom: 0; left: 0; right: 0; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(0 0 0 / .06); transform: translateY(100%);
-    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0 0 0 / 0.06);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &__btn {
-    display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 20px;
-    border: 1px solid rgb(var(--md-sys-color-outline)); border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 20px;
+    border: 1px solid rgb(var(--md-sys-color-outline));
+    border-radius: 20px;
     background: rgb(var(--md-sys-color-surface-container-lowest));
-    color: rgb(var(--md-sys-color-on-surface)); cursor: pointer; transition: background .15s ease;
-    svg { width: 18px; height: 18px; }
-    span { @include font(13px, 20px, 500); }
-    &:hover { background: rgb(var(--md-sys-color-surface-container-high)); }
+    color: rgb(var(--md-sys-color-on-surface));
+    cursor: pointer;
+    transition: background 0.15s ease;
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+    span {
+      @include font(13px, 20px, 500);
+    }
+    &:hover {
+      background: rgb(var(--md-sys-color-surface-container-high));
+    }
   }
 
-  &__title { @include font(14px, 20px, 500); color: rgb(var(--md-sys-color-on-surface-variant)); }
-  &__num { @include font(48px, 56px, 700); color: rgb(var(--md-sys-color-on-surface)); }
-  &__num--error { color: rgb(var(--md-sys-color-error)); }
-  &__num--primary { color: rgb(var(--md-sys-color-primary)); }
+  &__title {
+    @include font(14px, 20px, 500);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+  &__num {
+    @include font(48px, 56px, 700);
+    color: rgb(var(--md-sys-color-on-surface));
+  }
+  &__num--error {
+    color: rgb(var(--md-sys-color-error));
+  }
+  &__num--primary {
+    color: rgb(var(--md-sys-color-primary));
+  }
 }
 
 /* ── Class stats ── */
-.class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.class-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
 
 .class-card {
-  background: rgb(var(--md-sys-color-surface-container-lowest)); border-radius: 16px; padding: 20px;
+  background: rgb(var(--md-sys-color-surface-container-lowest));
+  border-radius: 16px;
+  padding: 20px;
 
-  &__name { @include font(15px, 22px, 500); color: rgb(var(--md-sys-color-on-surface)); }
-  &__bars { margin: 14px 0 10px; display: flex; flex-direction: column; gap: 8px; }
+  &__name {
+    @include font(15px, 22px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+  }
+  &__bars {
+    margin: 14px 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
-  &__bar-row { display: flex; align-items: center; gap: 8px; }
-  &__bar-label { @include font(12px, 16px); color: rgb(var(--md-sys-color-on-surface-variant)); width: 42px; flex-shrink: 0; }
-  &__bar-track { flex: 1; height: 8px; border-radius: 4px; background: rgb(var(--md-sys-color-surface-container-high)); overflow: hidden; }
-  &__bar-fill { height: 100%; border-radius: 4px; background: rgb(var(--md-sys-color-primary)); transition: width .5s ease; }
-  &__bar-fill--alt { background: rgb(var(--md-sys-color-tertiary)); }
-  &__bar-val { @include font(12px, 16px, 500); color: rgb(var(--md-sys-color-on-surface)); width: 36px; text-align: right; }
-  &__avg { @include font(13px, 20px, 500); color: rgb(var(--md-sys-color-primary)); }
+  &__bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  &__bar-label {
+    @include font(12px, 16px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    width: 42px;
+    flex-shrink: 0;
+  }
+  &__bar-track {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: rgb(var(--md-sys-color-surface-container-high));
+    overflow: hidden;
+  }
+  &__bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: rgb(var(--md-sys-color-primary));
+    transition: width 0.5s ease;
+  }
+  &__bar-fill--alt {
+    background: rgb(var(--md-sys-color-tertiary));
+  }
+  &__bar-val {
+    @include font(12px, 16px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+    width: 36px;
+    text-align: right;
+  }
+  &__avg {
+    @include font(13px, 20px, 500);
+    color: rgb(var(--md-sys-color-primary));
+  }
 }
 
 /* ── Work type ── */
-.work-grid { display: flex; flex-direction: column; gap: 8px; max-width: 520px; }
+.work-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 520px;
+}
 
 .work-row {
-  display: flex; align-items: center; gap: 12px; padding: 10px 16px;
-  background: rgb(var(--md-sys-color-surface-container-lowest)); border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgb(var(--md-sys-color-surface-container-lowest));
+  border-radius: 10px;
 
-  &__rank { @include font(16px, 22px, 600); color: rgb(var(--md-sys-color-primary)); width: 32px; }
-  &__type { flex: 1; @include font(14px, 20px, 500); color: rgb(var(--md-sys-color-on-surface)); }
-  &__count { @include font(13px, 20px); color: rgb(var(--md-sys-color-on-surface-variant)); }
-  &__avg { @include font(13px, 20px, 500); color: rgb(var(--md-sys-color-primary)); }
+  &__rank {
+    @include font(16px, 22px, 600);
+    color: rgb(var(--md-sys-color-primary));
+    width: 32px;
+  }
+  &__type {
+    flex: 1;
+    @include font(14px, 20px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+  }
+  &__count {
+    @include font(13px, 20px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+  &__avg {
+    @include font(13px, 20px, 500);
+    color: rgb(var(--md-sys-color-primary));
+  }
 }
 
 /* ── Toggle ── */
-.toggle-group { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid rgb(var(--md-sys-color-outline)); }
+.toggle-group {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--md-sys-color-outline));
+}
 
 .toggle-btn {
-  padding: 6px 16px; border: none; background: transparent; cursor: pointer;
-  @include font(13px, 20px, 500); color: rgb(var(--md-sys-color-on-surface-variant));
-  transition: background .15s ease;
-  &:not(:last-child) { border-right: 1px solid rgb(var(--md-sys-color-outline)); }
-  &--active { background: rgb(var(--md-sys-color-secondary-container)); color: rgb(var(--md-sys-color-on-secondary-container)); }
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  @include font(13px, 20px, 500);
+  color: rgb(var(--md-sys-color-on-surface-variant));
+  transition: background 0.15s ease;
+  &:not(:last-child) {
+    border-right: 1px solid rgb(var(--md-sys-color-outline));
+  }
+  &--active {
+    background: rgb(var(--md-sys-color-secondary-container));
+    color: rgb(var(--md-sys-color-on-secondary-container));
+  }
 }
 
 /* ── Histogram ── */
-.histogram { display: flex; gap: 24px; align-items: flex-end; height: 220px; padding: 0 4px; }
+.histogram {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  height: 220px;
+  padding: 0 4px;
+}
 
-.histogram__bar { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
-.histogram__count { @include font(13px, 18px, 600); color: rgb(var(--md-sys-color-on-surface)); }
-.histogram__fill { width: 100%; max-width: 56px; border-radius: 6px 6px 0 0; background: rgb(var(--md-sys-color-primary)); transition: height .5s ease; min-height: 4px; }
-.histogram__label { @include font(12px, 16px); color: rgb(var(--md-sys-color-on-surface-variant)); }
+.histogram__bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.histogram__count {
+  @include font(13px, 18px, 600);
+  color: rgb(var(--md-sys-color-on-surface));
+}
+.histogram__fill {
+  width: 100%;
+  max-width: 56px;
+  border-radius: 6px 6px 0 0;
+  background: rgb(var(--md-sys-color-primary));
+  transition: height 0.5s ease;
+  min-height: 4px;
+}
+.histogram__label {
+  @include font(12px, 16px);
+  color: rgb(var(--md-sys-color-on-surface-variant));
+}
 
 /* ── Pie chart ── */
-.pie-chart { display: flex; align-items: center; gap: 32px; }
+.pie-chart {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
 
 .pie-chart__circle {
-  width: 180px; height: 180px; flex-shrink: 0;
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
   border-radius: 50%;
 }
 
-.pie-legend { display: flex; flex-direction: column; gap: 8px; }
-.pie-legend__item { display: flex; align-items: center; gap: 8px; @include font(13px, 20px); color: rgb(var(--md-sys-color-on-surface-variant)); }
-.pie-legend__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pie-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  @include font(13px, 20px);
+  color: rgb(var(--md-sys-color-on-surface-variant));
+}
+.pie-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 
 /* ── Deviation ── */
-.dev-grid { display: flex; flex-direction: column; gap: 8px; max-width: 600px; }
+.dev-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 600px;
+}
 
 .dev-item {
-  display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
-  background: rgb(var(--md-sys-color-surface-container-lowest)); border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgb(var(--md-sys-color-surface-container-lowest));
+  border-radius: 10px;
 
-  &__title { @include font(14px, 20px, 500); color: rgb(var(--md-sys-color-on-surface)); flex: 1; }
-  &__scores { display: flex; align-items: center; gap: 12px; }
+  &__title {
+    @include font(14px, 20px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+    flex: 1;
+  }
+  &__scores {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 
-  &__score { @include font(14px, 20px, 600); }
-  &__score--ai { color: rgb(var(--md-sys-color-tertiary)); }
-  &__score--teacher { color: rgb(var(--md-sys-color-primary)); }
+  &__score {
+    @include font(14px, 20px, 600);
+  }
+  &__score--ai {
+    color: rgb(var(--md-sys-color-tertiary));
+  }
+  &__score--teacher {
+    color: rgb(var(--md-sys-color-primary));
+  }
 
   &__diff {
-    @include font(13px, 20px, 500); min-width: 40px; text-align: center;
-    &--up { color: rgb(var(--md-sys-color-error)); }
-    &--down { color: rgb(var(--md-sys-color-tertiary)); }
+    @include font(13px, 20px, 500);
+    min-width: 40px;
+    text-align: center;
+    &--up {
+      color: rgb(var(--md-sys-color-error));
+    }
+    &--down {
+      color: rgb(var(--md-sys-color-tertiary));
+    }
   }
 }
 
 /* ── Teacher work data ── */
-.twd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.twd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
 .twd-card {
-  background: rgb(var(--md-sys-color-surface-container-lowest)); border-radius: 16px; padding: 20px;
-  &__title { @include font(15px, 22px, 500); color: rgb(var(--md-sys-color-on-surface)); margin-bottom: 16px; }
+  background: rgb(var(--md-sys-color-surface-container-lowest));
+  border-radius: 16px;
+  padding: 20px;
+  &__title {
+    @include font(15px, 22px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+    margin-bottom: 16px;
+  }
 }
 
-.trend-bars { display: flex; gap: 6px; align-items: flex-end; height: 164px; padding: 0 4px; }
-.trend-bar { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 0; }
-.trend-bar__count { @include font(11px, 14px, 600); color: rgb(var(--md-sys-color-on-surface)); }
-.trend-bar__fill { width: 100%; max-width: 32px; border-radius: 4px 4px 0 0; background: rgb(var(--md-sys-color-primary)); transition: height .5s ease; min-height: 4px; }
-.trend-bar__fill--sub { background: rgb(var(--md-sys-color-tertiary)); }
-.trend-bar__fill--eff { background: rgb(var(--md-sys-color-secondary)); }
-.trend-bar__date { @include font(10px, 14px); color: rgb(var(--md-sys-color-on-surface-variant)); white-space: nowrap; }
+.trend-bars {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 164px;
+  padding: 0 4px;
+}
+.trend-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.trend-bar__count {
+  @include font(11px, 14px, 600);
+  color: rgb(var(--md-sys-color-on-surface));
+}
+.trend-bar__fill {
+  width: 100%;
+  max-width: 32px;
+  border-radius: 4px 4px 0 0;
+  background: rgb(var(--md-sys-color-primary));
+  transition: height 0.5s ease;
+  min-height: 4px;
+}
+.trend-bar__fill--sub {
+  background: rgb(var(--md-sys-color-tertiary));
+}
+.trend-bar__fill--eff {
+  background: rgb(var(--md-sys-color-secondary));
+}
+.trend-bar__date {
+  @include font(10px, 14px);
+  color: rgb(var(--md-sys-color-on-surface-variant));
+  white-space: nowrap;
+}
 
-.compare-chart { display: flex; flex-direction: column; gap: 6px; }
-.compare-row { display: flex; align-items: center; gap: 8px; }
-.compare-row__label { @include font(12px, 16px); color: rgb(var(--md-sys-color-on-surface-variant)); width: 44px; flex-shrink: 0; }
-.compare-row__bars { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.compare-row__bar-wrap { display: flex; align-items: center; gap: 6px; height: 18px; }
-.compare-row__bar { height: 14px; border-radius: 3px; transition: width .5s ease; }
-.compare-row__bar--ai { background: rgb(var(--md-sys-color-tertiary)); }
-.compare-row__bar--teacher { background: rgb(var(--md-sys-color-primary)); }
-.compare-row__val { @include font(11px, 14px, 500); color: rgb(var(--md-sys-color-on-surface)); width: 24px; text-align: right; }
+.compare-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.compare-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.compare-row__label {
+  @include font(12px, 16px);
+  color: rgb(var(--md-sys-color-on-surface-variant));
+  width: 44px;
+  flex-shrink: 0;
+}
+.compare-row__bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.compare-row__bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+}
+.compare-row__bar {
+  height: 14px;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.compare-row__bar--ai {
+  background: rgb(var(--md-sys-color-tertiary));
+}
+.compare-row__bar--teacher {
+  background: rgb(var(--md-sys-color-primary));
+}
+.compare-row__val {
+  @include font(11px, 14px, 500);
+  color: rgb(var(--md-sys-color-on-surface));
+  width: 24px;
+  text-align: right;
+}
 
-.compare-legend { display: flex; gap: 20px; margin-top: 12px; }
-.compare-legend__item { display: flex; align-items: center; gap: 6px; @include font(12px, 16px); color: rgb(var(--md-sys-color-on-surface-variant)); }
-.compare-legend__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.compare-legend__dot--ai { background: rgb(var(--md-sys-color-tertiary)); }
-.compare-legend__dot--teacher { background: rgb(var(--md-sys-color-primary)); }
+.compare-legend {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+}
+.compare-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  @include font(12px, 16px);
+  color: rgb(var(--md-sys-color-on-surface-variant));
+}
+.compare-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.compare-legend__dot--ai {
+  background: rgb(var(--md-sys-color-tertiary));
+}
+.compare-legend__dot--teacher {
+  background: rgb(var(--md-sys-color-primary));
+}
 </style>
