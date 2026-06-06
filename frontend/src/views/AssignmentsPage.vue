@@ -87,8 +87,8 @@
                 <span>编辑</span>
               </button>
               <button class="act-btn act-btn--outline" :disabled="exporting" @click="onExport(active)">
-                <svg :viewBox="FILE_ICONS.xlsx.viewBox" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path v-for="(d, i) in FILE_ICONS.xlsx.paths" :key="i" :d="d" />
+                <svg :viewBox="xlsxIcon.viewBox" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path v-for="(d, i) in xlsxIcon.paths" :key="i" :d="d" />
                 </svg>
                 <span>{{ exporting ? '导出中...' : '导出为Excel' }}</span>
               </button>
@@ -247,20 +247,23 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, onActivated, onDeactivated, nextTick, inject, watch, watchEffect } from 'vue'
-import http from '../utils/request.js'
-import { useSnackbar } from '../composables/useSnackbar.js'
-import { getCookie, setCookie } from '../utils/cookie.js'
-import { startRecoveryPoll } from '../utils/recoveryPoll.js'
-import { FILE_ICONS } from '../utils/fileIcons.js'
+import http from '../utils/request'
+import { useSnackbar } from '../composables/useSnackbar'
+import { getCookie, setCookie } from '../utils/cookie'
+import { startRecoveryPoll } from '../utils/recoveryPoll'
+import { FILE_ICONS } from '../utils/fileIcons'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+
+const xlsxIcon: any = FILE_ICONS.xlsx
 import HedgehogButton from '../components/HedgehogButton.vue'
 
 const snackbar = useSnackbar()
 
 const loading = ref(false)
 const activeId = ref(null)
-const assignments = ref([])
+const assignments = ref<any[]>([])
 const searchQuery = ref('')
 const filteredAssignments = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -274,15 +277,15 @@ const filteredAssignments = computed(() => {
 })
 const editing = ref(false)
 const isCreate = ref(false)
-const studentsAll = ref([])
+const studentsAll = ref<any[]>([])
 const exporting = ref(false)
 const editorRef = ref(null)
 
 const active = computed(() => assignments.value.find(a => a.id === activeId.value) || null)
 
 const availableClasses = computed(() => {
-  const set = new Set()
-  studentsAll.value.forEach(s => { if (s.className) set.add(s.className) })
+  const set = new Set<string>()
+  studentsAll.value.forEach((s: any) => { if (s.className) set.add(s.className) })
   return [...set].sort()
 })
 
@@ -492,8 +495,8 @@ function undoDelete() {
   snackbar.show('已撤销删除', { variant: 'info' })
 }
 
-const refreshTick = inject('refreshTick', ref(0))
-const rightButtons = inject('rightButtons', ref([]))
+const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
+const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
   rightButtons.value = [
@@ -516,14 +519,14 @@ async function fetchAssignments() {
     const evalMap = {}
     ;(evals || []).forEach(e => { evalMap[e.submissionId] = e })
 
-    const classStudentCounts = {}
+    const classStudentCounts: Record<string, number> = {}
     ;(students || []).forEach(s => {
       const cls = s.className || '未分班'
       classStudentCounts[cls] = (classStudentCounts[cls] || 0) + 1
     })
 
-    const map = {}
-    ;(subs || []).forEach(s => {
+    const map: Record<string, any> = {}
+    ;(subs || []).forEach((s: any) => {
       const type = s.workType || '其他'
       if (!map[type]) map[type] = { count: 0, reviewed: 0, classes: new Set() }
       map[type].count++
@@ -561,8 +564,8 @@ async function fetchAssignments() {
   }
 }
 
-const magicBar = inject('magicBar')
-const triggerRipple = inject('triggerRipple')
+const magicBar = inject(MAGIC_BAR_KEY)!
+const triggerRipple = inject(TRIGGER_RIPPLE_KEY)!
 
 watch(active, (a) => {
   magicBar.sub = a?.title || ''

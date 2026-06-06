@@ -7,8 +7,8 @@
   </Transition>
 </template>
 
-<script setup>
-import { useSnackbar } from '../composables/useSnackbar.js'
+<script setup lang="ts">
+import { useSnackbar } from '../composables/useSnackbar'
 
 const { message, visible, variant, actionLabel, doAction } = useSnackbar()
 </script>

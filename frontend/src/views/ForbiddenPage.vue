@@ -20,10 +20,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getCookie, delCookie } from '../utils/cookie.js'
+import { getCookie, delCookie } from '../utils/cookie'
 
 const router = useRouter()
 const hasToken = computed(() => !!getCookie('auth_token'))

@@ -9,7 +9,7 @@
   <Snackbar />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import Snackbar from './components/Snackbar.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 </script>

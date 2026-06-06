@@ -233,14 +233,15 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, provide, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getCookie, delCookie } from '../utils/cookie.js'
-import { useSnackbar } from '../composables/useSnackbar.js'
-import http from '../utils/request.js'
-import { onConnectionChange } from '../utils/recoveryPoll.js'
-import { useTheme } from '../composables/useTheme.js'
+import { getCookie, delCookie } from '../utils/cookie'
+import { useSnackbar } from '../composables/useSnackbar'
+import http from '../utils/request'
+import { onConnectionChange } from '../utils/recoveryPoll'
+import { useTheme } from '../composables/useTheme'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, SHOW_GREETING_KEY } from '../types'
 
 const snackbar = useSnackbar()
 
@@ -266,10 +267,10 @@ function triggerRipple(cx, cy) {
   rippleTop.value = (cy ?? 32) - r.top + 'px'
   ripple.value++
 }
-provide('triggerRipple', triggerRipple)
+provide(TRIGGER_RIPPLE_KEY, triggerRipple)
 const greeting = ref('')
 const magicKey = computed(() => `${magicBar.primary}|${magicBar.sub}|${magicBar.status}|${magicBar.suffix}|${greeting.value}`)
-provide('magicBar', magicBar)
+provide(MAGIC_BAR_KEY, magicBar)
 
 // ── Greeting system ──
 const POEMS = [
@@ -398,7 +399,7 @@ onUnmounted(() => {
 })
 
 // Expose helpers for pages
-provide('showGreeting', showGreeting)
+provide(SHOW_GREETING_KEY, showGreeting)
 
 const resetting = ref(false)
 
@@ -460,8 +461,8 @@ const indicatorStyle = computed(() => {
 
 const refreshTick = ref(0)
 const rightButtons = ref([])
-provide('refreshTick', refreshTick)
-provide('rightButtons', rightButtons)
+provide(REFRESH_TICK_KEY, refreshTick)
+provide(RIGHT_BUTTONS_KEY, rightButtons)
 
 async function doRefresh() {
   try {

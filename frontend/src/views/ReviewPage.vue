@@ -317,14 +317,15 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, onActivated, onDeactivated, nextTick, inject, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
-import http from '../utils/request.js'
-import { useSnackbar } from '../composables/useSnackbar.js'
-import { getCookie, setCookie } from '../utils/cookie.js'
-import { startRecoveryPoll } from '../utils/recoveryPoll.js'
-import { detectFileType, FILE_ICONS } from '../utils/fileIcons.js'
+import http from '../utils/request'
+import { useSnackbar } from '../composables/useSnackbar'
+import { getCookie, setCookie } from '../utils/cookie'
+import { startRecoveryPoll } from '../utils/recoveryPoll'
+import { detectFileType, FILE_ICONS } from '../utils/fileIcons'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 
 const route = useRoute()
 const snackbar = useSnackbar()
@@ -354,10 +355,10 @@ const tabIndicatorStyle = computed(() => {
 
 const selectedWorkType = ref(null)
 const activeId = ref(null)
-const semesters = ref([])
-const submissionsRaw = ref([])
-const evalMap = ref({})
-const studentsAll = ref([])
+const semesters = ref<any[]>([])
+const submissionsRaw = ref<any[]>([])
+const evalMap = ref<Record<string, any>>({})
+const studentsAll = ref<any[]>([])
 const searchQuery = ref('')
 
 const filteredSubmissions = computed(() => {
@@ -416,14 +417,14 @@ function formatTime(iso) {
 const totalSubmissionCount = computed(() => filteredSubmissions.value.length)
 
 const workTypes = computed(() => {
-  const classStudentCounts = {}
-  studentsAll.value.forEach(s => {
+  const classStudentCounts: Record<string, number> = {}
+  studentsAll.value.forEach((s: any) => {
     const cls = s.className || '未分班'
     classStudentCounts[cls] = (classStudentCounts[cls] || 0) + 1
   })
 
-  const map = {}
-  filteredSubmissions.value.forEach(s => {
+  const map: Record<string, any> = {}
+  filteredSubmissions.value.forEach((s: any) => {
     const type = s.workType || '其他'
     if (!map[type]) map[type] = { type, count: 0, reviewed: 0, classes: new Set() }
     map[type].count++
@@ -450,8 +451,8 @@ const workTypes = computed(() => {
   }).sort((a, b) => b.submittedCount - a.submittedCount)
 })
 
-const magicBar = inject('magicBar')
-const triggerRipple = inject('triggerRipple')
+const magicBar = inject(MAGIC_BAR_KEY)!
+const triggerRipple = inject(TRIGGER_RIPPLE_KEY)!
 
 function updateMagicTrail() {
   const parts = []
@@ -619,13 +620,13 @@ async function onAiEval() {
 
 function onReject() { /* TODO */ }
 
-const refreshTick = inject('refreshTick', ref(0))
-const rightButtons = inject('rightButtons', ref([]))
+const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
+const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 const sortClass = ref(getCookie('sort_class') === '1')
 const sortTime = ref(getCookie('sort_time') === '1')
 const sortCompletion = ref(getCookie('sort_completion') === '1')
-const filterStatus = ref('filter' in route.query ? (route.query.filter || 'all') : (getCookie('filter_status') || 'all'))
+const filterStatus = ref<string>('filter' in route.query ? (route.query.filter as string || 'all') : (getCookie('filter_status') || 'all'))
 
 const hasActiveFilter = computed(() => {
   return filterStatus.value !== 'all' || selectedWorkType.value !== null
@@ -730,11 +731,11 @@ function rebuildSemesters() {
   } else {
     const pending = filtered.filter(it => it.badgeType !== 'confirmed')
     const reviewed = filtered.filter(it => it.badgeType === 'confirmed')
-    semesters.value = [
-      { name: '待审批作业', assignments: pending },
-      ...(reviewed.length ? [{ name: '已评价', assignments: reviewed }] : []),
-      ...(showUnsub && unsubmitted.length ? [{ name: '未提交', assignments: unsubmitted }] : []),
-    ]
+    const groups = []
+    if (pending.length) groups.push({ name: '待审批作业', assignments: pending })
+    if (reviewed.length) groups.push({ name: '已评价', assignments: reviewed })
+    if (showUnsub && unsubmitted.length) groups.push({ name: '未提交', assignments: unsubmitted })
+    semesters.value = groups
   }
 }
 

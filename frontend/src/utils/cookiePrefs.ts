@@ -1,6 +1,13 @@
 const STORAGE_KEY = 'cookie_prefs'
 
-export const CATEGORIES = {
+export interface CookieCategory {
+  key: string
+  label: string
+  desc: string
+  required: boolean
+}
+
+export const CATEGORIES: Record<string, CookieCategory> = {
   essential: {
     key: 'essential',
     label: '必要 Cookie',
@@ -21,7 +28,7 @@ export const CATEGORIES = {
   },
 }
 
-const CATEGORY_MAP = {
+const CATEGORY_MAP: Record<string, string> = {
   auth_token: 'essential',
   user_name: 'essential',
   dash_class: 'preferences',
@@ -38,27 +45,27 @@ const CATEGORY_MAP = {
 
 const DRAFT_RE = /^draft_/
 
-export function getCategory(name) {
+export function getCategory(name: string): string | null {
   if (CATEGORY_MAP[name]) return CATEGORY_MAP[name]
   if (DRAFT_RE.test(name)) return 'drafts'
   return null
 }
 
-export function loadPrefs() {
+export function loadPrefs(): Record<string, boolean> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) return JSON.parse(raw) as Record<string, boolean>
   } catch {
     console.warn('[cookiePrefs] 无法解析偏好数据，已重置为默认值')
   }
   return {}
 }
 
-export function savePrefs(prefs) {
+export function savePrefs(prefs: Record<string, boolean>): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs))
 }
 
-export function isAllowed(name) {
+export function isAllowed(name: string): boolean {
   const cat = getCategory(name)
   if (!cat) return true
   const prefs = loadPrefs()
@@ -66,11 +73,10 @@ export function isAllowed(name) {
   return prefs[cat] !== false
 }
 
-export function clearCategory(catKey) {
+export function clearCategory(catKey: string): void {
   const names = Object.keys(CATEGORY_MAP).filter(k => CATEGORY_MAP[k] === catKey)
   names.forEach(n => { document.cookie = `${n}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/` })
   if (catKey === 'drafts') {
-    // clear all draft_* cookies
     document.cookie.split(';').forEach(c => {
       const name = c.trim().split('=')[0]
       if (DRAFT_RE.test(name)) {

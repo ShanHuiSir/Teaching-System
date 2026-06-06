@@ -55,26 +55,21 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const emit = defineEmits(['complete'])
+const emit = defineEmits<{
+  complete: []
+}>()
 
-const props = defineProps({
-  variant: {
-    type: String,
-    default: 'primary',
-    validator: v => ['primary', 'outline', 'ghost'].includes(v)
-  },
-  size: {
-    type: String,
-    default: 'md',
-    validator: v => ['sm', 'md', 'lg'].includes(v)
-  },
-  disabled: {
-    type: Boolean,
-    default: false
-  }
+const props = withDefaults(defineProps<{
+  variant?: 'primary' | 'outline' | 'ghost'
+  size?: 'sm' | 'md' | 'lg'
+  disabled?: boolean
+}>(), {
+  variant: 'primary',
+  size: 'md',
+  disabled: false,
 })
 
 const LONG_PRESS = 400
@@ -82,8 +77,8 @@ const POP_DURATION = 360
 const REPEL_RADIUS = 130
 const REPEL_STRENGTH = 28
 
-const wrapRef = ref(null)
-const btnRef = ref(null)
+const wrapRef = ref<HTMLElement | null>(null)
+const btnRef = ref<HTMLElement | null>(null)
 const pressing = ref(false)
 const popping = ref(false)
 const shaking = ref(false)
@@ -91,8 +86,8 @@ const cancelling = ref(false)
 const isHovering = ref(false)
 const repelX = ref(0)
 const repelY = ref(0)
-let holdTimer = null
-let repelFrame = null
+let holdTimer: ReturnType<typeof setTimeout> | null = null
+let repelFrame: ReturnType<typeof requestAnimationFrame> | null = null
 let repelTargetX = 0
 let repelTargetY = 0
 
@@ -114,7 +109,7 @@ function onUp() {
   finishPress(true)
 }
 
-function onWindowUp(e) {
+function onWindowUp(e: MouseEvent) {
   const el = btnRef.value
   if (el) {
     const rect = el.getBoundingClientRect()
@@ -139,7 +134,7 @@ function onLeave() {
   }
 }
 
-function onTouchEnd(e) {
+function onTouchEnd(e: TouchEvent) {
   if (props.disabled || !pressing.value) return
   const touch = e.changedTouches[0]
   const el = btnRef.value
@@ -156,7 +151,7 @@ function onTouchCancel() {
   finishPress(false)
 }
 
-function finishPress(completed) {
+function finishPress(completed: boolean) {
   window.removeEventListener('mouseup', onWindowUp)
   if (holdTimer) {
     clearTimeout(holdTimer)
@@ -179,7 +174,7 @@ function finishPress(completed) {
 
 /* ---------- repel ---------- */
 
-function onMouseMove(e) {
+function onMouseMove(e: MouseEvent) {
   if (props.disabled || pressing.value) {
     repelTargetX = 0
     repelTargetY = 0
