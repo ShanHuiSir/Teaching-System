@@ -54,4 +54,5 @@ uploads/
 
 # === nodejs ===
 /frontend/node_modules
-package-lock.json
+/frontend/package-lock.json
+/frontend/dist
