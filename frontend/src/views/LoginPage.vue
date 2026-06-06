@@ -1,409 +1,638 @@
 <template>
-  <div class="login-page" @click="onPageClick">
-    <div class="starfield">
-      <div v-for="s in stars" :key="s.id" class="star" :style="s.style" />
-    </div>
-    <div class="nebula nebula--1" />
-    <div class="nebula nebula--2" />
-
+  <div class="login-page">
     <div class="login-card">
-      <div class="login-card__accent" />
-      <div class="login-card__glow" />
-      <div class="login-card__content">
-        <div class="brand">
-          <svg class="brand__icon" viewBox="0 0 48 48" fill="none">
-            <rect x="4" y="4" width="40" height="40" rx="10" stroke="currentColor" stroke-width="2" />
-            <path d="M14 20L24 10L34 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M18 24V34H30V24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <circle cx="24" cy="28" r="3" fill="currentColor" />
+      <div class="login-card__track" :class="{ 'is-cookie': activeLayer === 'cookie', 'is-key': activeLayer === 'key' }">
+        <!-- Layer 1: Cookie管理 -->
+        <div class="login-card__layer layer-cookie">
+          <button class="layer-cookie__back" @click.stop="activeLayer = 'welcome'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <svg class="layer-cookie__icon" viewBox="0 0 24 24" fill="currentColor" stroke="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C12.7139 2 13.4187 2.07494 14.1059 2.22228C14.6865 2.34679 14.899 3.06471 14.4797 3.48521C14.0148 3.95137 13.75 4.57868 13.75 5.25C13.75 6.42043 14.5612 7.42718 15.6858 7.68625C16.0559 7.7715 16.3039 8.1199 16.2632 8.49747C16.2544 8.5787 16.25 8.66307 16.25 8.75C16.25 10.1307 17.3693 11.25 18.75 11.25C19.4766 11.25 20.1513 10.9393 20.6235 10.4053C21.0526 9.92011 21.8536 10.1704 21.9301 10.8137C21.9766 11.2048 22 11.6009 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM12 3.5C7.30558 3.5 3.5 7.30558 3.5 12C3.5 16.6944 7.30558 20.5 12 20.5C16.4367 20.5 20.0795 17.1008 20.4661 12.7646L20.485 12.5085L20.492 12.351L20.2985 12.4391C19.9679 12.5779 19.6173 12.6725 19.2549 12.7183L18.9811 12.7434L18.75 12.75C16.7439 12.75 15.0828 11.2732 14.7943 9.34752L14.7694 9.14675L14.755 8.96L14.6101 8.89964C13.3259 8.32272 12.4199 7.09599 12.2715 5.66565L12.2549 5.44962L12.25 5.25C12.25 4.80313 12.3238 4.36764 12.4636 3.95777L12.5553 3.71503L12.64 3.525L12.3637 3.50763L12 3.5ZM15 16C15.5523 16 16 16.4477 16 17C16 17.5523 15.5523 18 15 18C14.4477 18 14 17.5523 14 17C14 16.4477 14.4477 16 15 16ZM8 15C8.55228 15 9 15.4477 9 16C9 16.5523 8.55228 17 8 17C7.44772 17 7 16.5523 7 16C7 15.4477 7.44772 15 8 15ZM12 11C12.5523 11 13 11.4477 13 12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12C11 11.4477 11.4477 11 12 11ZM7 8C7.55228 8 8 8.44772 8 9C8 9.55228 7.55228 10 7 10C6.44772 10 6 9.55228 6 9C6 8.44772 6.44772 8 7 8Z" />
           </svg>
-          <h1 class="brand__title">教学评价系统</h1>
-          <p class="brand__sub">Teaching Evaluation System</p>
-        </div>
-
-        <!-- Quick login -->
-        <div v-if="savedAccounts.length" class="quick-login">
-          <span class="quick-login__label">快捷登录</span>
-          <div class="quick-login__dropdown" ref="dropdownRef">
-            <button class="quick-login__trigger" type="button" @click.stop="toggleDropdown">
-              <span class="quick-login__trigger-text">{{ selectedAccount || '选择已保存的账号' }}</span>
-              <svg class="quick-login__arrow" :class="{ 'quick-login__arrow--open': dropdownOpen }" viewBox="0 0 24 24" width="20" height="20"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
-            </button>
-            <div v-if="dropdownOpen" class="quick-login__menu">
-              <div
-                v-for="acc in savedAccounts"
-                :key="acc"
-                class="quick-login__item"
-                @click.stop="selectAccount(acc)"
-              >
-                <span class="quick-login__avatar">{{ acc.charAt(0).toUpperCase() }}</span>
-                <span class="quick-login__name">{{ acc }}</span>
-                <button class="quick-login__remove" type="button" @click.stop="removeAccount(acc)">&times;</button>
+          <h2 class="layer-cookie__title">Cookie 政策管理</h2>
+          <div class="layer-cookie__list">
+            <div v-for="cat in categories" :key="cat.key" class="cookie-cat">
+              <div class="cookie-cat__head">
+                <div class="cookie-cat__info">
+                  <span class="cookie-cat__label">{{ cat.label }}</span>
+                  <span class="cookie-cat__desc">{{ cat.desc }}</span>
+                </div>
+                <label v-if="cat.required" class="toggle toggle--locked">
+                  <input type="checkbox" checked disabled />
+                  <span class="toggle__track" />
+                </label>
+                <label v-else class="toggle">
+                  <input type="checkbox" :checked="prefs[cat.key] !== false" @change="onToggle(cat.key)" />
+                  <span class="toggle__track" />
+                </label>
               </div>
             </div>
           </div>
+          <button class="layer-cookie__clear-btn" @click="onClearAll">清除所有Cookie</button>
         </div>
 
-        <form class="login-form" @submit.prevent="handleLogin">
-          <div class="input-group">
-            <label class="input-group__label">用户名</label>
-            <div class="input-group__wrap">
-              <svg class="input-group__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="8" r="4" /><path d="M6 20v-1a6 6 0 0 1 12 0v1" />
+        <!-- Layer 2: Welcome -->
+        <div class="login-card__layer layer-welcome">
+          <div class="welcome">
+            <h1 class="welcome__greeting">{{ greeting }}</h1>
+            <p class="welcome__sub">也许我们该从登录开始</p>
+          </div>
+
+          <div class="actions">
+            <button class="cookie-policy-btn" @click="onCookiePolicy">
+              <svg class="cookie-policy-btn__icon" viewBox="0 0 24 24" fill="currentColor" stroke="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C12.7139 2 13.4187 2.07494 14.1059 2.22228C14.6865 2.34679 14.899 3.06471 14.4797 3.48521C14.0148 3.95137 13.75 4.57868 13.75 5.25C13.75 6.42043 14.5612 7.42718 15.6858 7.68625C16.0559 7.7715 16.3039 8.1199 16.2632 8.49747C16.2544 8.5787 16.25 8.66307 16.25 8.75C16.25 10.1307 17.3693 11.25 18.75 11.25C19.4766 11.25 20.1513 10.9393 20.6235 10.4053C21.0526 9.92011 21.8536 10.1704 21.9301 10.8137C21.9766 11.2048 22 11.6009 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM12 3.5C7.30558 3.5 3.5 7.30558 3.5 12C3.5 16.6944 7.30558 20.5 12 20.5C16.4367 20.5 20.0795 17.1008 20.4661 12.7646L20.485 12.5085L20.492 12.351L20.2985 12.4391C19.9679 12.5779 19.6173 12.6725 19.2549 12.7183L18.9811 12.7434L18.75 12.75C16.7439 12.75 15.0828 11.2732 14.7943 9.34752L14.7694 9.14675L14.755 8.96L14.6101 8.89964C13.3259 8.32272 12.4199 7.09599 12.2715 5.66565L12.2549 5.44962L12.25 5.25C12.25 4.80313 12.3238 4.36764 12.4636 3.95777L12.5553 3.71503L12.64 3.525L12.3637 3.50763L12 3.5ZM15 16C15.5523 16 16 16.4477 16 17C16 17.5523 15.5523 18 15 18C14.4477 18 14 17.5523 14 17C14 16.4477 14.4477 16 15 16ZM8 15C8.55228 15 9 15.4477 9 16C9 16.5523 8.55228 17 8 17C7.44772 17 7 16.5523 7 16C7 15.4477 7.44772 15 8 15ZM12 11C12.5523 11 13 11.4477 13 12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12C11 11.4477 11.4477 11 12 11ZM7 8C7.55228 8 8 8.44772 8 9C8 9.55228 7.55228 10 7 10C6.44772 10 6 9.55228 6 9C6 8.44772 6.44772 8 7 8Z" />
               </svg>
-              <input v-model="username" class="input-group__field" placeholder="请输入用户名" autocomplete="username" />
+              <span>管理您的Cookie政策</span>
+            </button>
+            <button class="key-btn" @click="onKeyLogin">
+              <svg class="key-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+              </svg>
+              <span>通过密钥登录</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Layer 3: Key Login -->
+        <div class="login-card__layer layer-key">
+          <button class="layer-key__back" @click.stop="activeLayer = 'welcome'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+
+          <svg class="layer-key__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+          </svg>
+          <h2 class="layer-key__title">通过密钥登录</h2>
+
+          <div class="layer-key__fields">
+            <div class="input-group">
+              <input v-model="account" class="input-group__field" type="text" placeholder="请输入账户名" autocomplete="username" />
+            </div>
+            <div class="input-group">
+              <input v-model="secretKey" class="input-group__field" type="password" placeholder="请输入密钥" autocomplete="current-password" />
             </div>
           </div>
-          <div class="input-group">
-            <label class="input-group__label">密码</label>
-            <div class="input-group__wrap">
-              <svg class="input-group__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <input v-model="password" type="password" class="input-group__field" placeholder="请输入密码" autocomplete="current-password" />
-            </div>
-          </div>
+
           <label class="remember-row">
-            <input v-model="rememberMe" type="checkbox" class="remember-check" />
-            <span>记住账号</span>
+            <input v-model="rememberMe" type="checkbox" class="remember-row__check" />
+            <span>记住我</span>
           </label>
-          <button type="submit" class="login-btn" :disabled="loading">
+
+          <button class="layer-key__login-btn" :disabled="loading" @click="handleLogin">
             <span v-if="!loading">登 录</span>
             <span v-else class="spinner" />
           </button>
-        </form>
 
-        <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { setCookie } from '@/utils/cookie';
-import { ElMessage } from 'element-plus';
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { setCookie, getCookie, delCookie } from '../utils/cookie.js'
+import { CATEGORIES, loadPrefs, savePrefs, clearCategory } from '../utils/cookiePrefs.js'
+import { useSnackbar } from '../composables/useSnackbar.js'
 
-const STORAGE_KEY = 'saved-accounts';
-const router = useRouter();
-const username = ref('');
-const password = ref('');
-const loading = ref(false);
-const errorMsg = ref('');
-const rememberMe = ref(true);
-const savedAccounts = ref<string[]>([]);
-const selectedAccount = ref('');
-const dropdownOpen = ref(false);
-const dropdownRef = ref<HTMLElement | null>(null);
+const router = useRouter()
+const snackbar = useSnackbar()
 
-function starStyle(i: number) {
-  const x = ((i * 137.5 + i * i * 7.3) % 100);
-  const y = ((i * 263.1 + i * i * 3.7) % 100);
-  const size = (i % 3) + 1;
-  const dur = 2 + (i % 4) * 1.5;
-  const delay = (i % 10) * 0.3;
-  return {
-    left: `${x}%`,
-    top: `${y}%`,
-    width: `${size}px`,
-    height: `${size}px`,
-    animationDuration: `${dur}s`,
-    animationDelay: `${delay}s`,
-  };
+const activeLayer = ref('welcome')
+const account = ref('')
+const secretKey = ref('')
+const rememberMe = ref(true)
+const loading = ref(false)
+
+onMounted(() => {
+  activeLayer.value = 'welcome'
+})
+
+const categories = Object.values(CATEGORIES)
+const prefs = ref(loadPrefs())
+
+function onToggle(catKey) {
+  const enabled = prefs.value[catKey] !== false
+  prefs.value[catKey] = !enabled
+  savePrefs(prefs.value)
+  if (!enabled) clearCategory(catKey)
 }
 
-const stars = Array.from({ length: 80 }, (_, i) => ({ id: i, style: starStyle(i) }));
-
-function loadAccounts() {
-  try { savedAccounts.value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-  catch { savedAccounts.value = []; }
+function onClearAll() {
+  document.cookie.split(';').forEach(c => {
+    const name = c.trim().split('=')[0]
+    if (name) delCookie(name)
+  })
+  snackbar.show('已清除全部Cookie', { variant: 'info' })
 }
 
-function saveAccount(name: string) {
-  const accounts = savedAccounts.value.filter(a => a !== name);
-  accounts.unshift(name);
-  if (accounts.length > 5) accounts.pop();
-  savedAccounts.value = accounts;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '夜深了'
+  if (hour < 12) return '早上好'
+  if (hour < 14) return '中午好'
+  if (hour < 18) return '下午好'
+  return '晚上好'
+})
+
+function onCookiePolicy() {
+  activeLayer.value = 'cookie'
 }
 
-function removeAccount(name: string) {
-  savedAccounts.value = savedAccounts.value.filter(a => a !== name);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedAccounts.value));
-  if (selectedAccount.value === name) selectedAccount.value = '';
-}
-
-function selectAccount(name: string) {
-  username.value = name;
-  password.value = '123456';
-  selectedAccount.value = name;
-  dropdownOpen.value = false;
-}
-
-function toggleDropdown() {
-  dropdownOpen.value = !dropdownOpen.value;
-}
-
-function onPageClick() {
-  dropdownOpen.value = false;
+function onKeyLogin() {
+  activeLayer.value = 'key'
 }
 
 async function handleLogin() {
-  errorMsg.value = '';
-  if (!username.value.trim() || !password.value.trim()) {
-    errorMsg.value = '请输入用户名和密码';
-    return;
+  if (!account.value.trim() || !secretKey.value.trim()) {
+    snackbar.show('请输入账户名和密钥', { variant: 'error' })
+    return
   }
-  loading.value = true;
-  await new Promise(r => setTimeout(r, 800));
-  if (rememberMe.value) saveAccount(username.value.trim());
-  setCookie('access_token', 'simulated-token');
-  setCookie('user_info', JSON.stringify({ name: username.value }));
-  loading.value = false;
-  ElMessage.success('登录成功');
-  router.replace('/class-selection');
-}
+  if (account.value !== 'teacher' || secretKey.value !== '123456') {
+    snackbar.show('账户名或密钥错误', { variant: 'error' })
+    return
+  }
 
-onMounted(loadAccounts);
+  loading.value = true
+  await new Promise(r => setTimeout(r, 800))
+
+  if (rememberMe.value) {
+    setCookie('auth_token', 'teacher-token', 7)
+    setCookie('user_name', account.value, 7)
+  } else {
+    setCookie('auth_token', 'teacher-token', 0)
+    setCookie('user_name', account.value, 0)
+  }
+
+  loading.value = false
+  snackbar.show('登录成功', { variant: 'info' })
+  router.replace('/')
+}
 </script>
 
 <style lang="scss" scoped>
+$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+
+@mixin font($size, $height, $weight: 400) {
+  font: $weight #{$size}/#{$height} $font-family;
+}
+
 .login-page {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0a0e1a 0%, #0d1528 30%, #111d3a 60%, #0a1628 100%);
-  overflow: hidden;
+  background: rgb(var(--md-sys-color-background));
 }
-
-.starfield { position: absolute; inset: 0; pointer-events: none; }
-.star {
-  position: absolute;
-  border-radius: 50%;
-  background: #fff;
-  animation: twinkle 3s ease-in-out infinite alternate;
-}
-@keyframes twinkle {
-  0% { opacity: .2; transform: scale(1); }
-  100% { opacity: .9; transform: scale(1.5); }
-}
-
-.nebula {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-  &--1 {
-    width: 500px; height: 500px;
-    background: radial-gradient(circle, rgba(26,86,219,.12) 0%, transparent 70%);
-    top: -120px; right: -100px;
-    animation: drift1 12s ease-in-out infinite alternate;
-  }
-  &--2 {
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(13,148,136,.08) 0%, transparent 70%);
-    bottom: -80px; left: -60px;
-    animation: drift2 15s ease-in-out infinite alternate;
-  }
-}
-@keyframes drift1 { 0% { transform: translate(0, 0); } 100% { transform: translate(-40px, 30px); } }
-@keyframes drift2 { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, -20px); } }
 
 .login-card {
   position: relative;
-  width: 420px;
-  background: rgba(255,255,255,.04);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: $shape-xl;
+  width: 360px;
+  height: 480px;
+  background: rgb(var(--md-sys-color-surface-container));
+  border: 1px solid rgb(var(--md-sys-color-outline-variant));
+  border-radius: 28px;
   overflow: hidden;
-  z-index: 1;
-
-  &__accent {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(26,86,219,.6), rgba(13,148,136,.4), transparent);
-  }
-  &__glow {
-    position: absolute;
-    top: -60px; left: 50%; transform: translateX(-50%);
-    width: 200px; height: 80px;
-    background: radial-gradient(ellipse, rgba(26,86,219,.15) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  &__content { position: relative; padding: $space-8 $space-8 $space-10; }
 }
 
-.brand {
-  text-align: center;
-  margin-bottom: $space-6;
-  &__icon { width: 56px; height: 56px; color: rgba(26,86,219,.8); margin-bottom: $space-4; }
-  &__title { @include font(24px, 32px, 600); color: #e8edf5; letter-spacing: .04em; }
-  &__sub { @include font(12px, 18px); color: rgba(255,255,255,.35); letter-spacing: .12em; text-transform: uppercase; margin-top: $space-1; }
+.login-card__track {
+  display: flex;
+  width: 300%;
+  height: 100%;
+  transform: translateX(-33.333%);
+  transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+
+  &.is-cookie {
+    transform: translateX(0);
+  }
+
+  &.is-key {
+    transform: translateX(-66.667%);
+  }
 }
 
-// Quick login dropdown
-.quick-login {
-  margin-bottom: $space-5;
-  &__label { @include font(12px, 18px, 500); color: rgba(255,255,255,.4); display: block; margin-bottom: $space-2; }
-  &__dropdown { position: relative; }
-  &__trigger {
+.login-card__layer {
+  flex: 0 0 33.333%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 48px 32px 40px;
+}
+
+/* ── Layer 1: Welcome ── */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 48px;
+}
+
+.welcome__greeting {
+  @include font(28px, 36px, 500);
+  color: rgb(var(--md-sys-color-on-surface));
+  letter-spacing: .02em;
+}
+
+.welcome__sub {
+  @include font(13px, 20px);
+  color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.key-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 44px;
+  padding: 0 24px;
+  border: 1px solid rgb(var(--md-sys-color-outline));
+  border-radius: 20px;
+  background: rgb(var(--md-sys-color-surface-container-high));
+  color: rgb(var(--md-sys-color-on-surface));
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+
+  &:hover {
+    background: rgb(var(--md-sys-color-surface-container-highest));
+    border-color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+
+  &__icon {
+    width: 20px;
+    height: 20px;
+    color: rgb(var(--md-sys-color-primary));
+  }
+
+  span {
+    @include font(14px, 20px, 500);
+    letter-spacing: .04em;
+  }
+}
+
+/* ── Cookie Policy Button ── */
+.cookie-policy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 44px;
+  padding: 0 24px;
+  margin-bottom: 12px;
+  border: 1px solid rgb(var(--md-sys-color-outline));
+  border-radius: 20px;
+  background: rgb(var(--md-sys-color-surface-container-high));
+  color: rgb(var(--md-sys-color-on-surface));
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+
+  &:hover {
+    background: rgb(var(--md-sys-color-surface-container-highest));
+    border-color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+
+  &__icon {
+    width: 20px;
+    height: 20px;
+    color: rgb(var(--md-sys-color-tertiary));
+  }
+
+  span {
+    @include font(14px, 20px, 500);
+    letter-spacing: .04em;
+  }
+}
+
+/* ── Layer: Cookie Management ── */
+.layer-cookie {
+  position: relative;
+  justify-content: flex-start;
+  padding-top: 48px;
+  padding-bottom: 32px;
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &__back {
+    position: absolute;
+    top: 20px;
+    left: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    cursor: pointer;
+    transition: background .15s ease;
+    z-index: 1;
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    &:hover {
+      background: rgb(var(--md-sys-color-surface-container-highest));
+    }
+  }
+
+  &__icon {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    color: rgb(var(--md-sys-color-tertiary));
+    margin-top: 36px;
+  }
+
+  &__title {
+    @include font(22px, 28px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+    margin-top: 16px;
+    letter-spacing: .02em;
+  }
+
+  &__list {
+    width: 100%;
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__clear-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    flex-shrink: 0;
+    margin-top: 28px;
+    border: none;
+    border-radius: 24px;
+    background: rgb(var(--md-sys-color-error-container));
+    color: rgb(var(--md-sys-color-on-error-container));
+    @include font(16px, 22px, 500);
+    letter-spacing: .05em;
+    cursor: pointer;
+    transition: box-shadow .15s ease;
+
+    &:hover {
+      box-shadow: 0 0 16px rgb(var(--md-sys-color-error-container) / .6);
+    }
+  }
+}
+
+/* ── Cookie Category Item ── */
+.cookie-cat {
+  background: rgb(var(--md-sys-color-surface-container-high));
+  border-radius: 12px;
+  padding: 14px 16px;
+
+  &__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
-    height: 40px;
-    padding: 0 12px;
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: $shape-sm;
-    background: rgba(255,255,255,.04);
-    color: rgba(255,255,255,.5);
-    cursor: pointer;
-    @include font(13px, 20px);
-    transition: border-color .15s;
-    &:hover { border-color: rgba(255,255,255,.2); }
+    gap: 12px;
   }
-  &__trigger-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  &__arrow {
-    width: 18px; height: 18px;
-    color: rgba(255,255,255,.3);
-    flex-shrink: 0;
-    transition: transform .2s;
-    &--open { transform: rotate(180deg); }
-  }
-  &__menu {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0; right: 0;
-    background: rgba(15,20,40,.95);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: $shape-sm;
-    overflow: hidden;
-    z-index: 10;
-  }
-  &__item {
-    display: flex;
-    align-items: center;
-    gap: $space-2;
-    height: 40px;
-    padding: 0 12px;
-    cursor: pointer;
-    transition: background .15s;
-    &:hover { background: rgba(26,86,219,.12); }
-  }
-  &__avatar {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: rgba(26,86,219,.25);
-    color: rgba(255,255,255,.7);
-    display: grid;
-    place-items: center;
-    @include font(12px, 16px, 600);
-    flex-shrink: 0;
-  }
-  &__name {
+
+  &__info {
     flex: 1;
-    @include font(13px, 20px);
-    color: rgba(255,255,255,.7);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  &__remove {
-    width: 22px; height: 22px;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    color: rgba(255,255,255,.3);
-    cursor: pointer;
-    @include font(16px, 22px);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    &:hover { background: rgba(220,38,38,.2); color: #EF4444; }
-  }
-}
-
-// Form
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: $space-5;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: $space-2;
-  &__label { @include font(13px, 20px, 500); color: rgba(255,255,255,.5); }
-  &__wrap {
+    min-width: 0;
     display: flex;
-    align-items: center;
-    gap: $space-3;
-    height: 44px;
-    padding: 0 14px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: $shape-sm;
-    transition: border-color .2s ease, box-shadow .2s ease;
-    &:focus-within {
-      border-color: rgba(26,86,219,.5);
-      box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__label {
+    @include font(13px, 20px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+  }
+
+  &__desc {
+    @include font(12px, 16px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+}
+
+/* ── Toggle Switch ── */
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  &__track {
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background: rgb(var(--md-sys-color-outline-variant));
+    transition: background .2s ease;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgb(var(--md-sys-color-shadow) / .2);
+      transition: transform .2s cubic-bezier(.4, 0, .2, 1);
     }
   }
-  &__icon { width: 18px; height: 18px; color: rgba(255,255,255,.3); flex-shrink: 0; }
-  &__field {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #e8edf5;
-    @include font(14px, 20px);
-    &::placeholder { color: rgba(255,255,255,.2); }
+
+  input:checked + &__track {
+    background: rgb(var(--md-sys-color-primary));
+
+    &::after {
+      transform: translateX(18px);
+    }
+  }
+
+  &--locked {
+    cursor: not-allowed;
+    opacity: .6;
+
+    .toggle__track {
+      background: rgb(var(--md-sys-color-primary) / .5);
+    }
+
+    input:checked + .toggle__track {
+      background: rgb(var(--md-sys-color-primary) / .5);
+    }
   }
 }
 
+/* ── Layer 2: Key Login ── */
+.layer-key {
+  position: relative;
+
+  &__back {
+    position: absolute;
+    top: 20px;
+    left: 14px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    cursor: pointer;
+    transition: background .15s ease;
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    &:hover {
+      background: rgb(var(--md-sys-color-surface-container-highest));
+    }
+  }
+
+  &__icon {
+    width: 48px;
+    height: 48px;
+    color: rgb(var(--md-sys-color-primary));
+    margin-top: 40px;
+  }
+
+  &__title {
+    @include font(22px, 28px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+    margin-top: 20px;
+    letter-spacing: .02em;
+  }
+
+  &__fields {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 44px;
+    margin-top: 28px;
+    border: none;
+    border-radius: 20px;
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+    @include font(15px, 20px, 500);
+    letter-spacing: .3em;
+    cursor: pointer;
+    transition: box-shadow .15s ease;
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 0 16px rgb(var(--md-sys-color-primary) / .3);
+    }
+
+    &:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+/* ── Shared: input fields ── */
+.input-group {
+  width: 100%;
+
+  &__field {
+    width: 100%;
+    height: 44px;
+    padding: 0 16px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 8px;
+    background: rgb(var(--md-sys-color-surface-container-highest));
+    color: rgb(var(--md-sys-color-on-surface));
+    @include font(14px, 20px);
+    outline: none;
+    transition: border-color .15s ease;
+
+    &::placeholder {
+      color: rgb(var(--md-sys-color-on-surface-variant) / .6);
+    }
+
+    &:focus {
+      border-color: rgb(var(--md-sys-color-primary));
+    }
+  }
+}
+
+/* ── Remember me ── */
 .remember-row {
   display: flex;
   align-items: center;
-  gap: $space-2;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
   cursor: pointer;
   @include font(13px, 20px);
-  color: rgba(255,255,255,.45);
-}
-.remember-check {
-  accent-color: $primary;
-  width: 14px; height: 14px;
-}
+  color: rgb(var(--md-sys-color-on-surface-variant));
 
-.login-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 44px;
-  border: none;
-  border-radius: $shape-sm;
-  background: linear-gradient(135deg, $primary, #2563EB);
-  color: #fff;
-  @include font(15px, 20px, 500);
-  letter-spacing: .3em;
-  cursor: pointer;
-  transition: all .2s ease;
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #2563EB, #3B82F6);
-    box-shadow: 0 0 24px rgba(26,86,219,.3);
+  &__check {
+    accent-color: rgb(var(--md-sys-color-primary));
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
   }
-  &:disabled { opacity: .5; cursor: not-allowed; }
 }
 
-.login-error {
-  text-align: center;
-  margin-top: $space-4;
-  @include font(13px, 20px);
-  color: $error;
+/* ── Spinner ── */
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255 255 255 / .3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
