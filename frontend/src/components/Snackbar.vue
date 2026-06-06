@@ -7,19 +7,13 @@
   </Transition>
 </template>
 
-<script setup>
-import { useSnackbar } from '../composables/useSnackbar.js'
+<script setup lang="ts">
+import { useSnackbar } from '../composables/useSnackbar'
 
 const { message, visible, variant, actionLabel, doAction } = useSnackbar()
 </script>
 
 <style lang="scss" scoped>
-$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
-
-@mixin font($size, $height, $weight: 400) {
-  font: $weight #{$size}/#{$height} $font-family;
-}
-
 .snackbar {
   position: fixed;
   bottom: 24px;
@@ -37,7 +31,7 @@ $font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
 
   &__text {
     @include font(14px, 20px, 500);
-    letter-spacing: .02em;
+    letter-spacing: 0.02em;
   }
 
   &__action {
@@ -49,10 +43,10 @@ $font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
     flex-shrink: 0;
     padding: 4px 14px;
     border-radius: 999px;
-    transition: background .15s ease;
+    transition: background 0.15s ease;
 
     &:hover {
-      background: rgb(var(--md-sys-color-on-secondary) / .15);
+      background: rgb(var(--md-sys-color-on-secondary) / 0.15);
     }
   }
 
@@ -61,7 +55,7 @@ $font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
     color: rgb(var(--md-sys-color-on-error-container));
 
     .snackbar__action:hover {
-      background: rgb(var(--md-sys-color-on-error-container) / .15);
+      background: rgb(var(--md-sys-color-on-error-container) / 0.15);
     }
   }
 
@@ -70,7 +64,7 @@ $font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
     color: rgb(var(--md-sys-color-on-tertiary));
 
     .snackbar__action:hover {
-      background: rgb(var(--md-sys-color-on-tertiary) / .15);
+      background: rgb(var(--md-sys-color-on-tertiary) / 0.15);
     }
   }
 
@@ -79,16 +73,16 @@ $font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
     color: rgb(var(--md-sys-color-on-secondary));
 
     .snackbar__action:hover {
-      background: rgb(var(--md-sys-color-on-secondary) / .15);
+      background: rgb(var(--md-sys-color-on-secondary) / 0.15);
     }
   }
 }
 
 .snack-enter-active {
-  transition: all .25s cubic-bezier(.4, 0, .2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .snack-leave-active {
-  transition: all .2s ease-in;
+  transition: all 0.2s ease-in;
 }
 .snack-enter-from {
   opacity: 0;
