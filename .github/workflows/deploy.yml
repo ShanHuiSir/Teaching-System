@@ -9,6 +9,7 @@ on:
       - 'frontend/**'
       - 'ai-service/**'
       - 'pom.xml'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   build-and-deploy:
