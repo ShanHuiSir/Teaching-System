@@ -4,14 +4,36 @@
     <div class="ap__panel ap__list">
       <div class="ap__toolbar">
         <button class="ap__create-btn" @click="startCreate">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
           <span>创建班级</span>
         </button>
         <SearchInput v-model="searchQuery" placeholder="搜索班级名称、年级、备注…" />
       </div>
 
       <div v-if="!classes.length && !loading" class="ap__empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
         <span>暂无班级，点击上方按钮创建</span>
       </div>
       <EmptyState v-else-if="!filteredClasses.length && searchQuery" text="这里似乎什么都没有" />
@@ -31,7 +53,18 @@
           <div class="asgn-card__body">
             <div class="asgn-card__stats">
               <span class="stat-chip" data-tooltip="学生人数">
-                <svg class="stat-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
+                <svg
+                  class="stat-chip__icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                </svg>
                 <span>{{ c.studentCount }}人</span>
               </span>
             </div>
@@ -48,19 +81,44 @@
           <div class="detail-card__bar">
             <div class="detail-card__bar-left">
               <button class="act-btn act-btn--primary" @click="startEdit(active)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
                 <span>编辑</span>
               </button>
             </div>
             <button class="act-btn act-btn--danger" @click="onDeleteClick(active)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
               <span>删除</span>
             </button>
           </div>
 
           <div class="detail-card__info">
             <h3 class="detail-card__title">{{ active.name }}</h3>
-            <span v-if="active.grade" class="asgn-card__type" style="display:inline-flex;vertical-align:middle;margin-left:8px">{{ active.grade }}</span>
+            <span
+              v-if="active.grade"
+              class="asgn-card__type"
+              style="display: inline-flex; vertical-align: middle; margin-left: 8px"
+              >{{ active.grade }}</span
+            >
           </div>
 
           <div class="detail-card__grid">
@@ -85,19 +143,13 @@
               <span class="roster__title">学生花名册</span>
               <span class="roster__count">{{ active.roster.length }}人</span>
             </div>
-            <div v-if="!active.roster.length" class="roster__empty">
-              暂无学生
-            </div>
+            <div v-if="!active.roster.length" class="roster__empty">暂无学生</div>
             <div v-else class="roster__table">
               <div class="roster__row roster__row--header">
                 <span class="roster__cell roster__cell--no">学号</span>
                 <span class="roster__cell roster__cell--name">姓名</span>
               </div>
-              <div
-                v-for="s in active.roster"
-                :key="s.id"
-                class="roster__row"
-              >
+              <div v-for="s in active.roster" :key="s.id" class="roster__row">
                 <span class="roster__cell roster__cell--no">{{ s.studentNo || '—' }}</span>
                 <span class="roster__cell roster__cell--name">{{ s.name || '—' }}</span>
               </div>
@@ -113,11 +165,29 @@
       <div class="form-card">
         <div class="form-card__bar">
           <button class="form-card__back" @click="closeForm">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
             <span>关闭{{ isCreate ? '创建' : '编辑' }}</span>
           </button>
           <button class="act-btn act-btn--primary" @click="onSave">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
             <span>{{ isCreate ? '创建' : '保存' }}</span>
           </button>
         </div>
@@ -125,12 +195,7 @@
         <div class="form-card__fields">
           <div class="form-field">
             <span class="form-field__label">班级名称</span>
-            <input
-              v-model="form.name"
-              class="form-field__input"
-              type="text"
-              placeholder="例：软件工程2101"
-            />
+            <input v-model="form.name" class="form-field__input" type="text" placeholder="例：软件工程2101" />
           </div>
 
           <div class="form-field">
@@ -163,8 +228,20 @@
       <Transition name="modal">
         <div v-if="deleteModal.open" class="modal-overlay" @click.self="deleteModal.open = false">
           <div class="modal-card">
-            <svg class="modal-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-            <p class="modal-card__text">确定要删除班级「{{ deleteModal.name }}」吗？<br/>此操作可在5s内撤销。</p>
+            <svg
+              class="modal-card__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p class="modal-card__text">确定要删除班级「{{ deleteModal.name }}」吗？<br />此操作可在5s内撤销。</p>
             <div class="modal-card__btns">
               <button class="modal-card__btn modal-card__btn--cancel" @click="deleteModal.open = false">取消</button>
               <HedgehogButton variant="primary" size="sm" @complete="confirmDelete">确认删除</HedgehogButton>
@@ -177,7 +254,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, watchEffect, inject, onMounted, onActivated, onDeactivated, nextTick } from 'vue'
+import {
+  ref,
+  reactive,
+  computed,
+  watch,
+  watchEffect,
+  inject,
+  onMounted,
+  onActivated,
+  onDeactivated,
+  nextTick,
+} from 'vue'
 import http from '../utils/request'
 import { getCookie, setCookie } from '../utils/cookie'
 import { useSnackbar } from '../composables/useSnackbar'
@@ -187,7 +275,7 @@ import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
-import ConfirmDialog from '../components/ConfirmDialog.vue'
+// ConfirmDialog reserved for delete modal
 
 const snackbar = useSnackbar()
 
@@ -207,14 +295,12 @@ const filteredClasses = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   let arr = classes.value
   if (q) {
-    arr = arr.filter(c =>
-      (c.name || '').toLowerCase().includes(q) ||
-      (c.grade || '').toLowerCase().includes(q) ||
-      (c.description || '').toLowerCase().includes(q) ||
-      c.roster.some(s =>
-        (s.name || '').toLowerCase().includes(q) ||
-        (s.studentNo || '').toLowerCase().includes(q)
-      )
+    arr = arr.filter(
+      c =>
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.grade || '').toLowerCase().includes(q) ||
+        (c.description || '').toLowerCase().includes(q) ||
+        c.roster.some(s => (s.name || '').toLowerCase().includes(q) || (s.studentNo || '').toLowerCase().includes(q)),
     )
   }
   arr = [...arr]
@@ -262,15 +348,21 @@ function loadDraft() {
     form.grade = d.grade || ''
     form.description = d.description || ''
     return true
-  } catch { return false }
+  } catch {
+    return false
+  }
 }
 
 function saveDraft() {
-  setCookie(DRAFT_KEY, JSON.stringify({
-    name: form.name,
-    grade: form.grade,
-    description: form.description,
-  }), 7)
+  setCookie(
+    DRAFT_KEY,
+    JSON.stringify({
+      name: form.name,
+      grade: form.grade,
+      description: form.description,
+    }),
+    7,
+  )
 }
 
 function clearDraft() {
@@ -309,7 +401,9 @@ watch(editing, (val, old) => {
     if (getCookie(DRAFT_KEY)) {
       magicBar.status = '编辑内容已保存至本地'
       magicBar.statusType = 'info'
-      setTimeout(() => { if (magicBar.status === '编辑内容已保存至本地') magicBar.status = '' }, 2500)
+      setTimeout(() => {
+        if (magicBar.status === '编辑内容已保存至本地') magicBar.status = ''
+      }, 2500)
       snackbar.show('编辑内容已保存至草稿', { variant: 'info', duration: 2500 })
     }
   }
@@ -355,7 +449,7 @@ async function onSave() {
     }
   }
   clearDraft()
-  triggerRipple(window.innerWidth * .75, 200)
+  triggerRipple(window.innerWidth * 0.75, 200)
   snackbar.show(isCreate.value ? '班级已创建' : '班级已更新', { variant: 'info' })
   editing.value = false
 }
@@ -393,7 +487,15 @@ const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
   rightButtons.value = [
-    { key: 'cp-sort-count', icon: 'sort-count', label: '按人数排序', active: sortKey.value === 'count', action: () => { sortKey.value = 'count' } },
+    {
+      key: 'cp-sort-count',
+      icon: 'sort-count',
+      label: '按人数排序',
+      active: sortKey.value === 'count',
+      action: () => {
+        sortKey.value = 'count'
+      },
+    },
   ]
 }
 
@@ -458,7 +560,7 @@ async function fetchClasses() {
 const magicBar = inject(MAGIC_BAR_KEY)!
 const triggerRipple = inject(TRIGGER_RIPPLE_KEY)!
 
-watch(active, (c) => {
+watch(active, c => {
   magicBar.sub = c?.name || ''
 })
 
@@ -472,7 +574,9 @@ onActivated(() => {
   magicBar.sub = active.value?.name || ''
   buildRightButtons()
 })
-onDeactivated(() => { rightButtons.value = [] })
+onDeactivated(() => {
+  rightButtons.value = []
+})
 watch(refreshTick, fetchClasses)
 </script>
 
@@ -525,12 +629,15 @@ watch(refreshTick, fetchClasses)
     color: rgb(var(--md-sys-color-on-primary));
     cursor: pointer;
     @include font(14px, 20px, 500);
-    transition: box-shadow .15s ease;
+    transition: box-shadow 0.15s ease;
 
-    svg { width: 16px; height: 16px; }
+    svg {
+      width: 16px;
+      height: 16px;
+    }
 
     &:hover {
-      box-shadow: 0 0 16px rgb(var(--md-sys-color-primary) / .3);
+      box-shadow: 0 0 16px rgb(var(--md-sys-color-primary) / 0.3);
     }
   }
 
@@ -560,10 +667,12 @@ watch(refreshTick, fetchClasses)
       color: rgb(var(--md-sys-color-on-surface));
       @include font(13px, 20px);
       outline: none;
-      transition: border-color .2s ease, background .2s ease;
+      transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
 
       &::placeholder {
-        color: rgb(var(--md-sys-color-on-surface-variant) / .5);
+        color: rgb(var(--md-sys-color-on-surface-variant) / 0.5);
       }
 
       &:focus {
@@ -585,12 +694,15 @@ watch(refreshTick, fetchClasses)
       background: transparent;
       color: rgb(var(--md-sys-color-on-surface-variant));
       cursor: pointer;
-      transition: background .15s ease;
+      transition: background 0.15s ease;
 
-      svg { width: 14px; height: 14px; }
+      svg {
+        width: 14px;
+        height: 14px;
+      }
 
       &:hover {
-        background: rgb(var(--md-sys-color-on-surface-variant) / .12);
+        background: rgb(var(--md-sys-color-on-surface-variant) / 0.12);
       }
     }
   }
@@ -603,8 +715,13 @@ watch(refreshTick, fetchClasses)
     padding: 80px 0;
     color: rgb(var(--md-sys-color-outline));
 
-    svg { width: 56px; height: 56px; }
-    span { @include font(14px, 20px); }
+    svg {
+      width: 56px;
+      height: 56px;
+    }
+    span {
+      @include font(14px, 20px);
+    }
   }
 
   &__cards {
@@ -635,15 +752,14 @@ watch(refreshTick, fetchClasses)
 }
 
 .ap {
-
   &__preview {
     padding-left: 12px;
-    transition: transform .4s cubic-bezier(.4, 0, .2, 1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &__form {
     padding-left: 12px;
-    transition: transform .4s cubic-bezier(.4, 0, .2, 1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -652,11 +768,15 @@ watch(refreshTick, fetchClasses)
   background: rgb(var(--md-sys-color-surface-container));
   border-radius: 16px;
   cursor: pointer;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
 
-  &:hover { background: rgb(var(--md-sys-color-surface-container-high)); }
+  &:hover {
+    background: rgb(var(--md-sys-color-surface-container-high));
+  }
 
-  &--active { background: rgb(var(--md-sys-color-secondary-container)); }
+  &--active {
+    background: rgb(var(--md-sys-color-secondary-container));
+  }
 
   &__header {
     display: flex;
@@ -693,7 +813,9 @@ watch(refreshTick, fetchClasses)
     align-items: center;
     gap: 4px 12px;
 
-    &--row { justify-content: flex-start; }
+    &--row {
+      justify-content: flex-start;
+    }
   }
 
   &__desc {
@@ -732,7 +854,9 @@ watch(refreshTick, fetchClasses)
     white-space: nowrap;
   }
 
-  &--push { margin-left: auto; }
+  &--push {
+    margin-left: auto;
+  }
 
   &:hover::after {
     content: attr(data-tooltip);
@@ -780,7 +904,7 @@ watch(refreshTick, fetchClasses)
   &__title {
     @include font(18px, 26px, 500);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .02em;
+    letter-spacing: 0.02em;
   }
 
   &__grid {
@@ -820,21 +944,28 @@ watch(refreshTick, fetchClasses)
   border-radius: 10px;
   cursor: pointer;
   @include font(13px, 20px, 500);
-  transition: background .15s ease;
+  transition: background 0.15s ease;
 
-  svg { width: 16px; height: 16px; }
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 
   &--primary {
     background: rgb(var(--md-sys-color-primary));
     color: rgb(var(--md-sys-color-on-primary));
-    &:hover { filter: brightness(.9); }
+    &:hover {
+      filter: brightness(0.9);
+    }
   }
 
   &--danger {
     background: transparent;
     color: rgb(var(--md-sys-color-error));
     border: 1px solid rgb(var(--md-sys-color-error));
-    &:hover { background: rgb(var(--md-sys-color-error) / .08); }
+    &:hover {
+      background: rgb(var(--md-sys-color-error) / 0.08);
+    }
   }
 }
 
@@ -884,9 +1015,14 @@ watch(refreshTick, fetchClasses)
     cursor: pointer;
     @include font(13px, 20px, 500);
 
-    svg { width: 16px; height: 16px; }
+    svg {
+      width: 16px;
+      height: 16px;
+    }
 
-    &:hover { background: rgb(var(--md-sys-color-surface-container-highest)); }
+    &:hover {
+      background: rgb(var(--md-sys-color-surface-container-highest));
+    }
   }
 
   &__fields {
@@ -917,9 +1053,13 @@ watch(refreshTick, fetchClasses)
     outline: none;
     appearance: none;
 
-    &:focus { border-color: rgb(var(--md-sys-color-primary)); }
+    &:focus {
+      border-color: rgb(var(--md-sys-color-primary));
+    }
 
-    &::placeholder { color: rgb(var(--md-sys-color-on-surface-variant) / .6); }
+    &::placeholder {
+      color: rgb(var(--md-sys-color-on-surface-variant) / 0.6);
+    }
 
     &--area {
       height: auto;
@@ -979,13 +1119,17 @@ select.form-field__input {
     align-items: center;
     padding: 0 16px;
     height: 40px;
-    transition: background .1s ease;
+    transition: background 0.1s ease;
 
-    &:hover { background: rgb(var(--md-sys-color-surface-container-high)); }
+    &:hover {
+      background: rgb(var(--md-sys-color-surface-container-high));
+    }
 
     &--header {
       border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
-      &:hover { background: transparent; }
+      &:hover {
+        background: transparent;
+      }
     }
   }
 
@@ -999,8 +1143,12 @@ select.form-field__input {
       text-transform: uppercase;
     }
 
-    &--no { flex: 0 0 120px; }
-    &--name { flex: 1; }
+    &--no {
+      flex: 0 0 120px;
+    }
+    &--name {
+      flex: 1;
+    }
   }
 }
 
@@ -1011,7 +1159,7 @@ select.form-field__input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0 0 0 / .4);
+  background: rgba(0 0 0 / 0.4);
   z-index: 200;
 }
 
@@ -1065,20 +1213,28 @@ select.form-field__input {
 }
 
 .modal-enter-active {
-  transition: opacity .2s ease;
-  .modal-card { transition: transform .25s cubic-bezier(.4, 0, .2, 1); }
+  transition: opacity 0.2s ease;
+  .modal-card {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 .modal-leave-active {
-  transition: opacity .15s ease;
-  .modal-card { transition: transform .15s ease; }
+  transition: opacity 0.15s ease;
+  .modal-card {
+    transition: transform 0.15s ease;
+  }
 }
 .modal-enter-from {
   opacity: 0;
-  .modal-card { transform: scale(.92) translateY(12px); }
+  .modal-card {
+    transform: scale(0.92) translateY(12px);
+  }
 }
 .modal-leave-to {
   opacity: 0;
-  .modal-card { transform: scale(.92) translateY(12px); }
+  .modal-card {
+    transform: scale(0.92) translateY(12px);
+  }
 }
 
 /* ── Preview Placeholder ── */
@@ -1091,7 +1247,12 @@ select.form-field__input {
   gap: 16px;
   color: rgb(var(--md-sys-color-outline));
 
-  svg { width: 56px; height: 56px; }
-  span { @include font(14px, 20px); }
+  svg {
+    width: 56px;
+    height: 56px;
+  }
+  span {
+    @include font(14px, 20px);
+  }
 }
 </style>

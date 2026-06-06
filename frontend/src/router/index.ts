@@ -40,7 +40,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
+router.beforeEach(to => {
   const hasToken = !!getCookie('auth_token')
   if (to.meta.requiresAuth && !hasToken) return '/forbidden'
   if (to.path === '/login' && hasToken) return '/'

@@ -28,19 +28,11 @@ export const FILE_ICONS: Record<string, FileIconDef> = {
   },
   docx: {
     viewBox: '0 0 24 24',
-    paths: [
-      'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
-      'M14 2v6h6',
-      'M9 11v6l2-3 2 3v-6',
-    ],
+    paths: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6', 'M9 11v6l2-3 2 3v-6'],
   },
   xlsx: {
     viewBox: '0 0 24 24',
-    paths: [
-      'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
-      'M14 2v6h6',
-      'M8 11h8M8 15h8M12 11v4',
-    ],
+    paths: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6', 'M8 11h8M8 15h8M12 11v4'],
   },
   pptx: {
     viewBox: '0 0 24 24',
@@ -58,17 +50,11 @@ export const FILE_ICONS: Record<string, FileIconDef> = {
   },
   code: {
     viewBox: '0 0 24 24',
-    paths: [
-      'M16 18l6-6-6-6',
-      'M8 6l-6 6 6 6',
-    ],
+    paths: ['M16 18l6-6-6-6', 'M8 6l-6 6 6 6'],
   },
   text: {
     viewBox: '0 0 24 24',
-    paths: [
-      'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
-      'M14 2v6h6',
-    ],
+    paths: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6'],
   },
   java: {
     viewBox: '0 0 24 24',
@@ -92,7 +78,9 @@ export const FILE_ICONS: Record<string, FileIconDef> = {
   },
   html: {
     viewBox: '0 0 32 32',
-    paths: [`<path d="M2.072 0l2.399 26.963L15.234 30l10.837-3.037L28.472 0H2.072z M23.259 8.795H10.622l.281 3.393h12.074L22.04 22.389l-6.73 1.855v.02h-.075l-6.787-1.875-.413-5.213h3.281l.244 2.625 3.675.994 3.692-.994.414-4.275H7.866L6.984 5.514H23.56L23.259 8.795z"/>`],
+    paths: [
+      `<path d="M2.072 0l2.399 26.963L15.234 30l10.837-3.037L28.472 0H2.072z M23.259 8.795H10.622l.281 3.393h12.074L22.04 22.389l-6.73 1.855v.02h-.075l-6.787-1.875-.413-5.213h3.281l.244 2.625 3.675.994 3.692-.994.414-4.275H7.866L6.984 5.514H23.56L23.259 8.795z"/>`,
+    ],
   },
   js: {
     viewBox: '0 0 32 32',
@@ -100,7 +88,9 @@ export const FILE_ICONS: Record<string, FileIconDef> = {
   },
   css: {
     viewBox: '0 0 32 32',
-    paths: [`<path d="M4.192 3.143h15.615l-1.42 16.034-6.404 1.812-6.369-1.813L4.192 3.143zM16.9 6.424H7.1l.158 1.949h7.529l-.189 2.022H9.66l.179 1.913h4.597l-.272 2.62-2.164.598-2.197-.603-.141-1.569H7.722l.216 2.867L12 17.484l3.995-1.138.905-9.922z"/>`],
+    paths: [
+      `<path d="M4.192 3.143h15.615l-1.42 16.034-6.404 1.812-6.369-1.813L4.192 3.143zM16.9 6.424H7.1l.158 1.949h7.529l-.189 2.022H9.66l.179 1.913h4.597l-.272 2.62-2.164.598-2.197-.603-.141-1.569H7.722l.216 2.867L12 17.484l3.995-1.138.905-9.922z"/>`,
+    ],
   },
   scss: {
     viewBox: '0 0 24 24',
@@ -121,24 +111,44 @@ export const FILE_ICONS: Record<string, FileIconDef> = {
 }
 
 const extMap: Record<string, string> = {
-  zip: 'archive', rar: 'archive', '7z': 'archive', tar: 'archive', gz: 'archive',
-  docx: 'docx', doc: 'docx',
-  xlsx: 'xlsx', xls: 'xlsx',
-  pptx: 'pptx', ppt: 'pptx',
+  zip: 'archive',
+  rar: 'archive',
+  '7z': 'archive',
+  tar: 'archive',
+  gz: 'archive',
+  docx: 'docx',
+  doc: 'docx',
+  xlsx: 'xlsx',
+  xls: 'xlsx',
+  pptx: 'pptx',
+  ppt: 'pptx',
   pdf: 'pdf',
   py: 'python',
   java: 'java',
-  c: 'cpp', cpp: 'cpp', h: 'cpp', hpp: 'cpp',
+  c: 'cpp',
+  cpp: 'cpp',
+  h: 'cpp',
+  hpp: 'cpp',
   go: 'golang',
   rs: 'rust',
-  html: 'html', htm: 'html',
-  js: 'js', jsx: 'js', ts: 'js', tsx: 'js', mjs: 'js',
+  html: 'html',
+  htm: 'html',
+  js: 'js',
+  jsx: 'js',
+  ts: 'js',
+  tsx: 'js',
+  mjs: 'js',
   css: 'css',
   scss: 'scss',
   sass: 'sass',
   sql: 'sql',
   kt: 'kotlin',
-  txt: 'text', md: 'text', json: 'text', xml: 'text', yaml: 'text', yml: 'text',
+  txt: 'text',
+  md: 'text',
+  json: 'text',
+  xml: 'text',
+  yaml: 'text',
+  yml: 'text',
 }
 
 export function detectFileType(fileName: string, _contentType?: string): string {

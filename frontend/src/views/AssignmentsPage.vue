@@ -4,14 +4,34 @@
     <div class="ap__panel ap__list">
       <div class="ap__toolbar">
         <button class="ap__create-btn" @click="startCreate">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
           <span>创建作业</span>
         </button>
         <SearchInput v-model="searchQuery" placeholder="搜索作业名称、班级、描述…" />
       </div>
 
       <div v-if="!assignments.length && !loading" class="ap__empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
         <span>暂无作业，点击上方按钮创建</span>
       </div>
       <EmptyState v-else-if="!filteredAssignments.length && searchQuery" text="这里似乎什么都没有" />
@@ -32,26 +52,87 @@
           <div class="asgn-card__body">
             <div class="asgn-card__stats">
               <span class="stat-chip" data-tooltip="受理班级">
-                <svg class="stat-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                <svg
+                  class="stat-chip__icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
                 <span>{{ a.className || '—' }}</span>
               </span>
             </div>
 
             <div class="asgn-card__stats asgn-card__stats--row">
               <span class="stat-chip" data-tooltip="提交进度">
-                <svg class="stat-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                <svg
+                  class="stat-chip__icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
                 <span>{{ a.submittedCount }}/{{ a.totalStudents }} · {{ a.submitRate }}%</span>
               </span>
               <span class="stat-chip" data-tooltip="审批进度">
-                <svg class="stat-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+                <svg
+                  class="stat-chip__icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 11 12 14 22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
                 <span>{{ a.reviewProgress }}%</span>
               </span>
               <span class="stat-chip" data-tooltip="发布日期">
-                <svg class="stat-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                <svg
+                  class="stat-chip__icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
                 <span>{{ a.createdAt ? formatDate(a.createdAt) : '—' }}</span>
               </span>
               <span class="stat-chip stat-chip--push" data-tooltip="截止日期">
-                <svg class="stat-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                <svg
+                  class="stat-chip__icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
                 <span>截止 {{ a.dueDate ? formatDate(a.dueDate) : '—' }}</span>
               </span>
             </div>
@@ -69,18 +150,45 @@
           <div class="detail-card__bar">
             <div class="detail-card__bar-left">
               <button class="act-btn act-btn--primary" @click="startEdit(active)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
                 <span>编辑</span>
               </button>
               <button class="act-btn act-btn--outline" :disabled="exporting" @click="onExport(active)">
-                <svg :viewBox="xlsxIcon.viewBox" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  :viewBox="xlsxIcon.viewBox"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <path v-for="(d, i) in xlsxIcon.paths" :key="i" :d="d" />
                 </svg>
                 <span>{{ exporting ? '导出中...' : '导出为Excel' }}</span>
               </button>
             </div>
             <button class="act-btn act-btn--danger" @click="onDeleteClick(active)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
               <span>删除</span>
             </button>
           </div>
@@ -98,7 +206,9 @@
             </div>
             <div class="info-field">
               <span class="info-field__label">提交进度</span>
-              <span class="info-field__value">{{ active.submittedCount }}/{{ active.totalStudents }} · {{ active.submitRate }}%</span>
+              <span class="info-field__value"
+                >{{ active.submittedCount }}/{{ active.totalStudents }} · {{ active.submitRate }}%</span
+              >
             </div>
             <div class="info-field">
               <span class="info-field__label">审批进度</span>
@@ -129,11 +239,29 @@
       <div class="form-card">
         <div class="form-card__bar">
           <button class="form-card__back" @click="editing = false">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
             <span>关闭{{ isCreate ? '创建' : '编辑' }}</span>
           </button>
           <button class="act-btn act-btn--primary" @click="onSave">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
             <span>{{ isCreate ? '发布' : '保存' }}</span>
           </button>
         </div>
@@ -160,15 +288,12 @@
             <div class="class-card">
               <div v-if="selectedClasses.length" class="class-card__section">
                 <span class="class-card__section-title">已受理</span>
-                <div
-                  v-for="cls in selectedClasses"
-                  :key="cls"
-                  class="class-card__row"
-                  @click="toggleClass(cls)"
-                >
+                <div v-for="cls in selectedClasses" :key="cls" class="class-card__row" @click="toggleClass(cls)">
                   <span class="class-card__name">{{ cls }}</span>
                   <span class="class-card__btn class-card__btn--remove">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
                   </span>
                 </div>
               </div>
@@ -177,15 +302,13 @@
 
               <div v-if="unselectedClasses.length" class="class-card__section">
                 <span v-if="selectedClasses.length" class="class-card__section-title">未受理</span>
-                <div
-                  v-for="cls in unselectedClasses"
-                  :key="cls"
-                  class="class-card__row"
-                  @click="toggleClass(cls)"
-                >
+                <div v-for="cls in unselectedClasses" :key="cls" class="class-card__row" @click="toggleClass(cls)">
                   <span class="class-card__name">{{ cls }}</span>
                   <span class="class-card__btn class-card__btn--add">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
                   </span>
                 </div>
               </div>
@@ -197,10 +320,10 @@
           <label class="form-field">
             <span class="form-field__label">作业说明</span>
             <textarea
+              ref="editorRef"
               v-model="form.description"
               class="form-field__input form-field__input--area"
               placeholder="作业要求与说明"
-              ref="editorRef"
               @input="autoResize"
             ></textarea>
           </label>
@@ -213,8 +336,20 @@
     <Transition name="modal">
       <div v-if="deleteModal.open" class="modal-overlay" @click.self="deleteModal.open = false">
         <div class="modal-card">
-          <svg class="modal-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-          <p class="modal-card__text">确定要删除「{{ deleteModal.title }}」吗？<br/>此操作可在5s内撤销。</p>
+          <svg
+            class="modal-card__icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <p class="modal-card__text">确定要删除「{{ deleteModal.title }}」吗？<br />此操作可在5s内撤销。</p>
           <div class="modal-card__btns">
             <button class="modal-card__btn modal-card__btn--cancel" @click="deleteModal.open = false">取消</button>
             <HedgehogButton variant="primary" size="sm" @complete="confirmDelete">确认删除</HedgehogButton>
@@ -226,7 +361,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, onActivated, onDeactivated, nextTick, inject, watch, watchEffect } from 'vue'
+import {
+  ref,
+  reactive,
+  computed,
+  onMounted,
+  onActivated,
+  onDeactivated,
+  nextTick,
+  inject,
+  watch,
+  watchEffect,
+} from 'vue'
 import http from '../utils/request'
 import { useSnackbar } from '../composables/useSnackbar'
 import { getCookie, setCookie } from '../utils/cookie'
@@ -239,7 +385,7 @@ import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
-import ConfirmDialog from '../components/ConfirmDialog.vue'
+// ConfirmDialog reserved for delete modal
 
 const snackbar = useSnackbar()
 
@@ -250,11 +396,12 @@ const searchQuery = ref('')
 const filteredAssignments = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return assignments.value
-  return assignments.value.filter(a =>
-    (a.title || '').toLowerCase().includes(q) ||
-    (a.workType || '').toLowerCase().includes(q) ||
-    (a.className || '').toLowerCase().includes(q) ||
-    (a.description || '').toLowerCase().includes(q)
+  return assignments.value.filter(
+    a =>
+      (a.title || '').toLowerCase().includes(q) ||
+      (a.workType || '').toLowerCase().includes(q) ||
+      (a.className || '').toLowerCase().includes(q) ||
+      (a.description || '').toLowerCase().includes(q),
   )
 })
 const editing = ref(false)
@@ -267,7 +414,9 @@ const active = computed(() => assignments.value.find(a => a.id === activeId.valu
 
 const availableClasses = computed(() => {
   const set = new Set<string>()
-  studentsAll.value.forEach((s: any) => { if (s.className) set.add(s.className) })
+  studentsAll.value.forEach((s: any) => {
+    if (s.className) set.add(s.className)
+  })
   return [...set].sort()
 })
 
@@ -323,7 +472,9 @@ function loadDraft() {
     form.description = d.description || ''
     form.dueDate = d.dueDate || ''
     return true
-  } catch { return false }
+  } catch {
+    return false
+  }
 }
 
 function saveDraft() {
@@ -371,7 +522,9 @@ watch(editing, (val, old) => {
     if (getCookie(DRAFT_KEY)) {
       magicBar.status = '编辑内容已保存至本地'
       magicBar.statusType = 'info'
-      setTimeout(() => { if (magicBar.status === '编辑内容已保存至本地') magicBar.status = '' }, 2500)
+      setTimeout(() => {
+        if (magicBar.status === '编辑内容已保存至本地') magicBar.status = ''
+      }, 2500)
       snackbar.show('编辑内容已保存至草稿', { variant: 'info', duration: 2500 })
     }
   }
@@ -396,7 +549,7 @@ function toggleClass(cls) {
 function formatDate(iso) {
   if (!iso) return ''
   const d = new Date(iso)
-  const pad = (n) => String(n).padStart(2, '0')
+  const pad = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
@@ -413,9 +566,8 @@ async function onSave() {
     return
   }
   // TODO: call POST /api/assignments or PUT /api/assignments/:id when API is ready
-  const createdAt = isCreate.value ? new Date().toISOString() : undefined
   clearDraft()
-  triggerRipple(window.innerWidth * .75, 200)
+  triggerRipple(window.innerWidth * 0.75, 200)
   snackbar.show(isCreate.value ? '作业已发布' : '作业已更新', { variant: 'info' })
   editing.value = false
   fetchAssignments()
@@ -444,7 +596,9 @@ async function onExport(item) {
     URL.revokeObjectURL(url)
     magicBar.status = '导出完成'
     magicBar.statusType = 'success'
-    setTimeout(() => { if (magicBar.status === '导出完成') magicBar.status = '' }, 2500)
+    setTimeout(() => {
+      if (magicBar.status === '导出完成') magicBar.status = ''
+    }, 2500)
     snackbar.show('导出成功', { variant: 'info' })
   } catch (e) {
     magicBar.status = ''
@@ -482,7 +636,15 @@ const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
   rightButtons.value = [
-    { key: 'refresh', icon: 'dash-class', label: '刷新', active: false, action: () => { refreshTick.value++ } },
+    {
+      key: 'refresh',
+      icon: 'dash-class',
+      label: '刷新',
+      active: false,
+      action: () => {
+        refreshTick.value++
+      },
+    },
   ]
 }
 
@@ -499,7 +661,9 @@ async function fetchAssignments() {
     studentsAll.value = students || []
 
     const evalMap = {}
-    ;(evals || []).forEach(e => { evalMap[e.submissionId] = e })
+    ;(evals || []).forEach(e => {
+      evalMap[e.submissionId] = e
+    })
 
     const classStudentCounts: Record<string, number> = {}
     ;(students || []).forEach(s => {
@@ -517,24 +681,26 @@ async function fetchAssignments() {
       if (ev && ev.status >= 2) map[type].reviewed++
     })
 
-    assignments.value = Object.entries(map).map(([type, d], i) => {
-      const classList = [...d.classes]
-      const total = classList.reduce((sum, cls) => sum + (classStudentCounts[cls] || 0), 0)
-      return {
-        id: `wt-${i}`,
-        title: type,
-        workType: type,
-        className: classList.join('、'),
-        description: '',
-        submittedCount: d.count,
-        reviewedCount: d.reviewed,
-        totalStudents: total,
-        submitRate: total ? Math.round(d.count / total * 100) : 0,
-        reviewProgress: d.count ? Math.round(d.reviewed / d.count * 100) : 0,
-        createdAt: '',
-        dueDate: '',
-      }
-    }).sort((a, b) => b.submittedCount - a.submittedCount)
+    assignments.value = Object.entries(map)
+      .map(([type, d], i) => {
+        const classList = [...d.classes]
+        const total = classList.reduce((sum, cls) => sum + (classStudentCounts[cls] || 0), 0)
+        return {
+          id: `wt-${i}`,
+          title: type,
+          workType: type,
+          className: classList.join('、'),
+          description: '',
+          submittedCount: d.count,
+          reviewedCount: d.reviewed,
+          totalStudents: total,
+          submitRate: total ? Math.round((d.count / total) * 100) : 0,
+          reviewProgress: d.count ? Math.round((d.reviewed / d.count) * 100) : 0,
+          createdAt: '',
+          dueDate: '',
+        }
+      })
+      .sort((a, b) => b.submittedCount - a.submittedCount)
   } catch (e) {
     snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' })
     startRecoveryPoll(() => {
@@ -549,7 +715,7 @@ async function fetchAssignments() {
 const magicBar = inject(MAGIC_BAR_KEY)!
 const triggerRipple = inject(TRIGGER_RIPPLE_KEY)!
 
-watch(active, (a) => {
+watch(active, a => {
   magicBar.sub = a?.title || ''
 })
 
@@ -563,7 +729,9 @@ onActivated(() => {
   magicBar.sub = active.value?.title || ''
   buildRightButtons()
 })
-onDeactivated(() => { rightButtons.value = [] })
+onDeactivated(() => {
+  rightButtons.value = []
+})
 watch(refreshTick, fetchAssignments)
 </script>
 
@@ -616,12 +784,15 @@ watch(refreshTick, fetchAssignments)
     color: rgb(var(--md-sys-color-on-primary));
     cursor: pointer;
     @include font(14px, 20px, 500);
-    transition: box-shadow .15s ease;
+    transition: box-shadow 0.15s ease;
 
-    svg { width: 16px; height: 16px; }
+    svg {
+      width: 16px;
+      height: 16px;
+    }
 
     &:hover {
-      box-shadow: 0 0 16px rgb(var(--md-sys-color-primary) / .3);
+      box-shadow: 0 0 16px rgb(var(--md-sys-color-primary) / 0.3);
     }
   }
 
@@ -651,10 +822,12 @@ watch(refreshTick, fetchAssignments)
       color: rgb(var(--md-sys-color-on-surface));
       @include font(13px, 20px);
       outline: none;
-      transition: border-color .2s ease, background .2s ease;
+      transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
 
       &::placeholder {
-        color: rgb(var(--md-sys-color-on-surface-variant) / .5);
+        color: rgb(var(--md-sys-color-on-surface-variant) / 0.5);
       }
 
       &:focus {
@@ -676,12 +849,15 @@ watch(refreshTick, fetchAssignments)
       background: transparent;
       color: rgb(var(--md-sys-color-on-surface-variant));
       cursor: pointer;
-      transition: background .15s ease;
+      transition: background 0.15s ease;
 
-      svg { width: 14px; height: 14px; }
+      svg {
+        width: 14px;
+        height: 14px;
+      }
 
       &:hover {
-        background: rgb(var(--md-sys-color-on-surface-variant) / .12);
+        background: rgb(var(--md-sys-color-on-surface-variant) / 0.12);
       }
     }
   }
@@ -694,8 +870,13 @@ watch(refreshTick, fetchAssignments)
     padding: 80px 0;
     color: rgb(var(--md-sys-color-outline));
 
-    svg { width: 56px; height: 56px; }
-    span { @include font(14px, 20px); }
+    svg {
+      width: 56px;
+      height: 56px;
+    }
+    span {
+      @include font(14px, 20px);
+    }
   }
 
   &__cards {
@@ -726,15 +907,14 @@ watch(refreshTick, fetchAssignments)
 }
 
 .ap {
-
   &__preview {
     padding-left: 12px;
-    transition: transform .4s cubic-bezier(.4, 0, .2, 1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &__form {
     padding-left: 12px;
-    transition: transform .4s cubic-bezier(.4, 0, .2, 1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -743,11 +923,15 @@ watch(refreshTick, fetchAssignments)
   background: rgb(var(--md-sys-color-surface-container));
   border-radius: 16px;
   cursor: pointer;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
 
-  &:hover { background: rgb(var(--md-sys-color-surface-container-high)); }
+  &:hover {
+    background: rgb(var(--md-sys-color-surface-container-high));
+  }
 
-  &--active { background: rgb(var(--md-sys-color-secondary-container)); }
+  &--active {
+    background: rgb(var(--md-sys-color-secondary-container));
+  }
 
   &__header {
     display: flex;
@@ -784,7 +968,9 @@ watch(refreshTick, fetchAssignments)
     align-items: center;
     gap: 4px 12px;
 
-    &--row { justify-content: flex-start; }
+    &--row {
+      justify-content: flex-start;
+    }
   }
 
   &__desc {
@@ -823,7 +1009,9 @@ watch(refreshTick, fetchAssignments)
     white-space: nowrap;
   }
 
-  &--push { margin-left: auto; }
+  &--push {
+    margin-left: auto;
+  }
 
   &:hover::after {
     content: attr(data-tooltip);
@@ -866,7 +1054,7 @@ watch(refreshTick, fetchAssignments)
   &__title {
     @include font(18px, 26px, 500);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .02em;
+    letter-spacing: 0.02em;
   }
 
   &__grid {
@@ -906,28 +1094,37 @@ watch(refreshTick, fetchAssignments)
   border-radius: 10px;
   cursor: pointer;
   @include font(13px, 20px, 500);
-  transition: background .15s ease;
+  transition: background 0.15s ease;
 
-  svg { width: 16px; height: 16px; }
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 
   &--primary {
     background: rgb(var(--md-sys-color-primary));
     color: rgb(var(--md-sys-color-on-primary));
-    &:hover { filter: brightness(.9); }
+    &:hover {
+      filter: brightness(0.9);
+    }
   }
 
   &--outline {
     background: transparent;
     color: rgb(var(--md-sys-color-on-surface-variant));
     border: 1px solid rgb(var(--md-sys-color-outline));
-    &:hover { background: rgb(var(--md-sys-color-surface-container-highest)); }
+    &:hover {
+      background: rgb(var(--md-sys-color-surface-container-highest));
+    }
   }
 
   &--danger {
     background: transparent;
     color: rgb(var(--md-sys-color-error));
     border: 1px solid rgb(var(--md-sys-color-error));
-    &:hover { background: rgb(var(--md-sys-color-error) / .08); }
+    &:hover {
+      background: rgb(var(--md-sys-color-error) / 0.08);
+    }
   }
 }
 
@@ -977,9 +1174,14 @@ watch(refreshTick, fetchAssignments)
     cursor: pointer;
     @include font(13px, 20px, 500);
 
-    svg { width: 16px; height: 16px; }
+    svg {
+      width: 16px;
+      height: 16px;
+    }
 
-    &:hover { background: rgb(var(--md-sys-color-surface-container-highest)); }
+    &:hover {
+      background: rgb(var(--md-sys-color-surface-container-highest));
+    }
   }
 
   &__fields {
@@ -1009,9 +1211,13 @@ watch(refreshTick, fetchAssignments)
     @include font(14px, 20px);
     outline: none;
 
-    &:focus { border-color: rgb(var(--md-sys-color-primary)); }
+    &:focus {
+      border-color: rgb(var(--md-sys-color-primary));
+    }
 
-    &::placeholder { color: rgb(var(--md-sys-color-on-surface-variant) / .6); }
+    &::placeholder {
+      color: rgb(var(--md-sys-color-on-surface-variant) / 0.6);
+    }
 
     &--area {
       height: auto;
@@ -1045,9 +1251,11 @@ watch(refreshTick, fetchAssignments)
     justify-content: space-between;
     padding: 10px 14px;
     cursor: pointer;
-    transition: background .1s ease;
+    transition: background 0.1s ease;
 
-    &:hover { background: rgb(var(--md-sys-color-surface-container-high)); }
+    &:hover {
+      background: rgb(var(--md-sys-color-surface-container-high));
+    }
   }
 
   &__name {
@@ -1064,7 +1272,10 @@ watch(refreshTick, fetchAssignments)
     justify-content: center;
     flex-shrink: 0;
 
-    svg { width: 16px; height: 16px; }
+    svg {
+      width: 16px;
+      height: 16px;
+    }
 
     &--add {
       background: rgb(var(--md-sys-color-primary));
@@ -1099,7 +1310,7 @@ watch(refreshTick, fetchAssignments)
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0 0 0 / .4);
+  background: rgba(0 0 0 / 0.4);
   z-index: 200;
 }
 
@@ -1153,20 +1364,28 @@ watch(refreshTick, fetchAssignments)
 }
 
 .modal-enter-active {
-  transition: opacity .2s ease;
-  .modal-card { transition: transform .25s cubic-bezier(.4, 0, .2, 1); }
+  transition: opacity 0.2s ease;
+  .modal-card {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 .modal-leave-active {
-  transition: opacity .15s ease;
-  .modal-card { transition: transform .15s ease; }
+  transition: opacity 0.15s ease;
+  .modal-card {
+    transition: transform 0.15s ease;
+  }
 }
 .modal-enter-from {
   opacity: 0;
-  .modal-card { transform: scale(.92) translateY(12px); }
+  .modal-card {
+    transform: scale(0.92) translateY(12px);
+  }
 }
 .modal-leave-to {
   opacity: 0;
-  .modal-card { transform: scale(.92) translateY(12px); }
+  .modal-card {
+    transform: scale(0.92) translateY(12px);
+  }
 }
 
 /* ── Preview Placeholder ── */
@@ -1179,7 +1398,12 @@ watch(refreshTick, fetchAssignments)
   gap: 16px;
   color: rgb(var(--md-sys-color-outline));
 
-  svg { width: 56px; height: 56px; }
-  span { @include font(14px, 20px); }
+  svg {
+    width: 56px;
+    height: 56px;
+  }
+  span {
+    @include font(14px, 20px);
+  }
 }
 </style>

@@ -56,7 +56,7 @@ const barStyle = computed(() => {
   &__pct {
     @include font(72px, 1, 300);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .02em;
+    letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
   }
 
@@ -75,13 +75,13 @@ const barStyle = computed(() => {
     height: 8px;
     border-radius: 4px;
     background: rgb(var(--md-sys-color-primary));
-    transition: width .5s cubic-bezier(.4, 0, .2, 1);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &__label {
     @include font(14px, 20px);
     color: rgb(var(--md-sys-color-on-surface-variant));
-    letter-spacing: .04em;
+    letter-spacing: 0.04em;
   }
 
   &__debug {
@@ -98,7 +98,7 @@ const barStyle = computed(() => {
     color: rgb(var(--md-sys-color-on-surface-variant));
     font-size: 13px;
     cursor: pointer;
-    transition: background .15s;
+    transition: background 0.15s;
 
     &:hover {
       background: rgb(var(--md-sys-color-surface-container-high));
@@ -110,15 +110,14 @@ const barStyle = computed(() => {
       border-color: transparent;
 
       &:hover {
-        background: rgb(var(--md-sys-color-primary) / .85);
+        background: rgb(var(--md-sys-color-primary) / 0.85);
       }
 
       &:disabled {
-        opacity: .5;
+        opacity: 0.5;
         cursor: default;
       }
     }
   }
 }
-
 </style>

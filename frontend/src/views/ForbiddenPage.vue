@@ -8,11 +8,31 @@
       <p v-else class="nf__hint">您似乎没有登录凭证，请尝试登录</p>
       <div class="nf__btns">
         <button v-if="hasToken" class="nf__btn" @click="goHome">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
           <span>返回首页</span>
         </button>
         <button class="nf__btn" :class="{ 'nf__btn--outline': hasToken }" @click="goLogin">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" y1="12" x2="3" y2="12" />
+          </svg>
           <span>登录系统</span>
         </button>
       </div>
@@ -58,8 +78,8 @@ function goLogin() {
 
   &__code {
     @include font(96px, 1, 300);
-    color: rgb(var(--md-sys-color-error) / .15);
-    letter-spacing: .04em;
+    color: rgb(var(--md-sys-color-error) / 0.15);
+    letter-spacing: 0.04em;
     margin-bottom: 16px;
     user-select: none;
   }
@@ -67,13 +87,13 @@ function goLogin() {
   &__title {
     @include font(28px, 40px, 500);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .06em;
+    letter-spacing: 0.06em;
   }
 
   &__subtitle {
     @include font(28px, 40px, 500);
     color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .06em;
+    letter-spacing: 0.06em;
   }
 
   &__hint {
@@ -100,12 +120,17 @@ function goLogin() {
     color: rgb(var(--md-sys-color-on-primary));
     cursor: pointer;
     @include font(15px, 24px, 500);
-    transition: box-shadow .2s ease, background .2s ease;
+    transition:
+      box-shadow 0.2s ease,
+      background 0.2s ease;
 
-    svg { width: 18px; height: 18px; }
+    svg {
+      width: 18px;
+      height: 18px;
+    }
 
     &:hover {
-      box-shadow: 0 0 20px rgb(var(--md-sys-color-primary) / .35);
+      box-shadow: 0 0 20px rgb(var(--md-sys-color-primary) / 0.35);
     }
 
     &--outline {
@@ -114,7 +139,7 @@ function goLogin() {
       border: 1px solid rgb(var(--md-sys-color-outline));
 
       &:hover {
-        background: rgb(var(--md-sys-color-primary) / .08);
+        background: rgb(var(--md-sys-color-primary) / 0.08);
         box-shadow: none;
       }
     }

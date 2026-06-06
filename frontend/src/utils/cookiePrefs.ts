@@ -75,7 +75,9 @@ export function isAllowed(name: string): boolean {
 
 export function clearCategory(catKey: string): void {
   const names = Object.keys(CATEGORY_MAP).filter(k => CATEGORY_MAP[k] === catKey)
-  names.forEach(n => { document.cookie = `${n}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/` })
+  names.forEach(n => {
+    document.cookie = `${n}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+  })
   if (catKey === 'drafts') {
     document.cookie.split(';').forEach(c => {
       const name = c.trim().split('=')[0]

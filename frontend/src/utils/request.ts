@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { useSnackbar } from '../composables/useSnackbar'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const http: any = axios.create({
   baseURL: '/api',
   timeout: 15000,
@@ -12,7 +12,9 @@ let offlineTimer: ReturnType<typeof setTimeout> | null = null
 function notifyOffline(): void {
   if (offlineTimer) return
   useSnackbar().show('与服务器连接断开', { variant: 'error', duration: 4000 })
-  offlineTimer = setTimeout(() => { offlineTimer = null }, 10000)
+  offlineTimer = setTimeout(() => {
+    offlineTimer = null
+  }, 10000)
 }
 
 http.interceptors.response.use(
