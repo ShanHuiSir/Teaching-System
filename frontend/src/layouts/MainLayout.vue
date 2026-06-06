@@ -5,28 +5,7 @@
       <span class="top-bar__ripple-clip">
         <i v-if="ripple > 0" class="top-bar__ripple" :style="{ left: rippleLeft, top: rippleTop }" :key="ripple" @animationend="ripple = 0" />
       </span>
-      <div class="magic-bar">
-        <Transition name="magic" mode="out-in">
-          <div class="magic-bar__text" :key="magicKey">
-            <template v-if="magicBar.status">
-              <span class="magic-bar__dot" :class="`magic-bar__dot--${magicBar.statusType}`" />
-              <span class="magic-bar__status">{{ magicBar.status }}</span>
-            </template>
-            <template v-else>
-              <span class="magic-bar__primary">{{ magicBar.primary }}</span>
-              <template v-if="greeting || magicBar.sub">
-                <span class="magic-bar__sep">·</span>
-                <span v-if="greeting" class="magic-bar__greeting">{{ greeting }}</span>
-                <span v-else class="magic-bar__sub">{{ magicBar.sub }}</span>
-              </template>
-              <template v-if="magicBar.suffix">
-                <span class="magic-bar__sep">·</span>
-                <span class="magic-bar__suffix" :class="`magic-bar__suffix--${magicBar.suffixType}`">{{ magicBar.suffix }}</span>
-              </template>
-            </template>
-          </div>
-        </Transition>
-      </div>
+      <MagicBar :magic-bar="magicBar" :greeting="greeting" :magic-key="magicKey" />
       <div class="top-bar__right">
         <button class="top-bar__avatar" @click.stop="menuOpen = !menuOpen">
           {{ avatarLetter }}
@@ -234,14 +213,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, provide, onMounted, onUnmounted } from 'vue'
+import { ref, computed, provide, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCookie, delCookie } from '../utils/cookie'
 import { useSnackbar } from '../composables/useSnackbar'
 import http from '../utils/request'
-import { onConnectionChange } from '../utils/recoveryPoll'
 import { useTheme } from '../composables/useTheme'
+import { useMagicBar } from '../composables/useMagicBar'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, SHOW_GREETING_KEY } from '../types'
+import MagicBar from '../components/MagicBar.vue'
 
 const snackbar = useSnackbar()
 
@@ -256,147 +236,25 @@ const teacherName = computed(() => getCookie('user_name') || '?')
 const accountName = computed(() => getCookie('user_name') || '?')
 const avatarLetter = computed(() => teacherName.value.charAt(0).toUpperCase())
 
-const magicBar = reactive({ primary: '仪表盘', sub: '', status: '', statusType: '', count: 0, suffix: '', suffixType: '' })
-const ripple = ref(0)
-const rippleLeft = ref('50%')
-const rippleTop = ref('50%')
-function triggerRipple(cx, cy) {
-  const bar = document.querySelector('.top-bar')
-  const r = bar ? bar.getBoundingClientRect() : { left: 0, top: 0 }
-  rippleLeft.value = (cx ?? window.innerWidth / 2) - r.left + 'px'
-  rippleTop.value = (cy ?? 32) - r.top + 'px'
-  ripple.value++
-}
-provide(TRIGGER_RIPPLE_KEY, triggerRipple)
-const greeting = ref('')
-const magicKey = computed(() => `${magicBar.primary}|${magicBar.sub}|${magicBar.status}|${magicBar.suffix}|${greeting.value}`)
+// ── MagicBar ──
+const {
+  magicBar,
+  greeting,
+  ripple,
+  rippleLeft,
+  rippleTop,
+  magicKey,
+  triggerRipple,
+  showGreeting,
+  setupLifecycle,
+  teardownLifecycle,
+} = useMagicBar(teacherName)
+
 provide(MAGIC_BAR_KEY, magicBar)
+provide(TRIGGER_RIPPLE_KEY, triggerRipple)
 
-// ── Greeting system ──
-const POEMS = [
-  '学而不厌，诲人不倦',
-  '随风潜入夜，润物细无声',
-  '桃李不言，下自成蹊',
-  '落红不是无情物，化作春泥更护花',
-  '令公桃李满天下，何用堂前更种花',
-  '新竹高于旧竹枝，全凭老干为扶持',
-]
-
-function pickGreeting() {
-  const h = new Date().getHours()
-  const name = teacherName.value
-  const timeGreet = h < 6 ? '夜深了' : h < 9 ? '早上好' : h < 12 ? '上午好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好'
-  const poem = POEMS[Math.floor(Math.random() * POEMS.length)]
-  const count = magicBar.count
-  const countPart = count > 0 ? `今天还有 ${count} 份作业待批改。` : ''
-  return Math.random() < 0.5
-    ? `${timeGreet}，${name}老师！${countPart}`
-    : `「${poem}」 ${timeGreet}，${name}老师！${countPart}`
-}
-
-let greetTimer = null
-let greetDismissTimer = null
-
-function showGreeting(pagePrimary) {
-  clearTimeout(greetTimer)
-  clearTimeout(greetDismissTimer)
-  greetTimer = setTimeout(() => {
-    magicBar.primary = pagePrimary
-    greeting.value = pickGreeting()
-    greetDismissTimer = setTimeout(() => {
-      greeting.value = ''
-    }, 5000)
-  }, 300)
-}
-
-// ── Rest reminder ──
-let restTimer = null
-const REST_INTERVAL = 60 * 60 * 1000 // 1 hour
-
-function resetRestTimer() {
-  clearTimeout(restTimer)
-  restTimer = setTimeout(() => {
-    magicBar.status = '已经连续工作一段时间了，起来活动一下吧'
-    magicBar.statusType = 'info'
-    setTimeout(() => {
-      if (magicBar.status === '已经连续工作一段时间了，起来活动一下吧') {
-        magicBar.status = ''
-      }
-      resetRestTimer()
-    }, 6000)
-  }, REST_INTERVAL)
-}
-
-// ── Connection health check (delegates to recoveryPoll) ──
-const lostConnection = ref(false)
-let reconnectTimer = null
-
-function hasDraftsEnabled() {
-  try {
-    const prefs = JSON.parse(localStorage.getItem('cookie_prefs') || '{}')
-    return prefs.drafts !== false
-  } catch { return true }
-}
-
-function onReconnected() {
-  lostConnection.value = false
-  magicBar.suffix = '服务器已恢复连接'
-  magicBar.suffixType = 'reconnected'
-  magicBar.status = ''
-  clearTimeout(reconnectTimer)
-  snackbar.show('服务器已恢复连接', { variant: 'info', duration: 2500 })
-  setTimeout(() => {
-    if (magicBar.suffix === '服务器已恢复连接') magicBar.suffix = ''
-  }, 3000)
-}
-
-function onDisconnected() {
-  lostConnection.value = true
-  const draftMsg = hasDraftsEnabled() ? ' · 修改已保存在本地' : ''
-  magicBar.status = `啊！与服务器断连了${draftMsg}`
-  magicBar.statusType = 'info'
-  reconnectTimer = setTimeout(() => {
-    magicBar.status = ''
-    magicBar.suffix = navigator.onLine ? '积极重连中' : '离线'
-    magicBar.suffixType = navigator.onLine ? 'reconnecting' : 'offline'
-  }, 4000)
-}
-
-onConnectionChange((connected) => {
-  if (connected) {
-    if (lostConnection.value) onReconnected()
-  } else {
-    onDisconnected()
-  }
-})
-
-window.addEventListener('online', () => {
-  if (lostConnection.value) {
-    magicBar.suffix = '积极重连中'
-    magicBar.suffixType = 'reconnecting'
-  }
-})
-window.addEventListener('offline', () => {
-  if (lostConnection.value) {
-    magicBar.suffix = '离线'
-    magicBar.suffixType = 'offline'
-  }
-})
-
-onMounted(() => {
-  resetRestTimer()
-  document.addEventListener('click', resetRestTimer, { once: false })
-  document.addEventListener('keydown', resetRestTimer, { once: false })
-})
-
-onUnmounted(() => {
-  clearTimeout(restTimer)
-  clearTimeout(greetTimer)
-  clearTimeout(greetDismissTimer)
-  clearTimeout(reconnectTimer)
-  document.removeEventListener('click', resetRestTimer)
-  document.removeEventListener('keydown', resetRestTimer)
-})
+onMounted(() => { setupLifecycle() })
+onUnmounted(() => { teardownLifecycle() })
 
 // Expose helpers for pages
 provide(SHOW_GREETING_KEY, showGreeting)
@@ -468,9 +326,6 @@ async function doRefresh() {
   try {
     await http.get('/health')
     refreshTick.value++
-    if (lostConnection.value) {
-      onReconnected()
-    }
     snackbar.show('数据已刷新', { variant: 'info', duration: 2000 })
   } catch {
     snackbar.show('刷新失败，服务器无响应', { variant: 'error', duration: 3000 })
@@ -486,12 +341,6 @@ function go(path) {
 </script>
 
 <style lang="scss" scoped>
-$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
-
-@mixin font($size, $height, $weight: 400) {
-  font: $weight #{$size}/#{$height} $font-family;
-}
-
 .layout {
   display: flex;
   flex-direction: column;
@@ -536,126 +385,10 @@ $font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
   }
 }
 
-/* ── MagicBar ── */
-.magic-bar {
-  overflow: hidden;
-  height: 28px;
-
-  &__text {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    white-space: nowrap;
-  }
-
-  &__primary {
-    @include font(18px, 24px, 500);
-    color: rgb(var(--md-sys-color-on-surface));
-    letter-spacing: .02em;
-  }
-
-  &__sep {
-    @include font(18px, 24px);
-    color: rgb(var(--md-sys-color-outline));
-  }
-
-  &__sub {
-    @include font(15px, 24px, 400);
-    color: rgb(var(--md-sys-color-on-surface-variant));
-    max-width: 420px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__greeting {
-    @include font(15px, 24px, 400);
-    color: rgb(var(--md-sys-color-on-surface-variant));
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__suffix {
-    @include font(14px, 24px, 400);
-    white-space: nowrap;
-
-    &--reconnecting {
-      color: rgb(var(--md-sys-color-tertiary));
-      animation: magic-breathe 3s ease-in-out infinite;
-    }
-
-    &--offline {
-      color: rgb(var(--md-sys-color-error));
-    }
-
-    &--reconnected {
-      color: #16a34a;
-    }
-  }
-
-  &__status {
-    @include font(15px, 24px, 400);
-    color: rgb(var(--md-sys-color-on-surface-variant));
-    max-width: 520px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__dot {
-    flex-shrink: 0;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    align-self: center;
-
-    &--loading {
-      background: rgb(var(--md-sys-color-primary));
-      animation: magic-pulse 1.2s ease-in-out infinite;
-    }
-
-    &--success {
-      background: #16a34a;
-    }
-
-    &--info {
-      background: rgb(var(--md-sys-color-tertiary));
-      animation: magic-pulse 2s ease-in-out infinite;
-    }
-  }
-}
-
-@keyframes magic-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .35; transform: scale(.75); }
-}
-
-@keyframes magic-breathe {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .6; transform: scale(.94); }
-}
-
 @keyframes magic-ripple {
   0% { transform: scale(0); opacity: 1; }
   100% { transform: scale(220); opacity: 0; }
 }
-
-.magic-enter-active,
-.magic-leave-active {
-  transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .25s ease;
-}
-.magic-leave-to {
-  transform: translateY(-120%);
-  opacity: 0;
-}
-.magic-enter-from {
-  transform: translateY(120%);
-  opacity: 0;
-}
-
 .top-bar {
 
   &__avatar {

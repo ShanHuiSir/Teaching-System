@@ -44,12 +44,6 @@ const barStyle = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
-
-@mixin font($size, $height, $weight: 400) {
-  font: $weight #{$size}/#{$height} $font-family;
-}
-
 .ld {
   display: flex;
   flex-direction: column;

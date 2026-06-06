@@ -7,28 +7,14 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
           <span>创建班级</span>
         </button>
-        <div class="ap__search">
-          <svg class="ap__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-          <input
-            v-model="searchQuery"
-            class="ap__search-input"
-            type="text"
-            placeholder="搜索班级名称、年级、备注…"
-          />
-          <button v-if="searchQuery" class="ap__search-clear" @click="searchQuery = ''">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
-        </div>
+        <SearchInput v-model="searchQuery" placeholder="搜索班级名称、年级、备注…" />
       </div>
 
       <div v-if="!classes.length && !loading" class="ap__empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
         <span>暂无班级，点击上方按钮创建</span>
       </div>
-      <div v-else-if="!filteredClasses.length && searchQuery" class="empty-search">
-        <span class="empty-search__emoji">¯\_(ツ)_/¯</span>
-        <span class="empty-search__text">这里似乎什么都没有</span>
-      </div>
+      <EmptyState v-else-if="!filteredClasses.length && searchQuery" text="这里似乎什么都没有" />
 
       <div class="ap__cards">
         <div
@@ -119,10 +105,7 @@
           </div>
         </div>
       </template>
-      <div v-else class="preview-placeholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
-        <span>选择一个班级查看详情</span>
-      </div>
+      <PreviewPlaceholder v-else message="选择一个班级查看详情" />
     </div>
 
     <!-- Panel 3: Create/Edit Form -->
@@ -201,6 +184,10 @@ import { useSnackbar } from '../composables/useSnackbar'
 import { startRecoveryPoll } from '../utils/recoveryPoll'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import HedgehogButton from '../components/HedgehogButton.vue'
+import EmptyState from '../components/EmptyState.vue'
+import SearchInput from '../components/SearchInput.vue'
+import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
 
 const snackbar = useSnackbar()
 
@@ -490,12 +477,6 @@ watch(refreshTick, fetchClasses)
 </script>
 
 <style lang="scss" scoped>
-$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
-
-@mixin font($size, $height, $weight: 400) {
-  font: $weight #{$size}/#{$height} $font-family;
-}
-
 .ap {
   display: flex;
   height: 100%;
