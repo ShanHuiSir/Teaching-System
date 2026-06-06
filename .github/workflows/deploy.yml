@@ -21,22 +21,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Configure Maven Mirror (Aliyun)
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml << 'MVNEOF'
-          <settings>
-            <mirrors>
-              <mirror>
-                <id>aliyun</id>
-                <name>Aliyun Maven Mirror</name>
-                <url>https://maven.aliyun.com/repository/public</url>
-                <mirrorOf>central</mirrorOf>
-              </mirror>
-            </mirrors>
-          </settings>
-          MVNEOF
-
       - name: Maven Package
         run: mvn package -B
 
@@ -54,7 +38,6 @@ jobs:
 
       - name: Build Frontend
         run: |
-          npm config set registry https://registry.npmmirror.com
           cd frontend
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm run build
