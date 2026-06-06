@@ -25,18 +25,7 @@
             <span>提交的作业</span>
           </button>
         </div>
-        <div class="tab-search">
-          <svg class="tab-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-          <input
-            v-model="searchQuery"
-            class="tab-search__input"
-            type="text"
-            placeholder="搜索学生、学号、文件名、备注…"
-          />
-          <button v-if="searchQuery" class="tab-search__clear" @click="searchQuery = ''">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
-        </div>
+        <SearchInput v-model="searchQuery" placeholder="搜索学生、学号、文件名、备注…" />
       </div>
 
       <!-- Published Assignments (tab 1) -->
@@ -97,10 +86,7 @@
           <div v-if="!workTypes.length && !searchQuery" class="assign-item" style="opacity:.5; cursor:default">
             <div class="assign-item__top"><span class="assign-item__student">暂无数据</span></div>
           </div>
-          <div v-else-if="!workTypes.length && searchQuery" class="empty-search">
-            <span class="empty-search__emoji">¯\_(ツ)_/¯</span>
-            <span class="empty-search__text">这里似乎什么都没有</span>
-          </div>
+          <EmptyState v-else-if="!workTypes.length && searchQuery" text="这里似乎什么都没有" />
         </div>
       </div>
 
@@ -133,10 +119,7 @@
           </div>
         </div>
         <div v-if="!semesters.length && (searchQuery || hasActiveFilter)" class="semester-card">
-          <div class="empty-search">
-            <span class="empty-search__emoji">¯\_(ツ)_/¯</span>
-            <span class="empty-search__text">这里似乎什么都没有</span>
-          </div>
+          <EmptyState text="这里似乎什么都没有" />
         </div>
       </div>
     </div>
@@ -258,12 +241,7 @@
         </div>
       </template>
 
-      <div v-else class="preview-placeholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
-        </svg>
-        <span>选择一份作业以预览</span>
-      </div>
+      <PreviewPlaceholder v-else message="选择一份作业以预览" />
     </div>
 
     <!-- Panel 3: Review Form -->
@@ -326,6 +304,9 @@ import { getCookie, setCookie } from '../utils/cookie'
 import { startRecoveryPoll } from '../utils/recoveryPoll'
 import { detectFileType, FILE_ICONS } from '../utils/fileIcons'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+import EmptyState from '../components/EmptyState.vue'
+import SearchInput from '../components/SearchInput.vue'
+import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 
 const route = useRoute()
 const snackbar = useSnackbar()
@@ -814,12 +795,6 @@ watch(filteredSubmissions, () => { rebuildSemesters() })
 </script>
 
 <style lang="scss" scoped>
-$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
-
-@mixin font($size, $height, $weight: 400) {
-  font: $weight #{$size}/#{$height} $font-family;
-}
-
 .review {
   display: flex;
   height: 100%;
@@ -863,88 +838,6 @@ $font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
     background: rgb(var(--md-sys-color-surface-container-lowest));
     border-radius: 16px;
     padding: 12px 16px;
-  }
-
-  /* ── Tab search ── */
-  .tab-search {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex: 0 1 280px;
-    min-width: 0;
-
-    &__icon {
-      position: absolute;
-      left: 12px;
-      width: 16px;
-      height: 16px;
-      color: rgb(var(--md-sys-color-on-surface-variant));
-      pointer-events: none;
-    }
-
-    &__input {
-      width: 100%;
-      height: 36px;
-      padding: 0 36px 0 36px;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      background: rgb(var(--md-sys-color-surface-container));
-      color: rgb(var(--md-sys-color-on-surface));
-      @include font(13px, 20px);
-      outline: none;
-      transition: border-color .2s ease, background .2s ease;
-
-      &::placeholder {
-        color: rgb(var(--md-sys-color-on-surface-variant) / .5);
-      }
-
-      &:focus {
-        border-color: rgb(var(--md-sys-color-primary));
-        background: rgb(var(--md-sys-color-surface-container-lowest));
-      }
-    }
-
-    &__clear {
-      position: absolute;
-      right: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border: none;
-      border-radius: 8px;
-      background: transparent;
-      color: rgb(var(--md-sys-color-on-surface-variant));
-      cursor: pointer;
-      transition: background .15s ease;
-
-      svg { width: 14px; height: 14px; }
-
-      &:hover {
-        background: rgb(var(--md-sys-color-on-surface-variant) / .12);
-      }
-    }
-  }
-
-  /* ── Empty Search ── */
-  .empty-search {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    padding: 48px 0;
-    background: rgb(var(--md-sys-color-surface-container));
-    border-radius: 16px;
-
-    &__emoji {
-      @include font(28px, 36px);
-    }
-
-    &__text {
-      @include font(14px, 20px);
-      color: rgb(var(--md-sys-color-on-surface-variant));
-    }
   }
 
   /* ── Tab bar ── */
@@ -1561,23 +1454,4 @@ $font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
   }
 }
 
-/* ── Preview Placeholder ── */
-.preview-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 16px;
-  color: rgb(var(--md-sys-color-outline));
-
-  svg {
-    width: 56px;
-    height: 56px;
-  }
-
-  span {
-    @include font(14px, 20px);
-  }
-}
 </style>

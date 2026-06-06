@@ -178,12 +178,6 @@ async function handleLogin() {
 </script>
 
 <style lang="scss" scoped>
-$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
-
-@mixin font($size, $height, $weight: 400) {
-  font: $weight #{$size}/#{$height} $font-family;
-}
-
 .login-page {
   position: fixed;
   inset: 0;

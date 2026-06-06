@@ -7,28 +7,14 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
           <span>创建作业</span>
         </button>
-        <div class="ap__search">
-          <svg class="ap__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-          <input
-            v-model="searchQuery"
-            class="ap__search-input"
-            type="text"
-            placeholder="搜索作业名称、班级、描述…"
-          />
-          <button v-if="searchQuery" class="ap__search-clear" @click="searchQuery = ''">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
-        </div>
+        <SearchInput v-model="searchQuery" placeholder="搜索作业名称、班级、描述…" />
       </div>
 
       <div v-if="!assignments.length && !loading" class="ap__empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
         <span>暂无作业，点击上方按钮创建</span>
       </div>
-      <div v-else-if="!filteredAssignments.length && searchQuery" class="empty-search">
-        <span class="empty-search__emoji">¯\_(ツ)_/¯</span>
-        <span class="empty-search__text">这里似乎什么都没有</span>
-      </div>
+      <EmptyState v-else-if="!filteredAssignments.length && searchQuery" text="这里似乎什么都没有" />
 
       <div class="ap__cards">
         <div
@@ -135,15 +121,7 @@
         </div>
       </template>
 
-      <div v-else class="preview-placeholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-        </svg>
-        <span>选择一份作业以查看详情</span>
-      </div>
+      <PreviewPlaceholder v-else message="选择一份作业以查看详情" />
     </div>
 
     <!-- Panel 3: Edit Form (slides in over right half) -->
@@ -258,6 +236,10 @@ import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY 
 
 const xlsxIcon: any = FILE_ICONS.xlsx
 import HedgehogButton from '../components/HedgehogButton.vue'
+import EmptyState from '../components/EmptyState.vue'
+import SearchInput from '../components/SearchInput.vue'
+import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
 
 const snackbar = useSnackbar()
 
@@ -586,12 +568,6 @@ watch(refreshTick, fetchAssignments)
 </script>
 
 <style lang="scss" scoped>
-$font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
-
-@mixin font($size, $height, $weight: 400) {
-  font: $weight #{$size}/#{$height} $font-family;
-}
-
 .ap {
   display: flex;
   height: 100%;
