@@ -1,9 +1,5 @@
 <template>
-  <span
-    ref="wrapRef"
-    class="sv-btn-wrap"
-    :style="{ transform: `translate(${repelX}px, ${repelY}px)` }"
-  >
+  <span ref="wrapRef" class="sv-btn-wrap" :style="{ transform: `translate(${repelX}px, ${repelY}px)` }">
     <button
       ref="btnRef"
       class="sv-btn"
@@ -13,8 +9,8 @@
         {
           'sv-btn--pop': popping,
           'sv-btn--shaking': shaking,
-          'sv-btn--cancelling': cancelling
-        }
+          'sv-btn--cancelling': cancelling,
+        },
       ]"
       :disabled="disabled"
       @mousedown.prevent="onDown"
@@ -28,21 +24,34 @@
       <span class="sv-btn__content">
         <slot />
       </span>
-      <svg
-        class="sv-btn__icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden="true"
-      >
+      <svg class="sv-btn__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
         <line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
-      <span class="sv-btn__bubble sv-btn__bubble--a" style="left: 12%; --b-delay: 0s;    --b-dur: 2.8s; --b-sway: 2.4s"></span>
-      <span class="sv-btn__bubble sv-btn__bubble--b" style="left: 28%; --b-delay: 0.8s;  --b-dur: 3.2s; --b-sway: 2.8s"></span>
-      <span class="sv-btn__bubble sv-btn__bubble--c" style="left: 44%; --b-delay: 0.3s;  --b-dur: 2.5s; --b-sway: 2.2s"></span>
-      <span class="sv-btn__bubble sv-btn__bubble--a" style="left: 58%; --b-delay: 1.3s;  --b-dur: 3.0s; --b-sway: 2.6s"></span>
-      <span class="sv-btn__bubble sv-btn__bubble--b" style="left: 72%; --b-delay: 0.6s;  --b-dur: 2.7s; --b-sway: 2.3s"></span>
-      <span class="sv-btn__bubble sv-btn__bubble--c" style="left: 86%; --b-delay: 1.7s;  --b-dur: 3.5s; --b-sway: 3.0s"></span>
+      <span
+        class="sv-btn__bubble sv-btn__bubble--a"
+        style="left: 12%; --b-delay: 0s; --b-dur: 2.8s; --b-sway: 2.4s"
+      ></span>
+      <span
+        class="sv-btn__bubble sv-btn__bubble--b"
+        style="left: 28%; --b-delay: 0.8s; --b-dur: 3.2s; --b-sway: 2.8s"
+      ></span>
+      <span
+        class="sv-btn__bubble sv-btn__bubble--c"
+        style="left: 44%; --b-delay: 0.3s; --b-dur: 2.5s; --b-sway: 2.2s"
+      ></span>
+      <span
+        class="sv-btn__bubble sv-btn__bubble--a"
+        style="left: 58%; --b-delay: 1.3s; --b-dur: 3s; --b-sway: 2.6s"
+      ></span>
+      <span
+        class="sv-btn__bubble sv-btn__bubble--b"
+        style="left: 72%; --b-delay: 0.6s; --b-dur: 2.7s; --b-sway: 2.3s"
+      ></span>
+      <span
+        class="sv-btn__bubble sv-btn__bubble--c"
+        style="left: 86%; --b-delay: 1.7s; --b-dur: 3.5s; --b-sway: 3s"
+      ></span>
     </button>
   </span>
 
@@ -55,35 +64,33 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const emit = defineEmits(['complete'])
+const emit = defineEmits<{
+  complete: []
+}>()
 
-const props = defineProps({
-  variant: {
-    type: String,
-    default: 'primary',
-    validator: v => ['primary', 'outline', 'ghost'].includes(v)
+const props = withDefaults(
+  defineProps<{
+    variant?: 'primary' | 'outline' | 'ghost'
+    size?: 'sm' | 'md' | 'lg'
+    disabled?: boolean
+  }>(),
+  {
+    variant: 'primary',
+    size: 'md',
+    disabled: false,
   },
-  size: {
-    type: String,
-    default: 'md',
-    validator: v => ['sm', 'md', 'lg'].includes(v)
-  },
-  disabled: {
-    type: Boolean,
-    default: false
-  }
-})
+)
 
 const LONG_PRESS = 400
 const POP_DURATION = 360
 const REPEL_RADIUS = 130
 const REPEL_STRENGTH = 28
 
-const wrapRef = ref(null)
-const btnRef = ref(null)
+const wrapRef = ref<HTMLElement | null>(null)
+const btnRef = ref<HTMLElement | null>(null)
 const pressing = ref(false)
 const popping = ref(false)
 const shaking = ref(false)
@@ -91,8 +98,8 @@ const cancelling = ref(false)
 const isHovering = ref(false)
 const repelX = ref(0)
 const repelY = ref(0)
-let holdTimer = null
-let repelFrame = null
+let holdTimer: ReturnType<typeof setTimeout> | null = null
+let repelFrame: ReturnType<typeof requestAnimationFrame> | null = null
 let repelTargetX = 0
 let repelTargetY = 0
 
@@ -114,12 +121,12 @@ function onUp() {
   finishPress(true)
 }
 
-function onWindowUp(e) {
+function onWindowUp(e: MouseEvent) {
   const el = btnRef.value
   if (el) {
     const rect = el.getBoundingClientRect()
-    const inside = e.clientX >= rect.left && e.clientX <= rect.right &&
-                   e.clientY >= rect.top  && e.clientY <= rect.bottom
+    const inside =
+      e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom
     if (inside) return
   }
   finishPress(false)
@@ -139,15 +146,18 @@ function onLeave() {
   }
 }
 
-function onTouchEnd(e) {
+function onTouchEnd(e: TouchEvent) {
   if (props.disabled || !pressing.value) return
   const touch = e.changedTouches[0]
   const el = btnRef.value
   let inside = false
   if (el && touch) {
     const rect = el.getBoundingClientRect()
-    inside = touch.clientX >= rect.left && touch.clientX <= rect.right &&
-             touch.clientY >= rect.top  && touch.clientY <= rect.bottom
+    inside =
+      touch.clientX >= rect.left &&
+      touch.clientX <= rect.right &&
+      touch.clientY >= rect.top &&
+      touch.clientY <= rect.bottom
   }
   finishPress(inside)
 }
@@ -156,7 +166,7 @@ function onTouchCancel() {
   finishPress(false)
 }
 
-function finishPress(completed) {
+function finishPress(completed: boolean) {
   window.removeEventListener('mouseup', onWindowUp)
   if (holdTimer) {
     clearTimeout(holdTimer)
@@ -179,7 +189,7 @@ function finishPress(completed) {
 
 /* ---------- repel ---------- */
 
-function onMouseMove(e) {
+function onMouseMove(e: MouseEvent) {
   if (props.disabled || pressing.value) {
     repelTargetX = 0
     repelTargetY = 0
@@ -311,57 +321,101 @@ onUnmounted(() => {
 
 .sv-btn:hover .sv-btn__bubble--a {
   animation:
-    bubble-rise  var(--b-dur)  var(--b-delay) ease-out infinite,
+    bubble-rise var(--b-dur) var(--b-delay) ease-out infinite,
     bubble-sway-a var(--b-sway) var(--b-delay) ease-in-out infinite;
 }
 
 .sv-btn:hover .sv-btn__bubble--b {
   animation:
-    bubble-rise  var(--b-dur)  var(--b-delay) ease-out infinite,
+    bubble-rise var(--b-dur) var(--b-delay) ease-out infinite,
     bubble-sway-b var(--b-sway) var(--b-delay) ease-in-out infinite;
 }
 
 .sv-btn:hover .sv-btn__bubble--c {
   animation:
-    bubble-rise  var(--b-dur)  var(--b-delay) ease-out infinite,
+    bubble-rise var(--b-dur) var(--b-delay) ease-out infinite,
     bubble-sway-c var(--b-sway) var(--b-delay) ease-in-out infinite;
 }
 
 @keyframes bubble-rise {
-  0%   { bottom: -8px; opacity: 0; }
-  8%   { opacity: 0.6; }
-  90%  { opacity: 0.6; }
-  100% { bottom: 105%; opacity: 0; }
+  0% {
+    bottom: -8px;
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    bottom: 105%;
+    opacity: 0;
+  }
 }
 
 @keyframes bubble-sway-a {
-  0%   { transform: translateX(0); }
-  25%  { transform: translateX(4px); }
-  75%  { transform: translateX(-3px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 @keyframes bubble-sway-b {
-  0%   { transform: translateX(0); }
-  25%  { transform: translateX(-3px); }
-  75%  { transform: translateX(4px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 @keyframes bubble-sway-c {
-  0%   { transform: translateX(0); }
-  25%  { transform: translateX(3px); }
-  75%  { transform: translateX(-4px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 /* ---------- short press: pop ---------- */
 @keyframes btn-pop {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(0.82); }
-  55%  { transform: scale(1.08); }
-  75%  { transform: scale(0.96); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.82);
+  }
+  55% {
+    transform: scale(1.08);
+  }
+  75% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .sv-btn--pop {
@@ -370,15 +424,33 @@ onUnmounted(() => {
 
 /* ---------- long press: shake ---------- */
 @keyframes btn-shake {
-  0%   { transform: translateX(0); }
-  12%  { transform: translateX(-3px); }
-  25%  { transform: translateX(3px); }
-  37%  { transform: translateX(-2.5px); }
-  50%  { transform: translateX(2.5px); }
-  62%  { transform: translateX(-1.5px); }
-  75%  { transform: translateX(1.5px); }
-  87%  { transform: translateX(-0.5px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  12% {
+    transform: translateX(-3px);
+  }
+  25% {
+    transform: translateX(3px);
+  }
+  37% {
+    transform: translateX(-2.5px);
+  }
+  50% {
+    transform: translateX(2.5px);
+  }
+  62% {
+    transform: translateX(-1.5px);
+  }
+  75% {
+    transform: translateX(1.5px);
+  }
+  87% {
+    transform: translateX(-0.5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .sv-btn--shaking {
@@ -392,7 +464,7 @@ onUnmounted(() => {
 }
 
 .sv-btn:focus-visible {
-  box-shadow: 0 0 0 3px rgb(var(--md-sys-color-error) / .35);
+  box-shadow: 0 0 0 3px rgb(var(--md-sys-color-error) / 0.35);
 }
 
 .sv-btn:disabled {
@@ -433,12 +505,12 @@ onUnmounted(() => {
 }
 
 .sv-btn--primary:hover {
-  filter: brightness(.92);
-  box-shadow: 0 1px 3px rgb(var(--md-sys-color-shadow) / .12);
+  filter: brightness(0.92);
+  box-shadow: 0 1px 3px rgb(var(--md-sys-color-shadow) / 0.12);
 }
 
 .sv-btn--primary:active {
-  filter: brightness(.85);
+  filter: brightness(0.85);
   box-shadow: none;
 }
 
@@ -453,11 +525,11 @@ onUnmounted(() => {
   color: rgb(var(--md-sys-color-on-error-container));
   background: rgb(var(--md-sys-color-error-container));
   border-color: rgb(var(--md-sys-color-error-container));
-  box-shadow: 0 1px 3px rgb(var(--md-sys-color-shadow) / .1);
+  box-shadow: 0 1px 3px rgb(var(--md-sys-color-shadow) / 0.1);
 }
 
 .sv-btn--outline:active {
-  filter: brightness(.92);
+  filter: brightness(0.92);
   box-shadow: none;
 }
 
@@ -469,11 +541,11 @@ onUnmounted(() => {
 }
 
 .sv-btn--ghost:hover {
-  background: rgb(var(--md-sys-color-error) / .08);
+  background: rgb(var(--md-sys-color-error) / 0.08);
 }
 
 .sv-btn--ghost:active {
-  background: rgb(var(--md-sys-color-error) / .14);
+  background: rgb(var(--md-sys-color-error) / 0.14);
 }
 </style>
 
@@ -501,13 +573,7 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 9999;
   border: 10px solid transparent;
-  border-image: repeating-linear-gradient(
-    -45deg,
-    #fdd835 0px,
-    #fdd835 12px,
-    #212121 12px,
-    #212121 24px
-  ) 10;
+  border-image: repeating-linear-gradient(-45deg, #fdd835 0px, #fdd835 12px, #212121 12px, #212121 24px) 10;
 }
 
 .sv-warning__hint {
@@ -528,7 +594,13 @@ onUnmounted(() => {
 }
 
 @keyframes hint-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 </style>
