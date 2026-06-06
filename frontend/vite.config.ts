@@ -1,5 +1,9 @@
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -7,7 +11,8 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@use "D:/Code/Project/Teaching-System/frontend/src/styles/mixins" as *;\n`,
+        loadPaths: [resolve(__dirname, 'src/styles')],
+        additionalData: `@use "mixins" as *;\n`,
       },
     },
   },
