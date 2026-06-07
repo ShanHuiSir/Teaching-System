@@ -1,20 +1,20 @@
 import axios from 'axios'
-import { useSnackbar } from '../composables/useSnackbar'
 
- 
+
 const http: any = axios.create({
   baseURL: '/api',
   timeout: 15000,
 })
 
-let offlineTimer: ReturnType<typeof setTimeout> | null = null
+const httpErrorCbs = new Set<() => void>()
 
-function notifyOffline(): void {
-  if (offlineTimer) return
-  useSnackbar().show('与服务器连接断开', { variant: 'error', duration: 4000 })
-  offlineTimer = setTimeout(() => {
-    offlineTimer = null
-  }, 10000)
+export function onHttpError(fn: () => void): () => void {
+  httpErrorCbs.add(fn)
+  return () => httpErrorCbs.delete(fn)
+}
+
+function notifyHttpError(): void {
+  httpErrorCbs.forEach(fn => fn())
 }
 
 http.interceptors.response.use(
@@ -30,20 +30,14 @@ http.interceptors.response.use(
     if (err && typeof err === 'object' && 'response' in err) {
       const axiosErr = err as { response?: { status?: number } }
       if (!axiosErr.response || axiosErr.response.status! >= 500) {
-        notifyOffline()
+        notifyHttpError()
       }
     } else {
-      notifyOffline()
+      notifyHttpError()
     }
     return Promise.reject(err)
   },
 )
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('offline', () => {
-    notifyOffline()
-  })
-}
 
 /**
  * Retry a fetch function with exponential backoff.

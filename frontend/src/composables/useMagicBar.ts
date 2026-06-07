@@ -1,6 +1,6 @@
-import { ref, reactive, computed, type Ref, type ComputedRef } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue'
 import { useSnackbar } from './useSnackbar'
-import { onConnectionChange } from '../utils/recoveryPoll'
+import { useConnectionHealth } from './useConnectionHealth'
 import type { MagicBar } from '../types'
 
 export interface MagicBarApi {
@@ -12,8 +12,6 @@ export interface MagicBarApi {
   magicKey: ComputedRef<string>
   triggerRipple: (cx?: number, cy?: number) => void
   showGreeting: (pagePrimary: string) => void
-  setupLifecycle: () => void
-  teardownLifecycle: () => void
 }
 
 const POEMS = [
@@ -27,6 +25,7 @@ const POEMS = [
 
 export function useMagicBar(teacherName: Ref<string>): MagicBarApi {
   const snackbar = useSnackbar()
+  const { state: connState, browserOnline } = useConnectionHealth()
 
   // ── Core state ──
   const magicBar = reactive<MagicBar>({
@@ -104,9 +103,10 @@ export function useMagicBar(teacherName: Ref<string>): MagicBarApi {
     }, REST_INTERVAL)
   }
 
-  // ── Connection health ──
-  const lostConnection = ref(false)
+  // ── Connection health → MagicBar UI ──
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let reconnectedClearTimer: ReturnType<typeof setTimeout> | null = null
+  let prevState = connState.value
 
   function hasDraftsEnabled(): boolean {
     try {
@@ -117,71 +117,62 @@ export function useMagicBar(teacherName: Ref<string>): MagicBarApi {
     }
   }
 
-  function onReconnected(): void {
-    lostConnection.value = false
-    magicBar.suffix = '服务器已恢复连接'
-    magicBar.suffixType = 'reconnected'
-    magicBar.status = ''
-    clearTimeout(reconnectTimer!)
-    snackbar.show('服务器已恢复连接', { variant: 'info', duration: 2500 })
-    setTimeout(() => {
-      if (magicBar.suffix === '服务器已恢复连接') magicBar.suffix = ''
-    }, 3000)
-  }
+  watch(
+    () => connState.value,
+    (cur) => {
+      if (cur === 'disconnected' && prevState === 'connected') {
+        const draftMsg = hasDraftsEnabled() ? ' · 修改已保存在本地' : ''
+        magicBar.status = `啊！与服务器断连了${draftMsg}`
+        magicBar.statusType = 'info'
+        clearTimeout(reconnectTimer!)
+        reconnectTimer = setTimeout(() => {
+          magicBar.status = ''
+          magicBar.suffix = browserOnline.value ? '积极重连中' : '离线'
+          magicBar.suffixType = browserOnline.value ? 'reconnecting' : 'offline'
+        }, 4000)
+      }
+      if (cur === 'connected' && prevState === 'disconnected') {
+        clearTimeout(reconnectTimer!)
+        clearTimeout(reconnectedClearTimer!)
+        magicBar.status = ''
+        magicBar.suffix = '服务器已恢复连接'
+        magicBar.suffixType = 'reconnected'
+        snackbar.show('服务器已恢复连接', { variant: 'info', duration: 2500 })
+        reconnectedClearTimer = setTimeout(() => {
+          if (magicBar.suffix === '服务器已恢复连接') magicBar.suffix = ''
+        }, 3000)
+      }
+      prevState = cur
+    },
+  )
 
-  function onDisconnected(): void {
-    lostConnection.value = true
-    const draftMsg = hasDraftsEnabled() ? ' · 修改已保存在本地' : ''
-    magicBar.status = `啊！与服务器断连了${draftMsg}`
-    magicBar.statusType = 'info'
-    reconnectTimer = setTimeout(() => {
-      magicBar.status = ''
-      magicBar.suffix = navigator.onLine ? '积极重连中' : '离线'
-      magicBar.suffixType = navigator.onLine ? 'reconnecting' : 'offline'
-    }, 4000)
-  }
-
-  onConnectionChange((connected: boolean) => {
-    if (connected) {
-      if (lostConnection.value) onReconnected()
-    } else {
-      onDisconnected()
-    }
-  })
-
-  function onOnline(): void {
-    if (lostConnection.value) {
-      magicBar.suffix = '积极重连中'
-      magicBar.suffixType = 'reconnecting'
-    }
-  }
-
-  function onOffline(): void {
-    if (lostConnection.value) {
-      magicBar.suffix = '离线'
-      magicBar.suffixType = 'offline'
-    }
-  }
+  // Also update suffix when browser online status changes while disconnected
+  watch(
+    () => browserOnline.value,
+    (online) => {
+      if (connState.value === 'disconnected' && !magicBar.status) {
+        magicBar.suffix = online ? '积极重连中' : '离线'
+        magicBar.suffixType = online ? 'reconnecting' : 'offline'
+      }
+    },
+  )
 
   // ── Lifecycle ──
-  function setupLifecycle(): void {
+  onMounted(() => {
     resetRestTimer()
     document.addEventListener('click', resetRestTimer)
     document.addEventListener('keydown', resetRestTimer)
-    window.addEventListener('online', onOnline)
-    window.addEventListener('offline', onOffline)
-  }
+  })
 
-  function teardownLifecycle(): void {
+  onUnmounted(() => {
     clearTimeout(restTimer!)
     clearTimeout(greetTimer!)
     clearTimeout(greetDismissTimer!)
     clearTimeout(reconnectTimer!)
+    clearTimeout(reconnectedClearTimer!)
     document.removeEventListener('click', resetRestTimer)
     document.removeEventListener('keydown', resetRestTimer)
-    window.removeEventListener('online', onOnline)
-    window.removeEventListener('offline', onOffline)
-  }
+  })
 
   return {
     magicBar,
@@ -192,7 +183,5 @@ export function useMagicBar(teacherName: Ref<string>): MagicBarApi {
     magicKey,
     triggerRipple,
     showGreeting,
-    setupLifecycle,
-    teardownLifecycle,
   }
 }
