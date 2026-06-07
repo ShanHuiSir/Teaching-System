@@ -55,6 +55,7 @@
         <!-- Layer 2: Welcome -->
         <div class="login-card__layer layer-welcome">
           <div class="welcome">
+            <img class="welcome__logo" src="/favicon.png" alt="红树AI评价" />
             <h1 class="welcome__greeting">{{ greeting }}</h1>
             <p class="welcome__sub">也许我们该从登录开始</p>
           </div>
@@ -293,6 +294,14 @@ async function handleLogin() {
   align-items: center;
   gap: 12px;
   margin-top: 48px;
+}
+
+.welcome__logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgb(var(--md-sys-color-shadow) / 0.15);
 }
 
 .welcome__greeting {
