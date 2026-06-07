@@ -301,7 +301,6 @@ async function handleLogin() {
   height: 72px;
   border-radius: 22px;
   object-fit: cover;
-  box-shadow: 0 4px 16px rgb(var(--md-sys-color-shadow) / 0.15);
 }
 
 .welcome__greeting {
@@ -330,24 +329,21 @@ async function handleLogin() {
   width: 100%;
   height: 44px;
   padding: 0 24px;
-  border: 1px solid rgb(var(--md-sys-color-outline));
+  border: none;
   border-radius: 20px;
-  background: rgb(var(--md-sys-color-surface-container-high));
-  color: rgb(var(--md-sys-color-on-surface));
+  background: rgb(var(--md-sys-color-primary));
+  color: rgb(var(--md-sys-color-on-primary));
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
+  transition: background 0.15s ease;
 
   &:hover {
-    background: rgb(var(--md-sys-color-surface-container-highest));
-    border-color: rgb(var(--md-sys-color-on-surface-variant));
+    background: rgb(var(--md-sys-color-primary) / 0.88);
   }
 
   &__icon {
     width: 20px;
     height: 20px;
-    color: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
   }
 
   span {
