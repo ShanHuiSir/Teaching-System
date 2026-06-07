@@ -328,7 +328,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide, onMounted, onUnmounted } from 'vue'
+import { ref, computed, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCookie, delCookie } from '../utils/cookie'
 import { useSnackbar } from '../composables/useSnackbar'
@@ -361,19 +361,11 @@ const {
   magicKey,
   triggerRipple,
   showGreeting,
-  setupLifecycle,
-  teardownLifecycle,
 } = useMagicBar(teacherName)
 
 provide(MAGIC_BAR_KEY, magicBar)
 provide(TRIGGER_RIPPLE_KEY, triggerRipple)
 
-onMounted(() => {
-  setupLifecycle()
-})
-onUnmounted(() => {
-  teardownLifecycle()
-})
 
 // Expose helpers for pages
 provide(SHOW_GREETING_KEY, showGreeting)
