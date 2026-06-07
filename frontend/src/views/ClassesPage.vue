@@ -495,6 +495,7 @@ function buildRightButtons() {
       active: sortKey.value === 'count',
       action: () => {
         sortKey.value = sortKey.value === 'count' ? null : 'count'
+        buildRightButtons()
       },
     },
   ]
