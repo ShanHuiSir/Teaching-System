@@ -237,7 +237,7 @@ async function handleLogin() {
 
   loading.value = false
   snackbar.show('登录成功', { variant: 'info' })
-  router.replace('/')
+  router.replace('/dashboard')
 }
 </script>
 

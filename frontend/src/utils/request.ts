@@ -45,4 +45,36 @@ if (typeof window !== 'undefined') {
   })
 }
 
+/**
+ * Retry a fetch function with exponential backoff.
+ * `onError(err, attempt, delay)` called on each failure.
+ * `onSuccess()` called when fn finally succeeds.
+ * Returns a stop function to cancel pending retries.
+ */
+export function retryFetch(
+  fn: () => Promise<void>,
+  onError: (err: unknown, attempt: number, delay: number) => void,
+): () => void {
+  let cancelled = false
+  let attempt = 0
+
+  async function run(): Promise<void> {
+    if (cancelled) return
+    try {
+      await fn()
+    } catch (e) {
+      if (cancelled) return
+      attempt++
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 15000)
+      onError(e, attempt, delay)
+      setTimeout(() => run(), delay)
+    }
+  }
+
+  run()
+  return () => {
+    cancelled = true
+  }
+}
+
 export default http

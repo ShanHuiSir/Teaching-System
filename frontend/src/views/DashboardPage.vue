@@ -3,7 +3,7 @@
     <h1 class="dash__greeting">{{ greeting }}，{{ teacherName }}老师</h1>
 
     <div class="dash__cards">
-      <div class="stat-card" @click="router.push('/review?filter=pending')">
+      <div class="stat-card" @click="router.push('/dashboard/review?filter=pending')">
         <span class="stat-card__title">待复审</span>
         <span class="stat-card__num stat-card__num--primary">{{ stats.aiReviewed }}</span>
         <div class="stat-card__overlay">
@@ -22,7 +22,7 @@
           </button>
         </div>
       </div>
-      <div class="stat-card" @click="router.push('/review?filter=none')">
+      <div class="stat-card" @click="router.push('/dashboard/review?filter=none')">
         <span class="stat-card__title">未审批</span>
         <span class="stat-card__num stat-card__num--error">{{ stats.pending }}</span>
         <div class="stat-card__overlay">
@@ -41,7 +41,7 @@
           </button>
         </div>
       </div>
-      <div class="stat-card" @click="router.push('/review?filter=all')">
+      <div class="stat-card" @click="router.push('/dashboard/review?filter=all')">
         <span class="stat-card__title">已提交</span>
         <span class="stat-card__num">{{ stats.submitted }}</span>
         <div class="stat-card__overlay">
@@ -60,7 +60,7 @@
           </button>
         </div>
       </div>
-      <div class="stat-card" @click="router.push('/classes')">
+      <div class="stat-card" @click="router.push('/dashboard/classes')">
         <span class="stat-card__title">学生总数</span>
         <span class="stat-card__num stat-card__num--primary">{{ stats.studentCount }}</span>
         <div class="stat-card__overlay">
@@ -270,9 +270,8 @@
 import { ref, computed, onMounted, onActivated, onDeactivated, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCookie, setCookie } from '../utils/cookie'
-import { startRecoveryPoll } from '../utils/recoveryPoll'
+import http, { retryFetch } from '../utils/request'
 import { useSnackbar } from '../composables/useSnackbar'
-import http from '../utils/request'
 import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 
 const router = useRouter()
@@ -566,22 +565,21 @@ async function fetchAll() {
       if (e.teacherScore != null) cmp[bucket(e.teacherScore)].teacher++
     })
     scoreCompare.value = cmp
-  } catch (e) {
-    snackbar.show('数据加载失败：' + (e.message || '网络异常'), { variant: 'error' })
-    startRecoveryPoll(() => {
-      snackbar.show('已恢复连接', { variant: 'info' })
-      fetchAll()
-    })
+  } finally {
+    // errors handled by retryFetch wrapper in onMounted
   }
 }
 
 const magicBar = inject(MAGIC_BAR_KEY)!
 const showGreeting = inject(SHOW_GREETING_KEY)!
 
-onMounted(async () => {
+onMounted(() => {
   magicBar.primary = '仪表盘'
   magicBar.sub = ''
-  await fetchAll()
+  retryFetch(
+    () => fetchAll(),
+    (e: any) => snackbar.show('数据加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+  )
   showGreeting('仪表盘')
 })
 onActivated(() => {

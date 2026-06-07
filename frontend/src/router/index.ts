@@ -1,37 +1,51 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { getCookie } from '../utils/cookie'
 
+import LoginPage from '../views/LoginPage.vue'
+import MainLayout from '../layouts/MainLayout.vue'
+import DashboardPage from '../views/DashboardPage.vue'
+import ReviewPage from '../views/ReviewPage.vue'
+import ClassesPage from '../views/ClassesPage.vue'
+import AssignmentsPage from '../views/AssignmentsPage.vue'
+import ForbiddenPage from '../views/ForbiddenPage.vue'
+import LoadingPage from '../views/LoadingPage.vue'
+import NotFoundPage from '../views/NotFoundPage.vue'
+
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('../views/LoginPage.vue'),
+    component: LoginPage,
   },
   {
     path: '/',
-    component: () => import('../layouts/MainLayout.vue'),
+    redirect: '/login',
+  },
+  {
+    path: '/dashboard',
+    component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'Dashboard', component: () => import('../views/DashboardPage.vue') },
-      { path: 'review', name: 'Review', component: () => import('../views/ReviewPage.vue') },
-      { path: 'classes', name: 'Classes', component: () => import('../views/ClassesPage.vue') },
-      { path: 'assignments', name: 'Assignments', component: () => import('../views/AssignmentsPage.vue') },
+      { path: '', name: 'Dashboard', component: DashboardPage },
+      { path: 'review', name: 'Review', component: ReviewPage },
+      { path: 'classes', name: 'Classes', component: ClassesPage },
+      { path: 'assignments', name: 'Assignments', component: AssignmentsPage },
     ],
   },
   {
     path: '/forbidden',
     name: 'Forbidden',
-    component: () => import('../views/ForbiddenPage.vue'),
+    component: ForbiddenPage,
   },
   {
     path: '/loading',
     name: 'Loading',
-    component: () => import('../views/LoadingPage.vue'),
+    component: LoadingPage,
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('../views/NotFoundPage.vue'),
+    component: NotFoundPage,
   },
 ]
 
@@ -43,8 +57,8 @@ const router = createRouter({
 router.beforeEach(to => {
   const hasToken = !!getCookie('auth_token')
   if (to.meta.requiresAuth && !hasToken) return '/forbidden'
-  if (to.path === '/login' && hasToken) return '/'
-  if (to.path === '/forbidden' && hasToken) return '/'
+  if (to.path === '/login' && hasToken) return '/dashboard'
+  if (to.path === '/forbidden' && hasToken) return '/dashboard'
 })
 
 export default router
