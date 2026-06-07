@@ -394,16 +394,25 @@ const loading = ref(false)
 const activeId = ref(null)
 const assignments = ref<any[]>([])
 const searchQuery = ref('')
+const sortKey = ref<string | null>(null)
+
 const filteredAssignments = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return assignments.value
-  return assignments.value.filter(
-    a =>
-      (a.title || '').toLowerCase().includes(q) ||
-      (a.workType || '').toLowerCase().includes(q) ||
-      (a.className || '').toLowerCase().includes(q) ||
-      (a.description || '').toLowerCase().includes(q),
-  )
+  let arr = assignments.value
+  if (q) {
+    arr = arr.filter(
+      a =>
+        (a.title || '').toLowerCase().includes(q) ||
+        (a.workType || '').toLowerCase().includes(q) ||
+        (a.className || '').toLowerCase().includes(q) ||
+        (a.description || '').toLowerCase().includes(q),
+    )
+  }
+  arr = [...arr]
+  if (sortKey.value === 'time') arr.sort((a, b) => (b.latestTime || '').localeCompare(a.latestTime || ''))
+  if (sortKey.value === 'submitRate') arr.sort((a, b) => b.submitRate - a.submitRate)
+  if (sortKey.value === 'reviewRate') arr.sort((a, b) => b.reviewProgress - a.reviewProgress)
+  return arr
 })
 const editing = ref(false)
 const isCreate = ref(false)
@@ -638,12 +647,33 @@ const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 function buildRightButtons() {
   rightButtons.value = [
     {
-      key: 'refresh',
-      icon: 'dash-class',
-      label: '刷新',
-      active: false,
+      key: 'sort-time',
+      icon: 'sort-time',
+      label: '按时间排序',
+      active: sortKey.value === 'time',
       action: () => {
-        refreshTick.value++
+        sortKey.value = sortKey.value === 'time' ? null : 'time'
+        buildRightButtons()
+      },
+    },
+    {
+      key: 'sort-submit-rate',
+      icon: 'sort-rate',
+      label: '按提交率排序',
+      active: sortKey.value === 'submitRate',
+      action: () => {
+        sortKey.value = sortKey.value === 'submitRate' ? null : 'submitRate'
+        buildRightButtons()
+      },
+    },
+    {
+      key: 'sort-review-rate',
+      icon: 'sort-completion',
+      label: '按批改率排序',
+      active: sortKey.value === 'reviewRate',
+      action: () => {
+        sortKey.value = sortKey.value === 'reviewRate' ? null : 'reviewRate'
+        buildRightButtons()
       },
     },
   ]
@@ -675,11 +705,12 @@ async function fetchAssignments() {
     const map: Record<string, any> = {}
     ;(subs || []).forEach((s: any) => {
       const type = s.workType || '其他'
-      if (!map[type]) map[type] = { count: 0, reviewed: 0, classes: new Set() }
+      if (!map[type]) map[type] = { count: 0, reviewed: 0, classes: new Set(), latestTime: '' }
       map[type].count++
       if (s.className) map[type].classes.add(s.className)
       const ev = evalMap[s.id]
       if (ev && ev.status >= 2) map[type].reviewed++
+      if (s.submittedAt && s.submittedAt > map[type].latestTime) map[type].latestTime = s.submittedAt
     })
 
     assignments.value = Object.entries(map)
@@ -697,6 +728,7 @@ async function fetchAssignments() {
           totalStudents: total,
           submitRate: total ? Math.round((d.count / total) * 100) : 0,
           reviewProgress: d.count ? Math.round((d.reviewed / d.count) * 100) : 0,
+          latestTime: d.latestTime,
           createdAt: '',
           dueDate: '',
         }
