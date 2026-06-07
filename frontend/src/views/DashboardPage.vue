@@ -3,7 +3,7 @@
     <h1 class="dash__greeting">{{ greeting }}，{{ teacherName }}老师</h1>
 
     <div class="dash__cards">
-      <div class="stat-card" @click="router.push('/dashboard/review?filter=pending')">
+      <div class="stat-card" @click="router.push('/review?filter=pending')">
         <span class="stat-card__title">待复审</span>
         <span class="stat-card__num stat-card__num--primary">{{ stats.aiReviewed }}</span>
         <div class="stat-card__overlay">
@@ -22,7 +22,7 @@
           </button>
         </div>
       </div>
-      <div class="stat-card" @click="router.push('/dashboard/review?filter=none')">
+      <div class="stat-card" @click="router.push('/review?filter=none')">
         <span class="stat-card__title">未审批</span>
         <span class="stat-card__num stat-card__num--error">{{ stats.pending }}</span>
         <div class="stat-card__overlay">
@@ -41,7 +41,7 @@
           </button>
         </div>
       </div>
-      <div class="stat-card" @click="router.push('/dashboard/review?filter=all')">
+      <div class="stat-card" @click="router.push('/review?filter=all')">
         <span class="stat-card__title">已提交</span>
         <span class="stat-card__num">{{ stats.submitted }}</span>
         <div class="stat-card__overlay">
@@ -60,7 +60,7 @@
           </button>
         </div>
       </div>
-      <div class="stat-card" @click="router.push('/dashboard/classes')">
+      <div class="stat-card" @click="router.push('/classes')">
         <span class="stat-card__title">学生总数</span>
         <span class="stat-card__num stat-card__num--primary">{{ stats.studentCount }}</span>
         <div class="stat-card__overlay">
