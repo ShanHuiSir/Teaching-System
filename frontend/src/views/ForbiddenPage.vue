@@ -49,7 +49,7 @@ const router = useRouter()
 const hasToken = computed(() => !!getCookie('auth_token'))
 
 function goHome() {
-  router.replace('/')
+  router.replace('/dashboard')
 }
 
 function goLogin() {

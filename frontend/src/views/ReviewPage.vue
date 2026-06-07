@@ -182,6 +182,7 @@
 
       <!-- Submissions (tab 2) -->
       <div v-show="activeTab === 'submissions'">
+        <ListSkeleton v-if="loading" />
         <div v-for="sem in semesters" :key="sem.name" class="semester-card">
           <h3 class="semester-card__title">{{ sem.name }}</h3>
           <div class="semester-card__items">
@@ -507,15 +508,15 @@ import {
   watchEffect,
 } from 'vue'
 import { useRoute } from 'vue-router'
-import http from '../utils/request'
+import http, { retryFetch } from '../utils/request'
 import { useSnackbar } from '../composables/useSnackbar'
 import { getCookie, setCookie } from '../utils/cookie'
-import { startRecoveryPoll } from '../utils/recoveryPoll'
 import { detectFileType, FILE_ICONS } from '../utils/fileIcons'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
+import ListSkeleton from '../components/ListSkeleton.vue'
 
 const route = useRoute()
 const snackbar = useSnackbar()
@@ -673,6 +674,7 @@ function selectItem(item) {
   updateMagicTrail()
 }
 
+const loading = ref(true)
 const reviewMode = ref(false)
 const aiLoading = ref(false)
 const submitting = ref(false)
@@ -1062,17 +1064,16 @@ async function fetchSubmissions() {
     })
 
     rebuildSemesters()
-  } catch (e) {
-    snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' })
-    startRecoveryPoll(() => {
-      snackbar.show('已恢复连接', { variant: 'info' })
-      fetchSubmissions()
-    })
+  } finally {
+    loading.value = false
   }
 }
 
 onMounted(() => {
-  fetchSubmissions()
+  retryFetch(
+    () => fetchSubmissions(),
+    (e: any) => snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+  )
 })
 onMounted(() => {
   magicBar.primary = '作业审批'

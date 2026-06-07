@@ -149,7 +149,7 @@
               :class="{
                 'nav-item--error': item.variant === 'error',
                 'nav-item--ghost': item.variant === 'ghost',
-                'nav-item--active': item.route === '/' ? route.path === '/' : route.path.startsWith(item.route),
+                'nav-item--active': route.path.startsWith(item.route),
               }"
               @click="go(item.route)"
             >
@@ -408,7 +408,7 @@ function forceCrash() {
 }
 
 const navItems = [
-  { label: '仪表盘', route: '/', icon: 'dashboard' },
+  { label: '仪表盘', route: '/dashboard', icon: 'dashboard' },
   { divider: true },
   { label: '作业审批', route: '/review', icon: 'review', variant: 'error' },
   { divider: true },
@@ -426,7 +426,7 @@ const indicatorStyle = computed(() => {
   let top = PAD
   for (const item of navItems) {
     if (item.route) {
-      const active = item.route === '/' ? route.path === '/' : route.path.startsWith(item.route)
+      const active = route.path.startsWith(item.route)
       if (active) {
         return { top: `${top}px`, height: `${ITEM_H}px` }
       }
@@ -452,7 +452,7 @@ async function doRefresh() {
 }
 
 function go(path) {
-  const active = path === '/' ? route.path === '/' : route.path.startsWith(path)
+  const active = route.path.startsWith(path)
   if (!active) {
     router.push(path)
   }

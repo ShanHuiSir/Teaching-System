@@ -20,7 +20,8 @@
         <SearchInput v-model="searchQuery" placeholder="搜索作业名称、班级、描述…" />
       </div>
 
-      <div v-if="!assignments.length && !loading" class="ap__empty">
+      <ListSkeleton v-if="loading" />
+      <div v-else-if="!assignments.length" class="ap__empty">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -373,10 +374,9 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-import http from '../utils/request'
+import http, { retryFetch } from '../utils/request'
 import { useSnackbar } from '../composables/useSnackbar'
 import { getCookie, setCookie } from '../utils/cookie'
-import { startRecoveryPoll } from '../utils/recoveryPoll'
 import { FILE_ICONS } from '../utils/fileIcons'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 
@@ -385,6 +385,7 @@ import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
+import ListSkeleton from '../components/ListSkeleton.vue'
 // ConfirmDialog reserved for delete modal
 
 const snackbar = useSnackbar()
@@ -701,12 +702,6 @@ async function fetchAssignments() {
         }
       })
       .sort((a, b) => b.submittedCount - a.submittedCount)
-  } catch (e) {
-    snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' })
-    startRecoveryPoll(() => {
-      snackbar.show('已恢复连接', { variant: 'info' })
-      fetchAssignments()
-    })
   } finally {
     loading.value = false
   }
@@ -722,7 +717,10 @@ watch(active, a => {
 onMounted(() => {
   magicBar.primary = '作业管理'
   magicBar.sub = active.value?.title || ''
-  fetchAssignments()
+  retryFetch(
+    () => fetchAssignments(),
+    (e: any) => snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+  )
 })
 onActivated(() => {
   magicBar.primary = '作业管理'
