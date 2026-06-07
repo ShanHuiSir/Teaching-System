@@ -691,13 +691,13 @@ async function onReview() {
     try {
       const d = JSON.parse(draft)
       teacherScore.value = d.score ?? ev?.teacherScore ?? ev?.aiScore ?? 0
-      teacherComment.value = d.comment ?? ev?.teacherComment ?? ev?.aiComment ?? ''
+      teacherComment.value = d.comment ?? ev?.teacherComment ?? ''
     } catch {
       snackbar.show('草稿数据损坏，已重置', { variant: 'warning' })
     }
   } else {
     teacherScore.value = ev?.teacherScore ?? ev?.aiScore ?? 0
-    teacherComment.value = ev?.teacherComment ?? ev?.aiComment ?? ''
+    teacherComment.value = ev?.teacherComment ?? ''
   }
   reviewMode.value = true
   await nextTick()
