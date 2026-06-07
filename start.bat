@@ -120,7 +120,7 @@ REM =============================================
 
 :kill_port
 set "found="
-for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| findstr /r ":%1[ ]" ^| findstr "LISTENING"') do (
+for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| find ":%1 " ^| findstr "LISTENING"') do (
     set "found=1"
     echo   Killing PID %%a on port %1...
     taskkill /F /PID %%a >nul 2>&1
