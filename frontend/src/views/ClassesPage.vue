@@ -286,7 +286,7 @@ const activeId = ref(null)
 const editing = ref(false)
 const isCreate = ref(true)
 const editorRef = ref(null)
-const sortKey = ref('count')
+const sortKey = ref<string | null>(null)
 
 const active = computed(() => classes.value.find(c => c.id === activeId.value) || null)
 
@@ -494,7 +494,7 @@ function buildRightButtons() {
       label: '按人数排序',
       active: sortKey.value === 'count',
       action: () => {
-        sortKey.value = 'count'
+        sortKey.value = sortKey.value === 'count' ? null : 'count'
       },
     },
   ]
