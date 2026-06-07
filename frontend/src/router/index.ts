@@ -27,9 +27,30 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
     children: [
       { path: '', name: 'Dashboard', component: DashboardPage },
-      { path: 'review', name: 'Review', component: ReviewPage },
-      { path: 'classes', name: 'Classes', component: ClassesPage },
-      { path: 'assignments', name: 'Assignments', component: AssignmentsPage },
+    ],
+  },
+  {
+    path: '/review',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', component: ReviewPage },
+    ],
+  },
+  {
+    path: '/classes',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', component: ClassesPage },
+    ],
+  },
+  {
+    path: '/assignments',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', component: AssignmentsPage },
     ],
   },
   {
