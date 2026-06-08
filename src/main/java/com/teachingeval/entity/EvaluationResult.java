@@ -41,6 +41,10 @@ public class EvaluationResult {
     @Schema(description = "AI 综合评语", example = "整体完成度较好，但在结构组织上还有提升空间")
     private String aiComment;
 
+    @Column(name = "dimension_scores", columnDefinition = "TEXT")
+    @Schema(description = "AI 分维度评分详情，JSON 数组", example = "[{\"name\":\"代码质量\",\"score\":88,\"comment\":\"命名规范\"}]")
+    private String dimensionScores;
+
     @Column(name = "teacher_score", precision = 5, scale = 2)
     @Schema(description = "教师最终评分，取值范围 0.00 ~ 100.00", example = "88.00")
     private BigDecimal teacherScore;
@@ -70,6 +74,10 @@ public class EvaluationResult {
     public String getAiComment() { return aiComment; }
     public void setAiComment(String aiComment) { this.aiComment = aiComment; }
 
+    @com.fasterxml.jackson.annotation.JsonRawValue
+    public String getDimensionScores() { return dimensionScores; }
+    public void setDimensionScores(String dimensionScores) { this.dimensionScores = dimensionScores; }
+
     public BigDecimal getTeacherScore() { return teacherScore; }
     public void setTeacherScore(BigDecimal teacherScore) { this.teacherScore = teacherScore; }
 
@@ -91,6 +99,7 @@ public class EvaluationResult {
                 ", aiScore=" + aiScore +
                 ", aiIssues='" + aiIssues + '\'' +
                 ", aiComment='" + aiComment + '\'' +
+                ", dimensionScores='" + dimensionScores + '\'' +
                 ", teacherScore=" + teacherScore +
                 ", teacherComment='" + teacherComment + '\'' +
                 ", status=" + status +
