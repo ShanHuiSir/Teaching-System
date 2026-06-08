@@ -2,6 +2,7 @@ package com.teachingeval.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +30,9 @@ public class HealthController {
 
     @Operation(summary = "SSE心跳", description = "SSE长连接，每10s推送心跳。浏览器断线后5s自动重连。")
     @GetMapping(value = "/api/heartbeat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter heartbeat() {
+    public SseEmitter heartbeat(HttpServletResponse response) {
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache");
         SseEmitter emitter = new SseEmitter(0L);
         String clientId = "client_" + System.currentTimeMillis();
         emitters.put(clientId, emitter);
