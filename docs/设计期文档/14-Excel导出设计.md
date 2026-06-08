@@ -47,4 +47,8 @@
 | DTO（列定义） | `src/main/java/com/teachingeval/dto/ExportRow.java` |
 | Service | `src/main/java/com/teachingeval/service/ExportService.java` |
 | Controller | `src/main/java/com/teachingeval/controller/ExportController.java` |
-| 前端 | `src/main/resources/templates/export.html` |
+| 前端 | `frontend/src/views/AssignmentsPage.vue` |
+
+## 当前限制
+
+当前接口导出全部成绩数据。按班级、作业、学生和评价状态筛选导出属于下一轮增强，需在补齐正式 `class`、`assignment` 和提交关系后统一设计。
