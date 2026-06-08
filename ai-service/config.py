@@ -28,7 +28,7 @@ DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 # Model: deepseek-v4-pro (premium, 1.6T MoE, 49B active) or
 #        deepseek-v4-flash (fast, 284B MoE, 13B active)
 # Legacy deepseek-chat / deepseek-reasoner will be retired 2026-07-24
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
 # Thinking mode: when enabled, the model produces an internal reasoning
 # trace before answering. Only supported on v4-pro (v4-flash ignores it).

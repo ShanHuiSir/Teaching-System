@@ -326,8 +326,43 @@
             </div>
           </div>
 
-          <!-- AI Evaluation -->
-          <div v-if="activeEval && activeEval.status >= 1" class="eval-card">
+          <!-- AI streaming preview -->
+          <div v-if="aiLoading" class="eval-card">
+            <div class="eval-card__field">
+              <span class="eval-card__label">AI 评分中…</span>
+              <span class="eval-card__score eval-card__score--pending">—</span>
+            </div>
+            <div v-if="streamDims.length" class="eval-card__dims">
+              <div v-for="d in streamDims" :key="d.name" class="eval-dim">
+                <div class="eval-dim__head">
+                  <span class="eval-dim__name">{{ d.name }}</span>
+                  <span class="eval-dim__score">{{ d.score }}</span>
+                </div>
+                <div class="eval-dim__bar"><div class="eval-dim__fill" :style="{ width: d.score + '%' }" /></div>
+              </div>
+            </div>
+            <div v-else class="eval-card__dims">
+              <div v-for="i in 3" :key="i" class="eval-dim">
+                <div class="eval-dim__head">
+                  <span class="eval-dim__name sk-pulse">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                </div>
+                <div class="eval-dim__bar sk-pulse" />
+              </div>
+            </div>
+            <hr class="eval-card__sep" />
+            <div class="eval-card__field">
+              <h4 class="eval-card__label eval-card__label--title">发现的问题</h4>
+              <p class="eval-card__text">{{ streamIssues || '等待中…' }}</p>
+            </div>
+            <hr class="eval-card__sep" />
+            <div class="eval-card__field">
+              <h4 class="eval-card__label eval-card__label--title">综合评语</h4>
+              <p class="eval-card__text">{{ streamComment || '等待中…' }}</p>
+            </div>
+          </div>
+
+          <!-- AI Evaluation (final) -->
+          <div v-else-if="activeEval && activeEval.status >= 1" class="eval-card">
             <div class="eval-card__field">
               <span class="eval-card__label">AI 评分</span>
               <span class="eval-card__score">{{ activeEval.aiScore ?? '—' }}</span>
@@ -605,7 +640,8 @@ const dimScores = computed(() => {
   if (!ev?.dimensionScores) return []
   try {
     const parsed = typeof ev.dimensionScores === 'string' ? JSON.parse(ev.dimensionScores) : ev.dimensionScores
-    return Object.entries(parsed).map(([name, score]) => ({ name, score: Number(score) || 0 }))
+    const arr = Array.isArray(parsed) ? parsed : Object.entries(parsed).map(([k, v]) => ({ name: k, score: Number(v) }))
+    return arr.map((d: any) => ({ name: d.name || '', score: Number(d.score) || 0 }))
   } catch {
     return []
   }
@@ -831,11 +867,19 @@ async function submitReview() {
   }
 }
 
+const streamIssues = ref('')
+const streamComment = ref('')
+const streamDims = ref<{ name: string; score: number }[]>([])
+
 async function onAiEval() {
   if (!active.value || aiLoading.value) return
   aiLoading.value = true
-  magicBar.status = '正在等待 AI 评价…'
+  streamIssues.value = ''
+  streamComment.value = ''
+  streamDims.value = []
+  magicBar.status = 'AI 正在思考…'
   magicBar.statusType = 'loading'
+
   try {
     const workType = (active.value.workType || '').toLowerCase()
     const st =
@@ -845,25 +889,92 @@ async function onAiEval() {
         : workType.includes('文档') || workType.includes('报告') || workType.includes('实验') ? 'document'
         : workType.includes('设计') || workType.includes('原型') ? 'design'
         : 'general'
-    await http.post(`/submissions/${active.value.id}/evaluate`, {
-      studentName: active.value.studentName,
-      fileName: active.value.fileName,
-      subjectType: st,
-    })
-    // Refresh evaluations
-    const evals = await http.get('/evaluations')
-    const em = {}
-    ;(evals || []).forEach(e => {
-      em[e.submissionId] = e
-    })
-    evalMap.value = em
+
+    // Fetch file blob from Java
+    const fileRes = await fetch(`/api/submissions/${active.value.id}/file`)
+    if (!fileRes.ok) throw new Error('文件下载失败')
+    const blob = await fileRes.blob()
+    const ext = (active.value.fileName || '').split('.').pop() || 'txt'
+    const mimeMap: Record<string, string> = { cpp: 'text/x-c++src', java: 'text/x-java', py: 'text/x-python', pdf: 'application/pdf', txt: 'text/plain' }
+    const file = new File([blob], active.value.fileName || 'submission.' + ext, { type: mimeMap[ext] || 'application/octet-stream' })
+
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('studentName', active.value.studentName)
+    fd.append('subjectType', st)
+
+    const res = await fetch('/api/evaluate/stream', { method: 'POST', body: fd })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+    const reader = res.body!.getReader()
+    const decoder = new TextDecoder()
+    let buf = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      const parts = buf.split('\n\n')
+      buf = parts.pop() || ''
+      for (const p of parts) {
+        const lines = p.split('\n')
+        const et = lines.find(l => l.startsWith('event:'))?.slice(6).trim()
+        const d = lines.filter(l => l.startsWith('data:')).map(l => l.slice(5)).join('\n').trim()
+        if (!d) continue
+        if (et === 'reasoning') {
+          magicBar.status = 'AI 正在分析作业…'
+        } else if (et === 'content') {
+          streamComment.value += d
+        } else if (et === 'issues') {
+          streamIssues.value += d
+        } else if (et === 'comment') {
+          streamComment.value += d
+        } else if (et?.startsWith('dimension_')) {
+          const name = et.slice('dimension_'.length)
+          const idx = streamDims.value.findIndex(dm => dm.name === name)
+          if (idx >= 0) streamDims.value[idx] = { name, score: Number(d) || 0 }
+          else streamDims.value.push({ name, score: Number(d) || 0 })
+          magicBar.status = `AI 正在评分: ${name}`
+        } else if (et === 'result') {
+          try {
+            const r = JSON.parse(d)
+            if (active.value) {
+              const dims = r.dimensionScores || r.dimensions || streamDims.value.map(dm => ({ name: dm.name, score: dm.score }))
+              const score = r.score ?? r.aiScore ?? r.totalScore ?? (dims.length ? Math.round(dims.reduce((s: number, d: any) => s + d.score, 0) / dims.length) : 0)
+              evalMap.value = {
+                ...evalMap.value,
+                [active.value.id]: {
+                  submissionId: active.value.id,
+                  aiScore: score,
+                  aiIssues: r.aiIssues || r.issues || streamIssues.value || '',
+                  aiComment: r.aiComment || r.comment || streamComment.value || streamIssues.value || '',
+                  dimensionScores: JSON.stringify(dims),
+                  status: 1,
+                },
+              }
+            }
+          } catch { /* ignore */ }
+          magicBar.status = 'AI 评价已完成'
+          magicBar.statusType = 'success'
+        }
+      }
+    }
+    // Persist streaming result to database
+    const ev = active.value ? evalMap.value[active.value.id] : null
+    if (ev?.aiScore != null) {
+      http.post(`/submissions/${active.value!.id}/evaluation-result`, {
+        aiScore: ev.aiScore,
+        aiIssues: ev.aiIssues || '',
+        aiComment: ev.aiComment || '',
+        dimensionScores: ev.dimensionScores || '[]',
+      }).catch(() => { /* non-fatal */ })
+    }
+
     rebuildSemesters()
-    magicBar.status = 'AI 评价已完成'
-    magicBar.statusType = 'success'
     setTimeout(() => {
       if (magicBar.status === 'AI 评价已完成') magicBar.status = ''
     }, 2500)
-  } catch (e) {
+  } catch (e: any) {
     snackbar.show('AI评价失败：' + (e.message || '网络异常'), { variant: 'error' })
     magicBar.status = ''
   } finally {
@@ -1610,6 +1721,10 @@ watch(filteredSubmissions, () => {
   &__score {
     @include font(32px, 40px, 700);
     color: rgb(var(--md-sys-color-primary));
+
+    &--pending {
+      color: rgb(var(--md-sys-color-on-surface) / 0.2);
+    }
   }
 
   &__text {
@@ -1872,6 +1987,28 @@ watch(filteredSubmissions, () => {
       margin: 0;
     }
     -moz-appearance: textfield;
+  }
+}
+.sk-pulse {
+  display: inline-block;
+  background: rgb(var(--md-sys-color-on-surface) / 0.06);
+  border-radius: 6px;
+  animation: sk-pulse 1.6s ease-in-out infinite;
+  min-width: 80px;
+  height: 13px;
+  &.eval-dim__bar {
+    height: 4px;
+    border-radius: 2px;
+  }
+}
+
+@keyframes sk-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.8;
   }
 }
 </style>
