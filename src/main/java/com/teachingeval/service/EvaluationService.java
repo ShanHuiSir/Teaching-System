@@ -38,6 +38,7 @@ public class EvaluationService {
         saved.setAiScore(result.getAiScore());
         saved.setAiIssues(result.getAiIssues());
         saved.setAiComment(result.getAiComment());
+        saved.setDimensionScores(result.getDimensionScores());
         if (saved.getStatus() < 2) {
             saved.setStatus(1);
         }

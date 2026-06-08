@@ -52,6 +52,12 @@ public class RealAIService {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("studentName", resolveStudentName(submission, request));
         body.add("file", new FileSystemResource(Path.of(submission.getFilePath())));
+        if (request.getSubjectType() != null && !request.getSubjectType().isBlank()) {
+            body.add("subjectType", request.getSubjectType());
+        }
+        if (request.getRubric() != null && !request.getRubric().isBlank()) {
+            body.add("rubric", request.getRubric());
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -79,6 +85,8 @@ public class RealAIService {
             result.setAiScore(new BigDecimal(root.path("aiScore").asText("0")));
             result.setAiIssues(root.path("aiIssues").asText(""));
             result.setAiComment(root.path("aiComment").asText(""));
+            JsonNode dimScores = root.path("dimensionScores");
+            result.setDimensionScores(dimScores.isMissingNode() ? "[]" : dimScores.toString());
             result.setStatus(root.path("status").asInt(EvaluationResult.STATUS_AI_REVIEWED));
             return result;
         } catch (Exception exception) {
