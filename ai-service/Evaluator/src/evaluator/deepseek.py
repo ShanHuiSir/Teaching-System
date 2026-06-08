@@ -166,6 +166,14 @@ def _call_deepseek_with_retry(
     )
 
 
+# ── SSE helpers ────────────────────────────────────────────────────────────
+
+def _format_sse(event: str, data: dict | str) -> str:
+    """Format a single SSE event frame."""
+    payload = json.dumps(data, ensure_ascii=False) if isinstance(data, dict) else data
+    return f"event: {event}\ndata: {payload}\n\n"
+
+
 # ── evaluation ────────────────────────────────────────────────────────────
 
 def evaluate(
@@ -273,6 +281,172 @@ def evaluate(
         )
 
     return eval_result
+
+
+def evaluate_stream(
+    text: str,
+    student_name: str = "",
+    rubric_json: dict | None = None,
+    subject_type: str = "general",
+):
+    """Stream DeepSeek v4 scoring as SSE events.
+
+    Yields SSE-formatted strings (event + data). Same scoring logic as
+    evaluate(), but delivers reasoning and content tokens in real-time.
+
+    Events: start, reasoning, content, result, error, done.
+    """
+    # ── empty content ──────────────────────────────────────────────────
+    if not text.strip():
+        yield _format_sse("result", {
+            "aiScore": 0,
+            "aiIssues": "1. 作业内容为空，请重新提交",
+            "aiComment": "未检测到有效内容，请确认文件是否损坏或格式是否正确。",
+            "dimensionScores": [],
+        })
+        yield _format_sse("done", {})
+        return
+
+    # ── pre-flight (same as evaluate) ───────────────────────────────────
+    try:
+        dimensions = _resolve_rubric(rubric_json, subject_type)
+    except ValueError as e:
+        yield _format_sse("error", {"message": f"Invalid rubric: {e}", "code": "INVALID_RUBRIC"})
+        yield _format_sse("done", {})
+        return
+
+    system_prompt = build_system_prompt(subject_type, dimensions)
+
+    content = text
+    if len(content) > config.EVAL_CONTENT_MAX_CHARS:
+        logger.warning(
+            "Content truncated from %d to %d chars for evaluation",
+            len(text), config.EVAL_CONTENT_MAX_CHARS,
+        )
+        content = content[: config.EVAL_CONTENT_MAX_CHARS]
+
+    user_content = (
+        f"学生姓名：{student_name}\n\n作业内容：\n{content}"
+        if student_name
+        else f"作业内容：\n{content}"
+    )
+
+    extra_body: dict = {}
+    if config.DEEPSEEK_THINKING:
+        extra_body["thinking"] = {"type": "enabled"}
+        extra_body["reasoning_effort"] = config.DEEPSEEK_REASONING_EFFORT
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content},
+    ]
+
+    yield _format_sse("start", {
+        "subjectType": subject_type,
+        "dimensions": [{"name": d["name"], "weight": d["weight"]} for d in dimensions],
+    })
+
+    # ── retry loop (connection only, not mid-stream) ────────────────────
+    t0 = time.perf_counter()
+    attempt_count = 0
+    last_exc: Exception | None = None
+    stream = None
+
+    for attempt in range(config.RETRY_MAX_ATTEMPTS):
+        try:
+            client = _get_client()
+            stream = client.chat.completions.create(
+                model=config.DEEPSEEK_MODEL,
+                messages=messages,
+                response_format={"type": "json_object"},
+                temperature=config.DEEPSEEK_TEMPERATURE,
+                max_tokens=config.DEEPSEEK_MAX_TOKENS,
+                extra_body=extra_body if extra_body else None,
+                stream=True,
+                stream_options={"include_usage": True},
+            )
+            attempt_count = attempt + 1
+            break
+        except _TRANSIENT_EXCEPTIONS as e:
+            last_exc = e
+            delay = min(
+                config.RETRY_BASE_DELAY_SECONDS * (2**attempt),
+                config.RETRY_MAX_DELAY_SECONDS,
+            )
+            logger.warning(
+                "DeepSeek stream attempt %d/%d failed: %s. Retrying in %.1fs",
+                attempt + 1, config.RETRY_MAX_ATTEMPTS, e, delay,
+            )
+            time.sleep(delay)
+        except Exception as e:
+            yield _format_sse("error", {"message": f"DeepSeek API error: {e}", "code": "DEEPSEEK_API_FAILURE"})
+            yield _format_sse("done", {})
+            return
+
+    if stream is None:
+        yield _format_sse("error", {
+            "message": f"DeepSeek API failed after {config.RETRY_MAX_ATTEMPTS} attempts: {last_exc}",
+            "code": "DEEPSEEK_API_FAILURE",
+        })
+        yield _format_sse("done", {})
+        return
+
+    # ── iterate stream chunks ───────────────────────────────────────────
+    content_buffer: list[str] = []
+    success = False
+    error_msg: str | None = None
+    eval_result: dict | None = None
+
+    try:
+        for chunk in stream:
+            if chunk.usage:
+                continue
+            if not chunk.choices:
+                continue
+
+            delta = chunk.choices[0].delta
+            if getattr(delta, "reasoning_content", None):
+                yield _format_sse("reasoning", {"delta": delta.reasoning_content})
+            if delta.content:
+                content_buffer.append(delta.content)
+                yield _format_sse("content", {"delta": delta.content})
+    except Exception as e:
+        error_msg = f"Stream interrupted: {e}"
+        logger.warning(error_msg)
+        yield _format_sse("error", {"message": error_msg, "code": "STREAM_INTERRUPTED"})
+    else:
+        # ── parse accumulated content ───────────────────────────────────
+        raw_text = "".join(content_buffer)
+        try:
+            raw = json.loads(raw_text)
+            eval_result = _build_result(raw, dimensions)
+            success = True
+            yield _format_sse("result", eval_result)
+        except json.JSONDecodeError:
+            error_msg = f"AI returned non-JSON content in stream: {raw_text[:200]}"
+            logger.warning(error_msg)
+            eval_result = {
+                "aiScore": 0,
+                "aiIssues": "1. AI 返回格式异常，请联系教师人工评阅",
+                "aiComment": f"AI 返回了非 JSON 内容，原始输出：{raw_text[:200]}",
+                "dimensionScores": [],
+            }
+            yield _format_sse("result", eval_result)
+    finally:
+        latency_ms = (time.perf_counter() - t0) * 1000
+        from evaluator.logger import log_evaluation
+
+        log_evaluation(
+            student_name=student_name,
+            subject_type=subject_type,
+            rubric_used=dimensions,
+            eval_result=eval_result if success else None,
+            latency_ms=latency_ms,
+            attempt_count=attempt_count,
+            success=success,
+            error=error_msg,
+        )
+        yield _format_sse("done", {})
 
 
 def _build_result(raw: dict, dimensions: list[dict]) -> dict:

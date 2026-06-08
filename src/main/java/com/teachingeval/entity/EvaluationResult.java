@@ -74,6 +74,7 @@ public class EvaluationResult {
     public String getAiComment() { return aiComment; }
     public void setAiComment(String aiComment) { this.aiComment = aiComment; }
 
+    @com.fasterxml.jackson.annotation.JsonRawValue
     public String getDimensionScores() { return dimensionScores; }
     public void setDimensionScores(String dimensionScores) { this.dimensionScores = dimensionScores; }
 

@@ -10,12 +10,14 @@ logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 import config
 from docxconv.converters.img import convert as convert_docx_to_images
 from docxconv.converters.json import convert_obj
 from evaluator.deepseek import evaluate as evaluate_content
+from evaluator.deepseek import evaluate_stream
 
 app = FastAPI(
     title="AI Evaluation Service",
@@ -674,6 +676,67 @@ async def evaluate_real(
         "dimensionScores": eval_result.get("dimensionScores", []),
         "status": 1,
     }
+
+# ── /api/evaluate/stream (SSE) ────────────────────────────────────────────
+
+@app.post(
+    "/api/evaluate/stream",
+    summary="AI 评分（流式 SSE）",
+    description=(
+        "上传文件 → 预处理提取文本 → DeepSeek 流式评分。"
+        "以 SSE (Server-Sent Events) 推送思考过程和评分结果。"
+        "事件类型：start / reasoning / content / result / error / done。"
+    ),
+    tags=["评分"],
+)
+async def evaluate_stream_endpoint(
+    file: UploadFile = File(..., description="学生提交的作业文件"),
+    studentName: str = Form(""),
+    rubric: str = Form(None),
+    subjectType: str = Form("general"),
+):
+    if not studentName.strip():
+        raise HTTPException(400, "studentName is required")
+
+    rubric_dict = None
+    if rubric and rubric.strip():
+        try:
+            rubric_dict = json.loads(rubric)
+        except json.JSONDecodeError:
+            raise HTTPException(422, "Invalid rubric JSON: 无法解析为 JSON")
+        try:
+            from evaluator.deepseek import _validate_rubric
+            _validate_rubric(rubric_dict.get("dimensions", []))
+        except ValueError as e:
+            raise HTTPException(422, f"Invalid rubric: {e}")
+
+    preprocess_result = await preprocess(file)
+
+    def _sse_generator():
+        """Sync generator wrapping evaluate_stream for StreamingResponse."""
+        try:
+            for sse_frame in evaluate_stream(
+                preprocess_result["extractedText"],
+                studentName,
+                rubric_json=rubric_dict,
+                subject_type=subjectType,
+            ):
+                yield sse_frame
+        except Exception:
+            logger.exception("Unhandled error in SSE stream")
+            yield f"event: error\ndata: {json.dumps({'message': '服务器内部错误', 'code': 'INTERNAL_ERROR'})}\n\n"
+            yield f"event: done\ndata: {json.dumps({})}\n\n"
+
+    return StreamingResponse(
+        _sse_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
 
 def main():
     import uvicorn
