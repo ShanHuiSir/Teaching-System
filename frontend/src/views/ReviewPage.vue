@@ -903,7 +903,7 @@ async function onAiEval() {
     fd.append('studentName', active.value.studentName)
     fd.append('subjectType', st)
 
-    const res = await fetch('/api/evaluate/stream', { method: 'POST', body: fd })
+    const res = await fetch('/ai/api/evaluate/stream', { method: 'POST', body: fd })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
     const reader = res.body!.getReader()
