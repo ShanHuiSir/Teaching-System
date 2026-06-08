@@ -1,3 +1,4 @@
+import json
 import logging
 import shutil
 import tempfile
@@ -19,7 +20,7 @@ from evaluator.deepseek import evaluate as evaluate_content
 app = FastAPI(
     title="AI Evaluation Service",
     description="文件预处理与 AI 自动评分服务",
-    version="0.7.0",
+    version="0.8.0",
     servers=[
         {"url": config.SERVER_URL, "description": "当前环境"},
     ],
@@ -55,6 +56,7 @@ class EvaluateRealResponse(PreprocessResponse):
     aiScore: float = Field(description="AI 评分，0-100")
     aiIssues: str = Field(description="扣分项列表，每条以 N. 开头，\\n 分隔")
     aiComment: str = Field(description="50-150 字综合评价")
+    dimensionScores: list[dict] = Field(default_factory=list, description="分维度评分明细，每项含 name/score/comment")
     status: int = Field(description="固定为 1，表示正常返回")
 
 class FeatureStatus(BaseModel):
@@ -422,7 +424,7 @@ async def health():
 
     return {
         "status": status,
-        "version": "0.7.0",
+        "version": "0.8.0",
         "modules": {
             "docxconv": "0.5.0",
             "screenshotproc": "0.1.0",
@@ -604,18 +606,46 @@ async def evaluate(
     "/api/evaluate/real",
     response_model=EvaluateRealResponse,
     summary="AI 评分（真实）",
-    description="上传文件 → 预处理提取文本 → DeepSeek 评分，返回分数、扣分项和评语。",
+    description=(
+        "上传文件 → 预处理提取文本 → DeepSeek 评分。"
+        "可选参数 subjectType（code/document/design/general）启用学科感知评分，"
+        "可选参数 rubric（JSON 字符串）自定义评分维度。"
+    ),
     tags=["评分"],
 )
 async def evaluate_real(
     file: UploadFile = File(..., description="学生提交的作业文件"),
     studentName: str = Form(""),
+    rubric: str = Form(None),
+    subjectType: str = Form("general"),
 ):
     if not studentName.strip():
         raise HTTPException(400, "studentName is required")
+
+    # Parse rubric JSON if provided
+    rubric_dict = None
+    if rubric and rubric.strip():
+        try:
+            rubric_dict = json.loads(rubric)
+        except json.JSONDecodeError:
+            raise HTTPException(422, "Invalid rubric JSON: 无法解析为 JSON")
+
+    # Validate rubric early
+    if rubric_dict is not None:
+        from evaluator.deepseek import _validate_rubric
+        try:
+            _validate_rubric(rubric_dict.get("dimensions", []))
+        except ValueError as e:
+            raise HTTPException(422, f"Invalid rubric: {e}")
+
     preprocess_result = await preprocess(file)
     try:
-        eval_result = evaluate_content(preprocess_result["extractedText"], studentName)
+        eval_result = evaluate_content(
+            preprocess_result["extractedText"],
+            studentName,
+            rubric_json=rubric_dict,
+            subject_type=subjectType,
+        )
     except RuntimeError as e:
         logger.warning("AI evaluation failed, falling back to default scores: %s", e)
         preprocess_result["warnings"].append(f"DeepSeek 评分失败，已降级为默认评分: {e}")
@@ -625,6 +655,7 @@ async def evaluate_real(
             "2. 请稍后重试或联系教师人工评阅"
         )
         preprocess_result["aiComment"] = "AI 评分服务暂时不可用，当前分数为系统默认值（不代表真实评价）。请稍后重试或联系教师。"
+        preprocess_result["dimensionScores"] = []
         preprocess_result["status"] = 1
         preprocess_result["studentName"] = studentName
         return preprocess_result
@@ -640,6 +671,7 @@ async def evaluate_real(
         "aiScore": eval_result["aiScore"],
         "aiIssues": eval_result["aiIssues"],
         "aiComment": eval_result["aiComment"],
+        "dimensionScores": eval_result.get("dimensionScores", []),
         "status": 1,
     }
 

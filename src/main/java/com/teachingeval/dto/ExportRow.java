@@ -55,6 +55,11 @@ public class ExportRow {
     @Schema(description = "AI 综合评语")
     private String aiComment;
 
+    @ExcelProperty("AI 分维度评分")
+    @ColumnWidth(50)
+    @Schema(description = "AI分维度评分详情")
+    private String dimensionScores;
+
     @ExcelProperty("教师评分")
     @ColumnWidth(10)
     @Schema(description = "教师最终评分", example = "88.00")
@@ -96,6 +101,9 @@ public class ExportRow {
 
     public String getAiComment() { return aiComment; }
     public void setAiComment(String aiComment) { this.aiComment = aiComment; }
+
+    public String getDimensionScores() { return dimensionScores; }
+    public void setDimensionScores(String dimensionScores) { this.dimensionScores = dimensionScores; }
 
     public BigDecimal getTeacherScore() { return teacherScore; }
     public void setTeacherScore(BigDecimal teacherScore) { this.teacherScore = teacherScore; }
