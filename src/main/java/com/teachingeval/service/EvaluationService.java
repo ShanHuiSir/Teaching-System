@@ -7,6 +7,7 @@ import com.teachingeval.entity.WorkSubmission;
 import org.springframework.stereotype.Service;
 
 import com.teachingeval.dto.AIEvalRequest;
+import com.teachingeval.dto.SaveEvaluationRequest;
 import com.teachingeval.dto.TeacherReviewRequest;
 import com.teachingeval.repository.EvaluationRepository;
 import com.teachingeval.repository.SubmissionRepository;
@@ -41,6 +42,20 @@ public class EvaluationService {
         saved.setDimensionScores(result.getDimensionScores());
         if (saved.getStatus() < 2) {
             saved.setStatus(1);
+        }
+        return evaluationRepository.save(saved);
+    }
+
+    public EvaluationResult saveAiResult(Long submissionId, SaveEvaluationRequest request) {
+        EvaluationResult saved = evaluationRepository.findBySubmissionId(submissionId)
+                .orElseGet(EvaluationResult::new);
+        saved.setSubmissionId(submissionId);
+        saved.setAiScore(request.getAiScore());
+        saved.setAiIssues(request.getAiIssues() != null ? request.getAiIssues() : "");
+        saved.setAiComment(request.getAiComment() != null ? request.getAiComment() : "");
+        saved.setDimensionScores(request.getDimensionScores() != null ? request.getDimensionScores() : "[]");
+        if (saved.getStatus() < 1) {
+            saved.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
         }
         return evaluationRepository.save(saved);
     }
