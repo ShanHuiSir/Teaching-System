@@ -1,6 +1,6 @@
 # 教学评价系统
 
-轻量级教师端作品评价系统。支持学生管理、作品提交、AI 辅助评价、教师复核、统计摘要和 Excel 导出。前后端分离架构：Vue 3 前端 + Spring Boot 后端 + Python AI 服务。
+教师端教学评价系统。当前主线为 Vue 3 SPA + Spring Boot REST API + Python FastAPI AI 服务，前端采用双 Rail / MagicBar / MD3 color / Niri 布局。系统围绕班级、作业、AI 评价、教师复核、统计和 Excel 导出完成教师端验收流程。
 
 ## 技术栈
 
@@ -51,15 +51,16 @@ npm run dev
 
 ## 当前功能
 
-- 固定账号登录：`teacher / 123456`
-- 学生管理：分页查询、关键字搜索、新增、删除、重置演示数据
-- 作品提交：选择学生并登记作品标题、类型、文件名和备注，支持真实文件上传
-- 作业审批：未审批、AI 已审批、已完成三类列表，教师复核后保存最终分数和评语
-- AI 评价：默认使用 `FakeAIService` 模拟评价，可通过 `app.ai.real.enabled=true` 切换为真实 DeepSeek API 调用
-- Py 预处理转发：上传后可调用 AI 服务 `/api/preprocess` 进行 DOCX 渲染、OCR 提取等，默认关闭
-- 统计摘要：学生数、作品数、AI 已评价数、教师已确认数、平均分
-- Excel 导出：`GET /api/export/excel` 返回 `.xlsx` 文件流
-- 全局通知栏、主题切换、草稿恢复等交互细节
+- 登录：固定演示账号 `teacher / 123456`，登录后写入 `auth_token` Cookie。
+- 路由：`/` 默认跳转 `/login`；登录后进入 `/dashboard`；业务页无 token 时跳转 `/forbidden`。
+- 仪表盘：展示提交、批改、学生、评分分布和趋势统计。
+- 班级管理：入口为 `/classes`，学生管理归入班级和花名册流程，不再设独立学生页。
+- 作业管理：入口为 `/assignments`，作业数据和 Excel 导出在作业管理中完成，不再设独立导出页。
+- 作业审批：入口为 `/review`，支持作业列表、附件区、AI 评价、教师复核、草稿恢复和分维度评分展示。
+- AI 评价：Java 侧默认尝试真实 AI，Python 8000 不可用时降级到 `FakeAIService`；前端支持 `/api/evaluate/stream` 流式评分。
+- Py 预处理转发：上传后可调用 AI 服务 `/api/preprocess` 进行文本提取、DOCX 解析、OCR 和压缩包处理，默认关闭。
+- Excel 导出：`POST /api/export/excel` 返回 `.xlsx` 文件流，前端在 `/assignments` 中触发下载。
+- 全局体验：MagicBar、双 Rail、主题切换、Cookie 偏好、Snackbar、骨架屏、错误边界和重试机制。
 
 ## 项目结构
 
@@ -83,9 +84,9 @@ Teaching-System/
 │   ├── src/
 │   │   ├── router/                    # 路由配置
 │   │   ├── layouts/                   # 布局组件
-│   │   ├── views/                     # 页面（登录、班级、作业审批、评价、Dashboard）
-│   │   ├── components/                # 通用组件（Snackbar、MagicBar、ConfirmDialog 等）
-│   │   ├── composables/               # 组合式 API（useSnackbar、useTheme、useDraft 等）
+│   │   ├── views/                     # 页面（登录、仪表盘、作业审批、班级、作业、错误页）
+│   │   ├── components/                # 通用组件（MagicBar、Snackbar、ConfirmDialog、骨架屏等）
+│   │   ├── composables/               # 组合式 API（useMagicBar、useSnackbar、useTheme、useDraft 等）
 │   │   ├── styles/                    # SCSS mixins
 │   │   ├── types.ts                   # TypeScript 类型定义
 │   │   └── utils/                     # 工具函数（axios 封装、cookie、文件图标等）
