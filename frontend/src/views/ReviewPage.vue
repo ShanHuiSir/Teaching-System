@@ -252,6 +252,12 @@
                 <span>批改</span>
               </button>
               <div class="ai-btn-wrap">
+                <select v-model="subjectType" class="ai-btn-wrap__subject">
+                  <option value="code">代码</option>
+                  <option value="document">文档</option>
+                  <option value="design">设计</option>
+                  <option value="general">通用</option>
+                </select>
                 <button class="act-btn act-btn--ai" :disabled="aiLoading" @click="onAiEval">
                   <svg
                     viewBox="0 0 24 24"
@@ -325,6 +331,15 @@
             <div class="eval-card__field">
               <span class="eval-card__label">AI 评分</span>
               <span class="eval-card__score">{{ activeEval.aiScore ?? '—' }}</span>
+            </div>
+            <div v-if="dimScores.length" class="eval-card__dims">
+              <div v-for="d in dimScores" :key="d.name" class="eval-dim">
+                <div class="eval-dim__head">
+                  <span class="eval-dim__name">{{ d.name }}</span>
+                  <span class="eval-dim__score">{{ d.score }}</span>
+                </div>
+                <div class="eval-dim__bar"><div class="eval-dim__fill" :style="{ width: d.score + '%' }" /></div>
+              </div>
             </div>
             <hr class="eval-card__sep" />
             <div class="eval-card__field">
@@ -551,6 +566,7 @@ const submissionsRaw = ref<any[]>([])
 const evalMap = ref<Record<string, any>>({})
 const studentsAll = ref<any[]>([])
 const searchQuery = ref('')
+const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
 
 const filteredSubmissions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -582,6 +598,17 @@ const active = computed(() => {
 
 const activeEval = computed(() => {
   return activeId.value ? evalMap.value[activeId.value] : null
+})
+
+const dimScores = computed(() => {
+  const ev = activeEval.value
+  if (!ev?.dimensionScores) return []
+  try {
+    const parsed = typeof ev.dimensionScores === 'string' ? JSON.parse(ev.dimensionScores) : ev.dimensionScores
+    return Object.entries(parsed).map(([name, score]) => ({ name, score: Number(score) || 0 }))
+  } catch {
+    return []
+  }
 })
 
 const draftStamp = ref(0)
@@ -810,9 +837,18 @@ async function onAiEval() {
   magicBar.status = '正在等待 AI 评价…'
   magicBar.statusType = 'loading'
   try {
+    const workType = (active.value.workType || '').toLowerCase()
+    const st =
+      subjectType.value !== 'general'
+        ? subjectType.value
+        : workType.includes('代码') || workType.includes('编程') || workType.includes('程序') ? 'code'
+        : workType.includes('文档') || workType.includes('报告') || workType.includes('实验') ? 'document'
+        : workType.includes('设计') || workType.includes('原型') ? 'design'
+        : 'general'
     await http.post(`/submissions/${active.value.id}/evaluate`, {
       studentName: active.value.studentName,
       fileName: active.value.fileName,
+      subjectType: st,
     })
     // Refresh evaluations
     const evals = await http.get('/evaluations')
@@ -1439,10 +1475,26 @@ watch(filteredSubmissions, () => {
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 8px;
 
   .act-btn--ai {
     position: relative;
     z-index: 1;
+  }
+
+  &__subject {
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid rgb(var(--md-sys-color-outline));
+    border-radius: 10px;
+    background: rgb(var(--md-sys-color-surface-container));
+    color: rgb(var(--md-sys-color-on-surface));
+    @include font(12px, 20px, 500);
+    cursor: pointer;
+    outline: none;
+    &:focus {
+      border-color: rgb(var(--md-sys-color-primary));
+    }
   }
 
   &__hint {
@@ -1567,6 +1619,13 @@ watch(filteredSubmissions, () => {
     white-space: pre-wrap;
   }
 
+  &__dims {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
   &__sep {
     border: none;
     height: 1px;
@@ -1583,6 +1642,41 @@ watch(filteredSubmissions, () => {
     .eval-card__score {
       color: rgb(var(--md-sys-color-tertiary));
     }
+  }
+}
+
+.eval-dim {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  &__head {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__name {
+    @include font(12px, 16px, 500);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+
+  &__score {
+    @include font(12px, 16px, 600);
+    color: rgb(var(--md-sys-color-primary));
+  }
+
+  &__bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgb(var(--md-sys-color-primary) / 0.12);
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: 2px;
+    background: rgb(var(--md-sys-color-primary));
+    transition: width 0.4s ease;
   }
 }
 
