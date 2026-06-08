@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,6 +43,14 @@ class TeachingSystemFlowTest {
     void resetData() {
         FileSystemUtils.deleteRecursively(Paths.get("target/test-uploads").toFile());
         dataInitializer.resetDemoData();
+    }
+
+    private MockMultipartFile loadTestFile(String resourcePath,
+                                            String uploadName,
+                                            String contentType) throws Exception {
+        var resource = new ClassPathResource(resourcePath);
+        byte[] bytes = resource.getInputStream().readAllBytes();
+        return new MockMultipartFile("file", uploadName, contentType, bytes);
     }
 
     @Test
@@ -171,22 +180,21 @@ class TeachingSystemFlowTest {
                 .getContentAsString();
         Integer studentId = com.jayway.jsonpath.JsonPath.read(studentPageResponse, "$.content[0].id");
 
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "real-upload.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "真实上传测试内容".getBytes(StandardCharsets.UTF_8)
+        MockMultipartFile file = loadTestFile(
+                "test-files/sample-code.cpp",
+                "sample-code.cpp",
+                "text/x-c++src"
         );
 
         String response = mockMvc.perform(multipart("/api/submissions/upload")
                         .file(file)
                         .param("studentId", String.valueOf(studentId))
                         .param("title", "真实文件上传作业")
-                        .param("workType", "实验报告")
+                        .param("workType", "代码作业")
                         .param("remark", "验证真实文件上传"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.studentName").value("张三"))
-                .andExpect(jsonPath("$.fileName").value("real-upload.docx"))
+                .andExpect(jsonPath("$.fileName").value("sample-code.cpp"))
                 .andExpect(jsonPath("$.fileSize").value(file.getSize()))
                 .andExpect(jsonPath("$.contentType").value(file.getContentType()))
                 .andExpect(jsonPath("$.preprocessStatus").value("SKIPPED"))
@@ -197,10 +205,11 @@ class TeachingSystemFlowTest {
 
         Integer submissionId = com.jayway.jsonpath.JsonPath.read(response, "$.id");
         String filePath = com.jayway.jsonpath.JsonPath.read(response, "$.filePath");
-        assertThat(filePath).isEqualTo("target/test-uploads/submissions/" + submissionId + "/real-upload.docx");
+        assertThat(filePath).isEqualTo("target/test-uploads/submissions/" + submissionId + "/sample-code.cpp");
         Path savedPath = Paths.get(filePath);
         assertThat(Files.exists(savedPath)).isTrue();
-        assertThat(Files.readString(savedPath)).isEqualTo("真实上传测试内容");
+        String savedContent = Files.readString(savedPath);
+        assertThat(savedContent).contains("Binary Search Implementation");
     }
 
     @Test
@@ -242,11 +251,10 @@ class TeachingSystemFlowTest {
                     .getContentAsString();
             Integer studentId = com.jayway.jsonpath.JsonPath.read(studentPageResponse, "$.content[0].id");
 
-            MockMultipartFile file = new MockMultipartFile(
-                    "file",
-                    "preprocess-upload.docx",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "传给 Py 的真实文件内容".getBytes(StandardCharsets.UTF_8)
+            MockMultipartFile file = loadTestFile(
+                    "test-files/sample-report.txt",
+                    "preprocess-upload.txt",
+                    "text/plain"
             );
 
             mockMvc.perform(multipart("/api/submissions/upload")
@@ -262,8 +270,8 @@ class TeachingSystemFlowTest {
             assertThat(capturedRequestBody.get()).contains("submissionId");
             assertThat(capturedRequestBody.get()).contains("studentId");
             assertThat(capturedRequestBody.get()).contains("Java Py 联调作业");
-            assertThat(capturedRequestBody.get()).contains("preprocess-upload.docx");
-            assertThat(capturedRequestBody.get()).contains("传给 Py 的真实文件内容");
+            assertThat(capturedRequestBody.get()).contains("preprocess-upload.txt");
+            assertThat(capturedRequestBody.get()).contains("软件工程实训项目总结报告");
         } finally {
             System.clearProperty("app.preprocess.enabled");
             System.clearProperty("app.preprocess.endpoint-url");
@@ -292,11 +300,10 @@ class TeachingSystemFlowTest {
                     .getContentAsString();
             Integer studentId = com.jayway.jsonpath.JsonPath.read(studentPageResponse, "$.content[0].id");
 
-            MockMultipartFile file = new MockMultipartFile(
-                    "file",
-                    "real-ai-upload.docx",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "真实 AI 评价文件内容".getBytes(StandardCharsets.UTF_8)
+            MockMultipartFile file = loadTestFile(
+                    "test-files/sample-code.cpp",
+                    "real-ai-upload.cpp",
+                    "text/x-c++src"
             );
 
             String uploadResponse = mockMvc.perform(multipart("/api/submissions/upload")
@@ -315,7 +322,7 @@ class TeachingSystemFlowTest {
                             .content("""
                                     {
                                       "studentName": "张三",
-                                      "fileName": "real-ai-upload.docx"
+                                      "fileName": "real-ai-upload.cpp"
                                     }
                                     """))
                     .andExpect(status().isOk())
@@ -323,17 +330,65 @@ class TeachingSystemFlowTest {
                     .andExpect(jsonPath("$.aiScore").value(88.00))
                     .andExpect(jsonPath("$.aiIssues").value("1. Mock Py 返回的问题"))
                     .andExpect(jsonPath("$.aiComment").value("Mock Py 真实 AI 评价完成。"))
+                    .andExpect(jsonPath("$.dimensionScores[0].name").value("代码质量"))
+                    .andExpect(jsonPath("$.dimensionScores[0].score").value(90))
                     .andExpect(jsonPath("$.status").value(1));
 
             assertThat(capturedRequestBody.get()).contains("studentName");
             assertThat(capturedRequestBody.get()).contains("张三");
-            assertThat(capturedRequestBody.get()).contains("real-ai-upload.docx");
-            assertThat(capturedRequestBody.get()).contains("真实 AI 评价文件内容");
+            assertThat(capturedRequestBody.get()).contains("real-ai-upload.cpp");
+            assertThat(capturedRequestBody.get()).contains("binarySearchIterative");
         } finally {
             System.clearProperty("app.ai.real.enabled");
             System.clearProperty("app.ai.real.endpoint-url");
             server.stop(0);
         }
+    }
+
+    @Test
+    void evaluateSubmissionWithRealPythonService() throws Exception {
+        String studentPageResponse = mockMvc.perform(get("/api/students/page")
+                        .param("page", "0")
+                        .param("size", "1"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Integer studentId = com.jayway.jsonpath.JsonPath.read(studentPageResponse, "$.content[0].id");
+
+        MockMultipartFile file = loadTestFile(
+                "test-files/sample-code.cpp",
+                "real-eval.cpp",
+                "text/x-c++src"
+        );
+
+        String uploadResponse = mockMvc.perform(multipart("/api/submissions/upload")
+                        .file(file)
+                        .param("studentId", String.valueOf(studentId))
+                        .param("title", "真实 AI 评价测试作业")
+                        .param("workType", "代码作业"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Integer submissionId = com.jayway.jsonpath.JsonPath.read(uploadResponse, "$.id");
+
+        mockMvc.perform(post("/api/submissions/{submissionId}/evaluate", submissionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "studentName": "张三",
+                                  "fileName": "real-eval.cpp",
+                                  "subjectType": "code"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.submissionId").value(submissionId))
+                .andExpect(jsonPath("$.aiScore").isNumber())
+                .andExpect(jsonPath("$.aiIssues").isString())
+                .andExpect(jsonPath("$.aiComment").isString())
+                .andExpect(jsonPath("$.dimensionScores").isArray())
+                .andExpect(jsonPath("$.status").value(1));
     }
 
     private void respondWithPreprocessResult(HttpExchange exchange,
@@ -358,6 +413,10 @@ class TeachingSystemFlowTest {
                   "aiScore": 88.00,
                   "aiIssues": "1. Mock Py 返回的问题",
                   "aiComment": "Mock Py 真实 AI 评价完成。",
+                  "dimensionScores": [
+                    {"name": "代码质量", "score": 90, "comment": "结构良好"},
+                    {"name": "功能完整性", "score": 86, "comment": "核心功能完整"}
+                  ],
                   "status": 1
                 }
                 """.getBytes(StandardCharsets.UTF_8);

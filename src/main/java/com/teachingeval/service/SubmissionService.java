@@ -27,7 +27,9 @@ public class SubmissionService {
     private static final long MAX_UPLOAD_SIZE = 50L * 1024L * 1024L;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
             "doc", "docx", "pdf", "zip", "rar", "7z", "tar", "gz",
-            "txt", "java", "py", "png", "jpg", "jpeg", "webp"
+            "txt", "java", "py", "png", "jpg", "jpeg", "webp",
+            "cpp", "c", "h", "hpp", "js", "ts", "html", "css",
+            "md", "json", "xml", "yaml", "yml", "sql", "sh", "csv", "log"
     );
 
     private final SubmissionRepository submissionRepository;

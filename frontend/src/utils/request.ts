@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const http: any = axios.create({
   baseURL: '/api',
-  timeout: 15000,
+  timeout: 120000,
 })
 
 const httpErrorCbs = new Set<() => void>()

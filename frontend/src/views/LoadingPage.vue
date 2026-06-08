@@ -84,6 +84,7 @@ const barStyle = computed(() => {
     letter-spacing: 0.04em;
   }
 
+
   &__debug {
     display: flex;
     gap: 8px;

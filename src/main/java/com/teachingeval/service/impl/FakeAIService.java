@@ -20,6 +20,7 @@ public class FakeAIService {
                 3. 格式规范性不足，标题层级需统一""");
 
         result.setAiComment("整体完成度较好，但在结构组织上还有提升空间，建议加强逻辑连贯性。");
+        result.setDimensionScores("[{\"name\":\"完成度\",\"score\":85,\"comment\":\"内容较完整\"},{\"name\":\"规范性\",\"score\":80,\"comment\":\"格式可优化\"}]");
         result.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
         return result;
     }

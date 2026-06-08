@@ -64,6 +64,7 @@ public class ExportService {
                 row.setAiScore(eval.getAiScore());
                 row.setAiIssues(eval.getAiIssues());
                 row.setAiComment(eval.getAiComment());
+                row.setDimensionScores(eval.getDimensionScores());
                 row.setTeacherScore(eval.getTeacherScore());
                 row.setTeacherComment(eval.getTeacherComment());
                 row.setStatusText(switch (eval.getStatus()) {
