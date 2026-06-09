@@ -237,6 +237,7 @@ def evaluate(
     attempt_count = 0
     error_msg: str | None = None
     eval_result: dict | None = None
+    raw = "{}"
 
     try:
         response, attempt_count = _call_deepseek_with_retry(
@@ -253,12 +254,13 @@ def evaluate(
         error_msg = str(e)
         raise
     except json.JSONDecodeError:
-        error_msg = f"AI returned non-JSON content: {raw[:200]}"
+        raw_preview = raw[:200] if raw else "N/A"
+        error_msg = f"AI returned non-JSON content: {raw_preview}"
         logger.warning(error_msg)
         eval_result = {
             "aiScore": 0,
             "aiIssues": "1. AI 返回格式异常，请联系教师人工评阅",
-            "aiComment": f"AI 返回了非 JSON 内容，原始输出：{raw[:200]}",
+            "aiComment": f"AI 返回了非 JSON 内容，原始输出：{raw_preview}",
             "dimensionScores": [],
         }
         success = False
