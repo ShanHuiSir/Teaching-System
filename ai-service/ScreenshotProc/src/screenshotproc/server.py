@@ -27,15 +27,18 @@ def _check_file(file: UploadFile) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from screenshotproc.ocr import _load_models
+    try:
+        from screenshotproc.ocr import _load_reader
 
-    _load_models()
+        _load_reader()
+    except Exception:
+        pass
     yield
 
 
 app = FastAPI(
     title="ScreenshotProc",
-    description="Extract text from screenshots via Surya OCR — line-level JSON with bounding boxes",
+    description="Extract text from screenshots via EasyOCR — line-level JSON with bounding boxes",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -70,12 +73,12 @@ async def ocr_endpoint(files: list[UploadFile] = File(..., min_length=1)):
 
 @app.get("/health")
 async def health():
-    from screenshotproc.ocr import _det_predictor, _rec_predictor
+    from screenshotproc.ocr import _reader
 
-    models_loaded = _det_predictor is not None and _rec_predictor is not None
+    reader_loaded = _reader is not None
     return {
-        "status": "ok" if models_loaded else "degraded",
-        "models_loaded": models_loaded,
+        "status": "ok" if reader_loaded else "degraded",
+        "models_loaded": reader_loaded,
     }
 
 
