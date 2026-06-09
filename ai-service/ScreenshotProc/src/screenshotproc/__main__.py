@@ -35,7 +35,7 @@ def cmd_serve(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="ScreenshotProc — Extract text from screenshots via Surya OCR",
+        description="ScreenshotProc — Extract text from screenshots via EasyOCR",
     )
     sub = parser.add_subparsers(dest="command")
 
