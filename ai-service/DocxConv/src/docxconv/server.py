@@ -738,6 +738,42 @@ async def evaluate_stream_endpoint(
     )
 
 
+# ── Pydantic models for eval-log ────────────────────────────────────────
+
+class EvalLogRequest(BaseModel):
+    student_name: str = Field(..., description="学生姓名")
+    ai_score: float = Field(..., description="AI 评分")
+    ai_issues: str = Field("", description="AI 发现的问题")
+    ai_comment: str = Field("", description="AI 综合评语")
+    dimension_scores: list[dict] = Field(default_factory=list, description="AI 分维度评分")
+    teacher_score: float = Field(..., description="教师最终评分")
+    teacher_comment: str = Field(..., description="教师最终评语")
+
+
+# ── /api/eval-log ───────────────────────────────────────────────────────
+
+@app.post(
+    "/api/eval-log",
+    response_model=dict,
+    summary="写入最终评价日志",
+    description="由 Java 后端在教师批改完成后调用，将 AI + 教师评价合并写入 JSONL 日志文件。",
+    tags=["评价日志"],
+)
+async def eval_log(body: EvalLogRequest):
+    from evaluator.logger import log_final_evaluation
+
+    log_final_evaluation(
+        student_name=body.student_name,
+        ai_score=body.ai_score,
+        ai_issues=body.ai_issues,
+        ai_comment=body.ai_comment,
+        dimension_scores=body.dimension_scores,
+        teacher_score=body.teacher_score,
+        teacher_comment=body.teacher_comment,
+    )
+    return {"status": "ok"}
+
+
 def main():
     import uvicorn
     uvicorn.run("docxconv.server:app", host="0.0.0.0", port=8000, reload=False)
