@@ -1,11 +1,17 @@
 package com.teachingeval.config;
 
+import com.teachingeval.entity.Assignment;
 import com.teachingeval.entity.EvaluationResult;
 import com.teachingeval.entity.Student;
+import com.teachingeval.entity.SubmissionFile;
+import com.teachingeval.entity.TeachingClass;
 import com.teachingeval.entity.WorkSubmission;
+import com.teachingeval.repository.AssignmentRepository;
 import com.teachingeval.repository.EvaluationRepository;
 import com.teachingeval.repository.StudentRepository;
+import com.teachingeval.repository.SubmissionFileRepository;
 import com.teachingeval.repository.SubmissionRepository;
+import com.teachingeval.repository.TeachingClassRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
@@ -16,23 +22,31 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
 
     private final StudentRepository studentRepository;
+    private final TeachingClassRepository teachingClassRepository;
+    private final AssignmentRepository assignmentRepository;
     private final SubmissionRepository submissionRepository;
+    private final SubmissionFileRepository submissionFileRepository;
     private final EvaluationRepository evaluationRepository;
     private final Path uploadRoot;
 
     public DataInitializer(StudentRepository studentRepository,
+                           TeachingClassRepository teachingClassRepository,
+                           AssignmentRepository assignmentRepository,
                            SubmissionRepository submissionRepository,
+                           SubmissionFileRepository submissionFileRepository,
                            EvaluationRepository evaluationRepository,
                            @Value("${app.upload.root:uploads}") String uploadRoot) {
         this.studentRepository = studentRepository;
+        this.teachingClassRepository = teachingClassRepository;
+        this.assignmentRepository = assignmentRepository;
         this.submissionRepository = submissionRepository;
+        this.submissionFileRepository = submissionFileRepository;
         this.evaluationRepository = evaluationRepository;
         this.uploadRoot = Paths.get(uploadRoot).normalize().toAbsolutePath().normalize();
     }
@@ -44,7 +58,10 @@ public class DataInitializer implements CommandLineRunner {
 
     public void seedIfEmpty() {
         if (studentRepository.count() == 0
+                && teachingClassRepository.count() == 0
+                && assignmentRepository.count() == 0
                 && submissionRepository.count() == 0
+                && submissionFileRepository.count() == 0
                 && evaluationRepository.count() == 0) {
             resetDemoData();
         }
@@ -52,11 +69,16 @@ public class DataInitializer implements CommandLineRunner {
 
     public void resetDemoData() {
         evaluationRepository.deleteAll();
+        submissionFileRepository.deleteAll();
         submissionRepository.deleteAll();
+        assignmentRepository.deleteAll();
         studentRepository.deleteAll();
+        teachingClassRepository.deleteAll();
 
-        List<Student> students = seedStudents();
-        List<WorkSubmission> submissions = seedSubmissions(students);
+        List<TeachingClass> classes = seedClasses();
+        List<Student> students = seedStudents(classes);
+        List<Assignment> assignments = seedAssignments(classes);
+        List<WorkSubmission> submissions = seedSubmissions(students, assignments);
         copySampleFiles(submissions);
         seedEvaluations(submissions);
     }
@@ -79,6 +101,7 @@ public class DataInitializer implements CommandLineRunner {
                 s.setFileSize((long) bytes.length);
                 s.setContentType(resolveContentType(s.getFileName()));
                 submissionRepository.save(s);
+                savePrimaryFile(s);
             } catch (IOException e) {
                 // Seed file missing or IO error — submission stays without file
             }
@@ -108,27 +131,52 @@ public class DataInitializer implements CommandLineRunner {
         };
     }
 
-    private List<Student> seedStudents() {
-        return studentRepository.saveAll(List.of(
-                buildStudent("2026001", "张三", "软件 1 班"),
-                buildStudent("2026002", "李四", "软件 1 班"),
-                buildStudent("2026003", "王五", "软件 2 班"),
-                buildStudent("2026004", "赵六", "软件 2 班"),
-                buildStudent("2026005", "孙七", "计算机科学 1 班"),
-                buildStudent("2026006", "周八", "计算机科学 2 班"),
-                buildStudent("2026007", "吴九", "软件 3 班"),
-                buildStudent("2026008", "郑十", "软件 3 班")
+    private List<TeachingClass> seedClasses() {
+        return teachingClassRepository.saveAll(List.of(
+                buildClass("软件 1 班", "2026", "软件工程实训演示班级"),
+                buildClass("软件 2 班", "2026", "软件工程实训演示班级"),
+                buildClass("计算机科学 1 班", "2026", "计算机科学实训演示班级"),
+                buildClass("计算机科学 2 班", "2026", "计算机科学实训演示班级"),
+                buildClass("软件 3 班", "2026", "软件工程实训演示班级")
         ));
     }
 
-    private List<WorkSubmission> seedSubmissions(List<Student> students) {
+    private List<Student> seedStudents(List<TeachingClass> classes) {
+        return studentRepository.saveAll(List.of(
+                buildStudent("2026001", "张三", classes.get(0)),
+                buildStudent("2026002", "李四", classes.get(0)),
+                buildStudent("2026003", "王五", classes.get(1)),
+                buildStudent("2026004", "赵六", classes.get(1)),
+                buildStudent("2026005", "孙七", classes.get(2)),
+                buildStudent("2026006", "周八", classes.get(3)),
+                buildStudent("2026007", "吴九", classes.get(4)),
+                buildStudent("2026008", "郑十", classes.get(4))
+        ));
+    }
+
+    private List<Assignment> seedAssignments(List<TeachingClass> classes) {
+        return assignmentRepository.saveAll(List.of(
+                buildAssignment("第二阶段实训报告", "课程论文", classes.get(0), "提交阶段报告、源码和运行截图"),
+                buildAssignment("算法设计与分析", "代码作业", classes.get(0), "提交算法实现与测试说明"),
+                buildAssignment("数据结构课程设计", "代码作业", classes.get(1), "提交课程设计源码和说明"),
+                buildAssignment("数据库课程设计", "课程论文", classes.get(3), "提交 ER 图、SQL 脚本和设计说明"),
+                buildAssignment("操作系统实验报告", "实验报告", classes.get(4), "提交实验记录和调度算法分析"),
+                buildAssignment("软件工程课程论文", "课程论文", classes.get(4), "提交课程论文和项目总结")
+        ));
+    }
+
+    private List<WorkSubmission> seedSubmissions(List<Student> students, List<Assignment> assignments) {
         if (students.size() < 8) {
             throw new IllegalStateException("演示学生数据不足，无法初始化作业数据");
+        }
+        if (assignments.size() < 6) {
+            throw new IllegalStateException("演示作业数据不足，无法初始化提交数据");
         }
 
         WorkSubmission s1 = new WorkSubmission();
         s1.setStudentId(students.get(0).getId());
         s1.setStudentName(students.get(0).getName());
+        applyAssignment(s1, assignments.get(0));
         s1.setTitle("第二阶段实训报告");
         s1.setFileName("project-report.txt");
         s1.setWorkType("课程论文");
@@ -137,6 +185,7 @@ public class DataInitializer implements CommandLineRunner {
         WorkSubmission s2 = new WorkSubmission();
         s2.setStudentId(students.get(1).getId());
         s2.setStudentName(students.get(1).getName());
+        applyAssignment(s2, assignments.get(1));
         s2.setTitle("算法设计与分析");
         s2.setFileName("binary-search.cpp");
         s2.setWorkType("代码作业");
@@ -145,6 +194,7 @@ public class DataInitializer implements CommandLineRunner {
         WorkSubmission s3 = new WorkSubmission();
         s3.setStudentId(students.get(2).getId());
         s3.setStudentName(students.get(2).getName());
+        applyAssignment(s3, assignments.get(2));
         s3.setTitle("数据结构课程设计");
         s3.setFileName("binary-search.cpp");
         s3.setWorkType("代码作业");
@@ -153,6 +203,7 @@ public class DataInitializer implements CommandLineRunner {
         WorkSubmission s4 = new WorkSubmission();
         s4.setStudentId(students.get(5).getId());
         s4.setStudentName(students.get(5).getName());
+        applyAssignment(s4, assignments.get(3));
         s4.setTitle("数据库课程设计");
         s4.setFileName("database-design.txt");
         s4.setWorkType("课程论文");
@@ -161,6 +212,7 @@ public class DataInitializer implements CommandLineRunner {
         WorkSubmission s5 = new WorkSubmission();
         s5.setStudentId(students.get(6).getId());
         s5.setStudentName(students.get(6).getName());
+        applyAssignment(s5, assignments.get(4));
         s5.setTitle("操作系统实验报告");
         s5.setFileName("os-experiment.txt");
         s5.setWorkType("实验报告");
@@ -169,6 +221,7 @@ public class DataInitializer implements CommandLineRunner {
         WorkSubmission s6 = new WorkSubmission();
         s6.setStudentId(students.get(7).getId());
         s6.setStudentName(students.get(7).getName());
+        applyAssignment(s6, assignments.get(5));
         s6.setTitle("软件工程课程论文");
         s6.setFileName("project-report.txt");
         s6.setWorkType("课程论文");
@@ -213,11 +266,52 @@ public class DataInitializer implements CommandLineRunner {
         evaluationRepository.save(tc);
     }
 
-    private static Student buildStudent(String studentNo, String name, String className) {
+    private void savePrimaryFile(WorkSubmission submission) {
+        submissionFileRepository.deleteBySubmissionId(submission.getId());
+        SubmissionFile file = new SubmissionFile();
+        file.setSubmissionId(submission.getId());
+        file.setFileName(submission.getFileName());
+        file.setFilePath(submission.getFilePath());
+        file.setFileSize(submission.getFileSize());
+        file.setContentType(submission.getContentType());
+        file.setFileRole("PRIMARY");
+        file.setPrimaryFile(true);
+        file.setSortOrder(0);
+        submissionFileRepository.save(file);
+    }
+
+    private static TeachingClass buildClass(String name, String grade, String description) {
+        TeachingClass teachingClass = new TeachingClass();
+        teachingClass.setName(name);
+        teachingClass.setGrade(grade);
+        teachingClass.setDescription(description);
+        return teachingClass;
+    }
+
+    private static Assignment buildAssignment(String title,
+                                              String workType,
+                                              TeachingClass teachingClass,
+                                              String description) {
+        Assignment assignment = new Assignment();
+        assignment.setTitle(title);
+        assignment.setDescription(description);
+        assignment.setWorkType(workType);
+        assignment.setClassId(teachingClass.getId());
+        assignment.setClassName(teachingClass.getName());
+        return assignment;
+    }
+
+    private static Student buildStudent(String studentNo, String name, TeachingClass teachingClass) {
         Student s = new Student();
         s.setStudentNo(studentNo);
         s.setName(name);
-        s.setClassName(className);
+        s.setClassId(teachingClass.getId());
+        s.setClassName(teachingClass.getName());
         return s;
+    }
+
+    private static void applyAssignment(WorkSubmission submission, Assignment assignment) {
+        submission.setAssignmentId(assignment.getId());
+        submission.setAssignmentTitle(assignment.getTitle());
     }
 }

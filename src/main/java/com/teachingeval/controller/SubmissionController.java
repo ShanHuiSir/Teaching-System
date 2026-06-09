@@ -1,12 +1,10 @@
 package com.teachingeval.controller;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.teachingeval.dto.SubmissionRequest;
+import com.teachingeval.entity.SubmissionFile;
 import com.teachingeval.entity.WorkSubmission;
-import com.teachingeval.repository.SubmissionRepository;
 import com.teachingeval.service.SubmissionService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,12 +33,9 @@ import jakarta.validation.Valid;
 public class SubmissionController {
 
     private final SubmissionService submissionService;
-    private final SubmissionRepository submissionRepository;
 
-    public SubmissionController(SubmissionService submissionService,
-                                SubmissionRepository submissionRepository) {
+    public SubmissionController(SubmissionService submissionService) {
         this.submissionService = submissionService;
-        this.submissionRepository = submissionRepository;
     }
 
     @Operation(summary = "查询作品提交列表", description = "返回系统中已录入的全部作品提交记录。")
@@ -60,27 +55,31 @@ public class SubmissionController {
     @PostMapping(value = "/submissions/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public WorkSubmission uploadSubmission(@RequestParam Long studentId,
+                                           @RequestParam(required = false) Long assignmentId,
                                            @RequestParam String title,
                                            @RequestParam String workType,
                                            @RequestParam(required = false) String remark,
                                            @RequestParam MultipartFile file) {
-        return submissionService.createSubmissionWithFile(studentId, title, workType, remark, file);
+        return submissionService.createSubmissionWithFile(studentId, assignmentId, title, workType, remark, file);
+    }
+
+    @Operation(summary = "查询提交文件列表", description = "返回指定提交下的文件明细，当前上传接口会写入一条主文件记录。")
+    @GetMapping("/submissions/{id}/files")
+    public List<SubmissionFile> listSubmissionFiles(@PathVariable Long id) {
+        return submissionService.listSubmissionFiles(id);
     }
 
     @Operation(summary = "下载作品文件", description = "根据提交ID下载对应的原始作业文件，供前端转发至AI流式评价。")
     @GetMapping("/submissions/{id}/file")
     public FileSystemResource downloadFile(@PathVariable Long id) {
-        WorkSubmission sub = submissionRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "提交记录不存在"));
-        Path path = Path.of(sub.getFilePath());
+        SubmissionFile file = submissionService.getPrimaryFile(id);
+        if (file.getFilePath() == null || file.getFilePath().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
+        }
+        Path path = Path.of(file.getFilePath());
         if (!Files.exists(path)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
         }
-        try {
-            String mime = Files.probeContentType(path);
-            return new FileSystemResource(path);
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "无法读取文件");
-        }
+        return new FileSystemResource(path);
     }
 }

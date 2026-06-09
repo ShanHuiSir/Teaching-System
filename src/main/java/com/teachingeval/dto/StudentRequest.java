@@ -14,8 +14,10 @@ public class StudentRequest {
     @Schema(description = "学生姓名", example = "张三")
     private String name;
 
-    @NotBlank(message = "班级不能为空")
-    @Schema(description = "班级名称", example = "软件 1 班")
+    @Schema(description = "所属班级 ID；传入后优先使用班级表信息", example = "1")
+    private Long classId;
+
+    @Schema(description = "班级名称；classId 为空时用于创建/匹配班级", example = "软件 1 班")
     private String className;
 
     public String getStudentNo() { return studentNo; }
@@ -23,6 +25,9 @@ public class StudentRequest {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public Long getClassId() { return classId; }
+    public void setClassId(Long classId) { this.classId = classId; }
 
     public String getClassName() { return className; }
     public void setClassName(String className) { this.className = className; }

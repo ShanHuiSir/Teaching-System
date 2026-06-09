@@ -11,6 +11,9 @@ public class SubmissionRequest {
     @Schema(description = "学生 ID", example = "1")
     private Long studentId;
 
+    @Schema(description = "关联作业 ID；传入后后端会写入 assignmentId 和 assignmentTitle", example = "1")
+    private Long assignmentId;
+
     @NotBlank(message = "作品标题不能为空")
     @Schema(description = "作品标题", example = "第二阶段实训报告")
     private String title;
@@ -28,6 +31,9 @@ public class SubmissionRequest {
 
     public Long getStudentId() { return studentId; }
     public void setStudentId(Long studentId) { this.studentId = studentId; }
+
+    public Long getAssignmentId() { return assignmentId; }
+    public void setAssignmentId(Long assignmentId) { this.assignmentId = assignmentId; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
