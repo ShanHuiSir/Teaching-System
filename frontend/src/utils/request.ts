@@ -29,7 +29,13 @@ http.interceptors.response.use(
   (err: unknown) => {
     if (err && typeof err === 'object' && 'response' in err) {
       const axiosErr = err as { response?: { status?: number } }
-      if (!axiosErr.response || axiosErr.response.status! >= 500) {
+      const status = axiosErr.response?.status
+      if (status === 401 || status === 403) {
+        document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+        window.location.href = '/login'
+        return Promise.reject(err)
+      }
+      if (!axiosErr.response || status! >= 500) {
         notifyHttpError()
       }
     } else {

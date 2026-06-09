@@ -497,7 +497,7 @@
           <button
             ref="submitBtnRef"
             class="act-btn act-btn--review"
-            :disabled="submitting || !teacherComment.trim()"
+            :disabled="submitting || !teacherComment.trim() || !activeEval || activeEval.status < 1"
             @click="submitReview"
           >
             <svg
@@ -510,7 +510,7 @@
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>{{ submitting ? '提交中...' : '提交批改' }}</span>
+            <span>{{ !activeEval || activeEval.status < 1 ? '请先执行AI评价' : submitting ? '提交中...' : '提交批改' }}</span>
           </button>
         </div>
 
