@@ -30,6 +30,14 @@ public class WorkSubmission {
     @Schema(description = "学生姓名快照", example = "张三")
     private String studentName;
 
+    @Column(name = "assignment_id")
+    @Schema(description = "关联作业 ID，正式模型字段；为空表示历史或临时提交", example = "1")
+    private Long assignmentId;
+
+    @Column(name = "assignment_title", length = 128)
+    @Schema(description = "关联作业标题快照", example = "第二阶段实训报告")
+    private String assignmentTitle;
+
     @Column(name = "title", nullable = false, length = 128)
     @Schema(description = "作品标题", example = "第二阶段实训报告")
     private String title;
@@ -75,11 +83,23 @@ public class WorkSubmission {
     @Schema(description = "提交时间")
     private LocalDateTime submittedAt;
 
+    @Column(name = "updated_at", nullable = false)
+    @Schema(description = "提交记录更新时间")
+    private LocalDateTime updatedAt;
+
     @PrePersist
     void prePersist() {
         if (submittedAt == null) {
             submittedAt = LocalDateTime.now();
         }
+        if (updatedAt == null) {
+            updatedAt = submittedAt;
+        }
+    }
+
+    @jakarta.persistence.PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -104,6 +124,22 @@ public class WorkSubmission {
 
     public void setStudentName(String studentName) {
         this.studentName = studentName;
+    }
+
+    public Long getAssignmentId() {
+        return assignmentId;
+    }
+
+    public void setAssignmentId(Long assignmentId) {
+        this.assignmentId = assignmentId;
+    }
+
+    public String getAssignmentTitle() {
+        return assignmentTitle;
+    }
+
+    public void setAssignmentTitle(String assignmentTitle) {
+        this.assignmentTitle = assignmentTitle;
     }
 
     public String getTitle() {
@@ -192,5 +228,13 @@ public class WorkSubmission {
 
     public void setSubmittedAt(LocalDateTime submittedAt) {
         this.submittedAt = submittedAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

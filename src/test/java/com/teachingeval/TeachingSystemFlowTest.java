@@ -64,7 +64,9 @@ class TeachingSystemFlowTest {
                 .andExpect(jsonPath("$.size").value(3))
                 .andExpect(jsonPath("$.totalElements").value(8))
                 .andExpect(jsonPath("$.totalPages").value(3))
-                .andExpect(jsonPath("$.hasNext").value(true));
+                .andExpect(jsonPath("$.hasNext").value(true))
+                .andExpect(jsonPath("$.content[0].classId", greaterThan(0)))
+                .andExpect(jsonPath("$.content[0].className").value("软件 1 班"));
 
         mockMvc.perform(get("/api/students/page")
                         .param("page", "-1")
@@ -75,6 +77,29 @@ class TeachingSystemFlowTest {
                 .andExpect(jsonPath("$.size").value(200))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].name").value("张三"));
+    }
+
+    @Test
+    void classAndAssignmentModelsExposeStableRelationships() throws Exception {
+        mockMvc.perform(get("/api/classes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(5)))
+                .andExpect(jsonPath("$[0].name").value("软件 1 班"))
+                .andExpect(jsonPath("$[0].grade").value("2026"));
+
+        String assignmentResponse = mockMvc.perform(get("/api/assignments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(6)))
+                .andExpect(jsonPath("$[0].classId", greaterThan(0)))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Integer classId = com.jayway.jsonpath.JsonPath.read(assignmentResponse, "$[0].classId");
+        mockMvc.perform(get("/api/assignments")
+                        .param("classId", String.valueOf(classId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].classId").value(classId));
     }
 
     @Test
@@ -102,21 +127,42 @@ class TeachingSystemFlowTest {
                 .getResponse()
                 .getContentAsString();
         Integer studentId = com.jayway.jsonpath.JsonPath.read(studentPageResponse, "$.content[0].id");
+        Integer classId = com.jayway.jsonpath.JsonPath.read(studentPageResponse, "$.content[0].classId");
+
+        String assignmentResponse = mockMvc.perform(post("/api/assignments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "自动化测试作业",
+                                  "description": "主流程联调作业",
+                                  "workType": "代码压缩包",
+                                  "classId": %d
+                                }
+                                """.formatted(classId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("自动化测试作业"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Integer assignmentId = com.jayway.jsonpath.JsonPath.read(assignmentResponse, "$.id");
 
         String submissionResponse = mockMvc.perform(post("/api/submissions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "studentId": %d,
+                                  "assignmentId": %d,
                                   "title": "自动化测试作业",
                                   "fileName": "auto-test.zip",
                                   "workType": "代码压缩包",
                                   "remark": "覆盖最小主流程"
                                 }
-                                """.formatted(studentId)))
+                                """.formatted(studentId, assignmentId)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", greaterThan(0)))
                 .andExpect(jsonPath("$.studentName").value("张三"))
+                .andExpect(jsonPath("$.assignmentId").value(assignmentId))
+                .andExpect(jsonPath("$.assignmentTitle").value("自动化测试作业"))
                 .andExpect(jsonPath("$.title").value("自动化测试作业"))
                 .andReturn()
                 .getResponse()
@@ -210,6 +256,14 @@ class TeachingSystemFlowTest {
         assertThat(Files.exists(savedPath)).isTrue();
         String savedContent = Files.readString(savedPath);
         assertThat(savedContent).contains("Binary Search Implementation");
+
+        mockMvc.perform(get("/api/submissions/{submissionId}/files", submissionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].submissionId").value(submissionId))
+                .andExpect(jsonPath("$[0].fileName").value("sample-code.cpp"))
+                .andExpect(jsonPath("$[0].filePath").value(filePath))
+                .andExpect(jsonPath("$[0].primaryFile").value(true));
     }
 
     @Test

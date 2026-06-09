@@ -26,8 +26,12 @@ public class Student {
     @Schema(description = "学生姓名", example = "张三")
     private String name;
 
+    @Column(name = "class_id")
+    @Schema(description = "所属班级 ID，正式模型字段；className 保留为快照兼容", example = "1")
+    private Long classId;
+
     @Column(name = "class_name", nullable = false, length = 64)
-    @Schema(description = "班级名称", example = "软件 1 班")
+    @Schema(description = "班级名称快照，兼容旧前端和历史提交", example = "软件 1 班")
     private String className;
 
     public Student() {
@@ -55,6 +59,14 @@ public class Student {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Long getClassId() {
+        return classId;
+    }
+
+    public void setClassId(Long classId) {
+        this.classId = classId;
     }
 
     public String getClassName() {
