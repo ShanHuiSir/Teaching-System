@@ -253,32 +253,29 @@ def evaluate(
         error_msg = str(e)
         raise
     except json.JSONDecodeError:
-        error_msg = f"AI returned non-JSON content: {raw[:200] if 'raw' in dir() else 'N/A'}"
+        error_msg = f"AI returned non-JSON content: {raw[:200]}"
         logger.warning(error_msg)
         eval_result = {
             "aiScore": 0,
             "aiIssues": "1. AI 返回格式异常，请联系教师人工评阅",
-            "aiComment": f"AI 返回了非 JSON 内容，原始输出：{raw[:200] if 'raw' in dir() else 'N/A'}",
+            "aiComment": f"AI 返回了非 JSON 内容，原始输出：{raw[:200]}",
+            "dimensionScores": [],
+        }
+        success = False
+    except Exception as e:
+        error_msg = f"Unexpected evaluation error: {e}"
+        logger.warning(error_msg)
+        eval_result = {
+            "aiScore": 0,
+            "aiIssues": "1. AI 评价流程异常，请联系教师人工评阅",
+            "aiComment": f"评价服务内部错误：{e}",
             "dimensionScores": [],
         }
         success = False
     finally:
         latency_ms = (time.perf_counter() - t0) * 1000
-        if success and 'result' in dir():
+        if success:
             eval_result = _build_result(result, dimensions)
-
-        from evaluator.logger import log_evaluation
-
-        log_evaluation(
-            student_name=student_name,
-            subject_type=subject_type,
-            rubric_used=dimensions,
-            eval_result=eval_result,
-            latency_ms=latency_ms,
-            attempt_count=attempt_count,
-            success=success,
-            error=error_msg,
-        )
 
     return eval_result
 
@@ -433,19 +430,6 @@ def evaluate_stream(
             }
             yield _format_sse("result", eval_result)
     finally:
-        latency_ms = (time.perf_counter() - t0) * 1000
-        from evaluator.logger import log_evaluation
-
-        log_evaluation(
-            student_name=student_name,
-            subject_type=subject_type,
-            rubric_used=dimensions,
-            eval_result=eval_result if success else None,
-            latency_ms=latency_ms,
-            attempt_count=attempt_count,
-            success=success,
-            error=error_msg,
-        )
         yield _format_sse("done", {})
 
 
