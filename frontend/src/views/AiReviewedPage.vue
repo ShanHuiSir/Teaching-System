@@ -21,14 +21,14 @@
       <div v-else-if="!filtered.length" class="empty-state"><div class="empty-state__icon">&#129302;</div><div class="empty-state__text">暂无AI已审批作业</div></div>
       <table v-else class="table"><thead><tr><th>学生</th><th>作业标题</th><th>文件名</th><th>类型</th><th>AI评分</th><th>提交时间</th><th style="width:180px;">操作</th></tr></thead><tbody><tr v-for="s in filtered" :key="s.id"><td>{{ s.studentName }}</td><td>{{ s.title }}</td><td>{{ s.fileName }}</td><td>{{ s.workType }}</td><td>{{ evalMap[s.id]?.aiScore ?? '--' }}</td><td>{{ fmt(s.submittedAt) }}</td><td class="action-cell"><router-link class="btn btn--tonal btn--sm" :to="evalLink(s)">复核</router-link><button class="btn btn--text btn--sm" @click="doPreviewFile(s.id, s.fileName, s.contentType)">预览</button><button class="btn btn--text btn--sm" @click="doDownloadFile(s.id, s.fileName)">下载</button></td></tr></tbody></table>
     </div></div>
-    <FilePreviewDialog
+    <FloatingPreview
       v-model="previewVisible"
       :file-name="previewFileName"
       :content="previewContent"
       :loading="previewLoading"
       :error="previewError"
+      :submission-id="previewFileId"
       @closed="closePreview"
-      @download="doDownloadFile(previewFileId, previewFileName)"
     />
   </div>
 </template>
@@ -37,7 +37,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import usePolling from '@/composables/usePolling';
 import { useFileActions } from '@/composables/useFileActions';
-import FilePreviewDialog from '@/components/FilePreviewDialog.vue';
+import FloatingPreview from '@/components/FloatingPreview.vue';
 import { ElMessage } from 'element-plus';
 import { storeToRefs } from 'pinia';
 import { get } from '@/utils/request';

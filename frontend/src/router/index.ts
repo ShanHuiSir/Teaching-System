@@ -56,6 +56,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/LoadingPage.vue'),
   },
   {
+    path: '/preview/:submissionId',
+    name: 'FilePreview',
+    component: () => import('../views/FilePreviewPage.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFoundPage.vue'),

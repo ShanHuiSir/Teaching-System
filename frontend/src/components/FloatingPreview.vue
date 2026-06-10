@@ -17,17 +17,24 @@
               <span class="fp-bar__name">{{ fileName }}</span>
             </div>
             <div class="fp-bar__actions">
-              <button class="fp-bar__btn" title="最大化" @click.stop="toggleMax">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <rect v-if="isMax" x="4" y="4" width="16" height="16" rx="1" />
-                  <path v-else d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                </svg>
-              </button>
-              <button class="fp-bar__btn fp-bar__btn--close" title="关闭" @click.stop="$emit('update:modelValue', false); $emit('closed')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+              <div class="fp-tooltip-wrap">
+                <button class="fp-bar__btn" @click.stop="openInNewTab">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </button>
+                <span class="fp-tooltip">在新标签页中打开</span>
+              </div>
+              <div class="fp-tooltip-wrap">
+                <button class="fp-bar__btn fp-bar__btn--close" @click.stop="$emit('update:modelValue', false); $emit('closed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+                <span class="fp-tooltip">关闭</span>
+              </div>
             </div>
           </div>
 
@@ -39,7 +46,6 @@
             </div>
             <div v-else-if="error" class="fp-error">
               <p>{{ error }}</p>
-              <button class="fp-dl-btn" @click="$emit('download')">下载文件</button>
             </div>
             <div v-else class="fp-scroll">
               <pre class="fp-code"><code>{{ content }}</code></pre>
@@ -62,45 +68,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onBeforeUnmount } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 
 const emit = defineEmits<{
   'update:modelValue': [v: boolean]
   closed: []
-  download: []
 }>()
 
-defineProps<{
+const props = defineProps<{
   modelValue: boolean
   fileName: string
   content: string
   loading: boolean
   error: string
+  submissionId?: number
 }>()
 
 const x = ref(80)
 const y = ref(60)
 const w = ref(720)
 const h = ref(500)
-const isMax = ref(false)
 const zIndex = ref(2000)
 let globalZ = 2000
 
 const MIN_W = 360
 const MIN_H = 240
 
-// store pre-max bounds
-let preMax = { x: 0, y: 0, w: 0, h: 0 }
-
-const windowStyle = computed(() => {
-  if (isMax.value) {
-    return { left: '0px', top: '0px', width: '100vw', height: '100vh', borderRadius: '0', zIndex: zIndex.value }
-  }
-  return { left: `${x.value}px`, top: `${y.value}px`, width: `${w.value}px`, height: `${h.value}px`, zIndex: zIndex.value }
-})
+const windowStyle = computed(() => ({
+  left: `${x.value}px`, top: `${y.value}px`, width: `${w.value}px`, height: `${h.value}px`, zIndex: zIndex.value,
+}))
 
 function onFocus() {
   zIndex.value = ++globalZ
+}
+
+function openInNewTab() {
+  if (props.submissionId != null) {
+    window.open(`/preview/${props.submissionId}`, '_blank')
+  }
 }
 
 function clamp(v: number, lo: number, hi: number) {
@@ -115,7 +120,6 @@ let origX = 0
 let origY = 0
 
 function onDragStart(e: MouseEvent) {
-  if (isMax.value) return
   dragging = true
   dragSX = e.screenX
   dragSY = e.screenY
@@ -148,7 +152,6 @@ let rX = 0
 let rY = 0
 
 function onResizeStart(e: MouseEvent, dir: string) {
-  if (isMax.value) return
   resizing = true
   rDir = dir
   rSX = e.screenX
@@ -175,17 +178,6 @@ function onResizeEnd() {
   resizing = false
   document.removeEventListener('mousemove', onResize)
   document.removeEventListener('mouseup', onResizeEnd)
-}
-
-function toggleMax() {
-  onFocus()
-  if (isMax.value) {
-    x.value = preMax.x; y.value = preMax.y; w.value = preMax.w; h.value = preMax.h
-    isMax.value = false
-  } else {
-    preMax = { x: x.value, y: y.value, w: w.value, h: h.value }
-    isMax.value = true
-  }
 }
 
 onBeforeUnmount(() => {
@@ -244,6 +236,35 @@ onBeforeUnmount(() => {
   }
 }
 
+// ── Tooltip ──
+.fp-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  &:hover .fp-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: .6s;
+  }
+}
+.fp-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgb(var(--md-sys-color-inverse-surface));
+  color: rgb(var(--md-sys-color-inverse-on-surface));
+  font: 400 12px/18px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .15s ease, visibility .15s ease;
+  transition-delay: 0s;
+  z-index: 10;
+}
+
 // ── Body ──
 .fp-body {
   flex: 1; overflow: hidden; display: flex; flex-direction: column;
@@ -270,17 +291,6 @@ onBeforeUnmount(() => {
   color: rgb(var(--md-sys-color-error));
   font: 400 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
 }
-.fp-dl-btn {
-  margin-top: 16px; height: 36px; padding: 0 20px;
-  border: none; border-radius: 10px;
-  background: rgb(var(--md-sys-color-primary));
-  color: rgb(var(--md-sys-color-on-primary));
-  font: 500 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
-  cursor: pointer;
-  transition: filter .15s ease;
-  &:hover { filter: brightness(0.9); }
-}
-
 // ── Spinner ──
 .fp-spinner {
   width: 20px; height: 20px;

@@ -26,14 +26,14 @@
         </table>
       </div>
     </div>
-    <FilePreviewDialog
+    <FloatingPreview
       v-model="previewVisible"
       :file-name="previewFileName"
       :content="previewContent"
       :loading="previewLoading"
       :error="previewError"
+      :submission-id="previewFileId"
       @closed="closePreview"
-      @download="doDownloadFile(previewFileId, previewFileName)"
     />
   </div>
 </template>
@@ -42,7 +42,7 @@
 import { ref, onMounted } from 'vue';
 import { get } from '@/utils/request';
 import { useFileActions } from '@/composables/useFileActions';
-import FilePreviewDialog from '@/components/FilePreviewDialog.vue';
+import FloatingPreview from '@/components/FloatingPreview.vue';
 import AppNotice from '@/components/AppNotice.vue';
 import type { WorkSubmission } from '@/types';
 

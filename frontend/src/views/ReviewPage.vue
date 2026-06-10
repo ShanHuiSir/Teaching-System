@@ -542,14 +542,14 @@
         ></textarea>
       </div>
     </div>
-    <FilePreviewDialog
+    <FloatingPreview
       v-model="previewVisible"
       :file-name="previewFileName"
       :content="previewContent"
       :loading="previewLoading"
       :error="previewError"
+      :submission-id="previewFileId"
       @closed="closePreview"
-      @download="doDownloadFile(previewFileId, previewFileName)"
     />
   </div>
 </template>
@@ -576,7 +576,7 @@ import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
-import FilePreviewDialog from '../components/FilePreviewDialog.vue'
+import FloatingPreview from '../components/FloatingPreview.vue'
 import { useFileActions } from '../composables/useFileActions'
 
 const route = useRoute()

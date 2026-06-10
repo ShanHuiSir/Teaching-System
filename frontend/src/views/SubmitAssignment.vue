@@ -97,14 +97,14 @@
       @close="snackbar.visible = false"
       @action="handleSnackbarAction"
     />
-    <FilePreviewDialog
+    <FloatingPreview
       v-model="previewVisible"
       :file-name="previewFileName"
       :content="previewContent"
       :loading="previewLoading"
       :error="previewError"
+      :submission-id="previewFileId"
       @closed="closePreview"
-      @download="doDownloadSubmitFile(previewFileId, previewFileName)"
     />
   </div>
 </template>
@@ -115,7 +115,7 @@ import { ElMessage } from 'element-plus';
 import type { UploadFile } from 'element-plus';
 import { get, post } from '@/utils/request';
 import { useFileActions } from '@/composables/useFileActions';
-import FilePreviewDialog from '@/components/FilePreviewDialog.vue';
+import FloatingPreview from '@/components/FloatingPreview.vue';
 import AppNotice from '@/components/AppNotice.vue';
 import Snackbar from '@/components/Snackbar.vue';
 import type { Student, WorkSubmission } from '@/types';
