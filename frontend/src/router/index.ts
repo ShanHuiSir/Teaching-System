@@ -2,14 +2,6 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { getCookie } from '../utils/cookie'
 
 import LoginPage from '../views/LoginPage.vue'
-import MainLayout from '../layouts/MainLayout.vue'
-import DashboardPage from '../views/DashboardPage.vue'
-import ReviewPage from '../views/ReviewPage.vue'
-import ClassesPage from '../views/ClassesPage.vue'
-import AssignmentsPage from '../views/AssignmentsPage.vue'
-import ForbiddenPage from '../views/ForbiddenPage.vue'
-import LoadingPage from '../views/LoadingPage.vue'
-import NotFoundPage from '../views/NotFoundPage.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -23,50 +15,55 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/dashboard',
-    component: MainLayout,
+    component: () => import('../layouts/MainLayout.vue'),
     meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'Dashboard', component: DashboardPage },
+      { path: '', name: 'Dashboard', component: () => import('../views/DashboardPage.vue') },
     ],
   },
   {
     path: '/review',
-    component: MainLayout,
+    component: () => import('../layouts/MainLayout.vue'),
     meta: { requiresAuth: true },
     children: [
-      { path: '', component: ReviewPage },
+      { path: '', component: () => import('../views/ReviewPage.vue') },
     ],
   },
   {
     path: '/classes',
-    component: MainLayout,
+    component: () => import('../layouts/MainLayout.vue'),
     meta: { requiresAuth: true },
     children: [
-      { path: '', component: ClassesPage },
+      { path: '', component: () => import('../views/ClassesPage.vue') },
     ],
   },
   {
     path: '/assignments',
-    component: MainLayout,
+    component: () => import('../layouts/MainLayout.vue'),
     meta: { requiresAuth: true },
     children: [
-      { path: '', component: AssignmentsPage },
+      { path: '', component: () => import('../views/AssignmentsPage.vue') },
     ],
   },
   {
     path: '/forbidden',
     name: 'Forbidden',
-    component: ForbiddenPage,
+    component: () => import('../views/ForbiddenPage.vue'),
   },
   {
     path: '/loading',
     name: 'Loading',
-    component: LoadingPage,
+    component: () => import('../views/LoadingPage.vue'),
+  },
+  {
+    path: '/preview/:submissionId',
+    name: 'FilePreview',
+    component: () => import('../views/FilePreviewPage.vue'),
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: NotFoundPage,
+    component: () => import('../views/NotFoundPage.vue'),
   },
 ]
 
