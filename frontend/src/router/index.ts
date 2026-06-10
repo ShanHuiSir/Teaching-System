@@ -19,7 +19,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/',
-    redirect: '/login',
+    redirect: '/dashboard',
   },
   {
     path: '/dashboard',
@@ -53,6 +53,15 @@ const routes: RouteRecordRaw[] = [
       { path: '', component: AssignmentsPage },
     ],
   },
+  // Old path compatibility redirects
+  { path: '/assignments/pending', redirect: '/review' },
+  { path: '/assignments/ai-reviewed', redirect: '/review' },
+  { path: '/assignments/completed', redirect: '/review' },
+  { path: '/students', redirect: '/classes' },
+  { path: '/submit', redirect: '/assignments' },
+  { path: '/works', redirect: '/assignments' },
+  { path: '/export', redirect: '/dashboard' },
+
   {
     path: '/forbidden',
     name: 'Forbidden',
@@ -77,9 +86,8 @@ const router = createRouter({
 
 router.beforeEach(to => {
   const hasToken = !!getCookie('auth_token')
-  if (to.meta.requiresAuth && !hasToken) return '/forbidden'
+  if (to.meta.requiresAuth && !hasToken) return '/login'
   if (to.path === '/login' && hasToken) return '/dashboard'
-  if (to.path === '/forbidden' && hasToken) return '/dashboard'
 })
 
 export default router
