@@ -411,11 +411,11 @@
               </svg>
               <div class="attach-item__info">
                 <span class="attach-item__name">{{ active.fileName }}</span>
-                <span class="attach-item__size">100 KB</span>
+                <span class="attach-item__size">{{ formatFileSize(active.fileSize) }}</span>
               </div>
               <div class="attach-item__btns">
-                <button class="ghost-btn">预览</button>
-                <button class="ghost-btn">下载</button>
+                <button class="ghost-btn" @click="doPreviewFile(active.id, active.fileName, active.contentType)">预览</button>
+                <button class="ghost-btn" @click="doDownloadFile(active.id, active.fileName)">下载</button>
               </div>
             </div>
           </div>
@@ -542,6 +542,15 @@
         ></textarea>
       </div>
     </div>
+    <FloatingPreview
+      v-model="previewVisible"
+      :file-name="previewFileName"
+      :content="previewContent"
+      :loading="previewLoading"
+      :error="previewError"
+      :submission-id="previewFileId"
+      @closed="closePreview"
+    />
   </div>
 </template>
 
@@ -567,6 +576,8 @@ import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
+import FloatingPreview from '../components/FloatingPreview.vue'
+import { useFileActions } from '../composables/useFileActions'
 
 const route = useRoute()
 const snackbar = useSnackbar()
@@ -578,6 +589,13 @@ function iconPaths(type) {
 
 function iconViewBox(type) {
   return FILE_ICONS[type]?.viewBox || '0 0 24 24'
+}
+
+function formatFileSize(size?: number) {
+  if (size == null) return ''
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
 }
 
 const activeTab = ref('assignments')
@@ -602,6 +620,11 @@ const evalMap = ref<Record<string, any>>({})
 const studentsAll = ref<any[]>([])
 const searchQuery = ref('')
 const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
+
+const { previewVisible, previewContent, previewFileName, previewLoading, previewError, downloadFile, previewFile, closePreview } = useFileActions()
+const previewFileId = ref(0)
+function doPreviewFile(id: number, fileName: string, contentType?: string) { previewFileId.value = id; previewFile(id, fileName, contentType) }
+function doDownloadFile(id: number, fileName: string) { downloadFile(id, fileName) }
 
 const filteredSubmissions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
