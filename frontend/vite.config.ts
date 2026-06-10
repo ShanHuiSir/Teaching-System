@@ -11,11 +11,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
   css: {
     preprocessorOptions: {
       scss: {
         loadPaths: [resolve(__dirname, 'src/styles')],
-        additionalData: `@use "mixins" as *;\n`,
+        additionalData: `@import "mixins";\n`,
       },
     },
   },
