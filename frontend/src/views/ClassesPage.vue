@@ -242,7 +242,7 @@
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <p class="modal-card__text">确定要删除班级「{{ deleteModal.name }}」吗？<br />此操作可在5s内撤销。</p>
+            <p class="modal-card__text">确定要删除班级「{{ deleteModal.name }}」吗？<br />已有学生或作业关联的班级不会被删除。</p>
             <div class="modal-card__btns">
               <button class="modal-card__btn modal-card__btn--cancel" @click="deleteModal.open = false">取消</button>
               <HedgehogButton variant="primary" size="sm" @complete="confirmDelete">确认删除</HedgehogButton>
@@ -426,33 +426,25 @@ async function onSave() {
     snackbar.show('请输入班级名称', { variant: 'error' })
     return
   }
-  // TODO: call POST /api/classes or PUT /api/classes/:id when API is ready
-  if (isCreate.value) {
-    const newId = 'cls-' + Date.now()
-    classes.value.push({
-      id: newId,
-      name: form.name.trim(),
-      grade: form.grade,
-      description: form.description.trim(),
-      studentCount: 0,
-      roster: [],
-    })
-    activeId.value = newId
-  } else {
-    const idx = classes.value.findIndex(c => c.id === form.id)
-    if (idx !== -1) {
-      classes.value[idx] = {
-        ...classes.value[idx],
-        name: form.name.trim(),
-        grade: form.grade,
-        description: form.description.trim(),
-      }
-    }
+  const payload = {
+    name: form.name.trim(),
+    grade: form.grade || null,
+    description: form.description.trim(),
   }
-  clearDraft()
-  triggerRipple(window.innerWidth * 0.75, 200)
-  snackbar.show(isCreate.value ? '班级已创建' : '班级已更新', { variant: 'info' })
-  editing.value = false
+
+  try {
+    const saved = isCreate.value
+      ? await http.post('/classes', payload)
+      : await http.put(`/classes/${form.id}`, payload)
+    clearDraft()
+    triggerRipple(window.innerWidth * 0.75, 200)
+    snackbar.show(isCreate.value ? '班级已创建' : '班级已更新', { variant: 'info' })
+    editing.value = false
+    activeId.value = saved.id
+    await fetchClasses()
+  } catch (e: any) {
+    snackbar.show('保存失败：' + (e.message || '网络异常'), { variant: 'error' })
+  }
 }
 
 const deleteModal = reactive({ open: false, id: null, name: '' })
@@ -463,24 +455,18 @@ function onDeleteClick(c) {
   deleteModal.open = true
 }
 
-let undoItem = null
-
-function confirmDelete() {
+async function confirmDelete() {
   deleteModal.open = false
   const c = classes.value.find(x => x.id === deleteModal.id)
   if (!c) return
-  if (activeId.value === c.id) activeId.value = null
-  undoItem = { ...c }
-  classes.value = classes.value.filter(x => x.id !== c.id)
-  snackbar.show(`「${c.name}」已删除`, { variant: 'info', action: '撤销', onAction: undoDelete, duration: 5000 })
-}
-
-function undoDelete() {
-  if (!undoItem) return
-  classes.value = [...classes.value, undoItem]
-  if (undoItem.id === activeId.value) activeId.value = undoItem.id
-  undoItem = null
-  snackbar.show('已撤销删除', { variant: 'info' })
+  try {
+    await http.delete(`/classes/${c.id}`)
+    if (activeId.value === c.id) activeId.value = null
+    classes.value = classes.value.filter(x => x.id !== c.id)
+    snackbar.show(`「${c.name}」已删除`, { variant: 'info' })
+  } catch (e: any) {
+    snackbar.show('删除失败：' + (e.message || '网络异常'), { variant: 'error' })
+  }
 }
 
 const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
@@ -506,46 +492,29 @@ function buildRightButtons() {
 async function fetchClasses() {
   loading.value = true
   try {
-    const students = await http.get('/students')
+    const [classRows, students] = await Promise.all([
+      http.get('/classes'),
+      http.get('/students'),
+    ])
 
-    // Group students by className
+    // Group students by formal classId first, then className for legacy rows.
     const classMap: Record<string, any[]> = {}
     ;(students || []).forEach((s: any) => {
-      const cls = s.className || '未分班'
-      if (!classMap[cls]) classMap[cls] = []
-      classMap[cls].push(s)
+      const key = s.classId ? `id:${s.classId}` : `name:${s.className || '未分班'}`
+      if (!classMap[key]) classMap[key] = []
+      classMap[key].push(s)
     })
 
-    // Preserve locally-created classes and edited fields
-    const manualMap: Record<string, any> = {}
-    classes.value.forEach((c: any) => {
-      if (c.id.startsWith('cls-')) {
-        manualMap[c.name] = c
-      }
-    })
-
-    const existingNames = new Set(Object.keys(classMap))
-
-    classes.value = Object.entries(classMap).map(([name, d], i) => {
-      const manual = manualMap[name]
+    classes.value = (classRows || []).map((c: any) => {
+      const roster = classMap[`id:${c.id}`] || classMap[`name:${c.name}`] || []
       return {
-        id: manual?.id || `stu-${i}`,
-        name: manual?.name || name,
-        grade: manual?.grade || '',
-        description: manual?.description || '',
-        studentCount: d.length,
-        roster: d.map(s => ({
+        ...c,
+        studentCount: roster.length,
+        roster: roster.map(s => ({
           id: s.id,
           name: s.name || '',
           studentNo: s.studentNo || '',
         })),
-      }
-    })
-
-    // Add purely manual classes not in student data
-    Object.values(manualMap).forEach(m => {
-      if (!existingNames.has(m.name) && !classes.value.find(c => c.id === m.id)) {
-        classes.value.push({ ...m, roster: [] })
       }
     })
   } finally {

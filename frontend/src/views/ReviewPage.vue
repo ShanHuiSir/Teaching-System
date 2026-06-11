@@ -618,6 +618,7 @@ const semesters = ref<any[]>([])
 const submissionsRaw = ref<any[]>([])
 const evalMap = ref<Record<string, any>>({})
 const studentsAll = ref<any[]>([])
+const assignmentsAll = ref<any[]>([])
 const searchQuery = ref('')
 const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
 
@@ -706,31 +707,30 @@ const workTypes = computed(() => {
     classStudentCounts[cls] = (classStudentCounts[cls] || 0) + 1
   })
 
-  const map: Record<string, any> = {}
+  const assignmentStats: Record<string, any> = {}
   filteredSubmissions.value.forEach((s: any) => {
-    const type = s.workType || '其他'
-    if (!map[type]) map[type] = { type, count: 0, reviewed: 0, classes: new Set() }
-    map[type].count++
-    if (s.className) map[type].classes.add(s.className)
+    if (!s.assignmentId) return
+    const key = String(s.assignmentId)
+    if (!assignmentStats[key]) assignmentStats[key] = { count: 0, reviewed: 0 }
+    assignmentStats[key].count++
     const ev = evalMap.value[s.id]
-    if (ev && ev.status >= 2) map[type].reviewed++
+    if (ev && ev.status >= 2) assignmentStats[key].reviewed++
   })
 
-  return Object.values(map)
-    .map(w => {
-      const classList = [...w.classes]
-      const total = classList.reduce((sum, cls) => sum + (classStudentCounts[cls] || 0), 0)
+  return assignmentsAll.value
+    .map((a: any) => {
+      const stats = assignmentStats[String(a.id)] || { count: 0, reviewed: 0 }
+      const total = a.className ? classStudentCounts[a.className] || 0 : studentsAll.value.length
       return {
-        type: w.type,
-        submittedCount: w.count,
-        reviewedCount: w.reviewed,
+        type: a.title,
+        submittedCount: stats.count,
+        reviewedCount: stats.reviewed,
         totalStudents: total,
-        className: classList.join('、') || '—',
-        submitRate: total ? Math.round((w.count / total) * 100) : 0,
-        reviewProgress: w.count ? Math.round((w.reviewed / w.count) * 100) : 0,
-        // TODO: replace with real data from GET /api/assignments
-        createdAt: '—',
-        dueDate: '—',
+        className: a.className || '全部班级',
+        submitRate: total ? Math.round((stats.count / total) * 100) : 0,
+        reviewProgress: stats.count ? Math.round((stats.reviewed / stats.count) * 100) : 0,
+        createdAt: a.createdAt ? formatTime(a.createdAt) : '—',
+        dueDate: a.dueAt ? formatTime(a.dueAt) : '—',
       }
     })
     .sort((a, b) => b.submittedCount - a.submittedCount)
@@ -914,7 +914,7 @@ async function onAiEval() {
         : 'general'
 
     // Fetch file blob from Java
-    const fileRes = await fetch(`/api/submissions/${active.value.id}/file`)
+    const fileRes = await fetch(`/api/submissions/${active.value.id}/file`, { credentials: 'include' })
     if (!fileRes.ok) throw new Error('文件下载失败')
     const blob = await fileRes.blob()
     const ext = (active.value.fileName || '').split('.').pop() || 'txt'
@@ -1206,10 +1206,11 @@ function buildRightButtons() {
 
 async function fetchSubmissions() {
   try {
-    const [subs, evals, students] = await Promise.all([
+    const [subs, evals, students, assignments] = await Promise.all([
       http.get('/submissions'),
       http.get('/evaluations'),
       http.get('/students'),
+      http.get('/assignments'),
     ])
     const em = {}
     ;(evals || []).forEach(e => {
@@ -1217,6 +1218,7 @@ async function fetchSubmissions() {
     })
     evalMap.value = em
     studentsAll.value = students || []
+    assignmentsAll.value = assignments || []
     const studentMap = {}
     studentsAll.value.forEach(s => {
       studentMap[s.id] = s

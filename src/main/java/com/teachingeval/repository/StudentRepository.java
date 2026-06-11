@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface StudentRepository extends JpaRepository<Student, Long> {
     boolean existsByStudentNo(String studentNo);
 
+    long countByClassId(Long classId);
+
     Page<Student> findByStudentNoContainingIgnoreCaseOrNameContainingIgnoreCase(String studentNo,
                                                                                String name,
                                                                                Pageable pageable);

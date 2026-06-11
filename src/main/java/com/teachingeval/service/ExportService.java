@@ -34,12 +34,27 @@ public class ExportService {
     }
 
     public void exportTo(OutputStream outputStream) {
+        exportTo(outputStream, null, null);
+    }
+
+    public void exportTo(OutputStream outputStream, Long assignmentId, Long classId) {
         List<WorkSubmission> submissions = submissionRepository.findAll();
-        Map<Long, WorkSubmission> submissionMap = submissions.stream()
-                .collect(Collectors.toMap(WorkSubmission::getId, Function.identity()));
+        if (assignmentId != null) {
+            submissions = submissions.stream()
+                    .filter(submission -> assignmentId.equals(submission.getAssignmentId()))
+                    .toList();
+        }
 
         Map<Long, Student> studentMap = studentRepository.findAll().stream()
                 .collect(Collectors.toMap(Student::getId, Function.identity()));
+        if (classId != null) {
+            submissions = submissions.stream()
+                    .filter(submission -> {
+                        Student student = studentMap.get(submission.getStudentId());
+                        return student != null && classId.equals(student.getClassId());
+                    })
+                    .toList();
+        }
 
         List<EvaluationResult> evaluations = evaluationRepository.findAll();
         Map<Long, EvaluationResult> evalMap = evaluations.stream()

@@ -29,7 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "app.upload.root=target/test-uploads")
+@SpringBootTest(properties = {
+        "app.upload.root=target/test-uploads",
+        "app.auth.enabled=false"
+})
 @AutoConfigureMockMvc
 class TeachingSystemFlowTest {
 

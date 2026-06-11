@@ -4,6 +4,10 @@ import axios from 'axios'
 const http: any = axios.create({
   baseURL: '/api',
   timeout: 120000,
+  withCredentials: true,
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest',
+  },
 })
 
 const httpErrorCbs = new Set<() => void>()

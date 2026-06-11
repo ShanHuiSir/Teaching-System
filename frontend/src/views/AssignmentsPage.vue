@@ -350,7 +350,7 @@
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <p class="modal-card__text">确定要删除「{{ deleteModal.title }}」吗？<br />此操作可在5s内撤销。</p>
+          <p class="modal-card__text">确定要删除「{{ deleteModal.title }}」吗？<br />已有提交记录的作业不会被删除。</p>
           <div class="modal-card__btns">
             <button class="modal-card__btn modal-card__btn--cancel" @click="deleteModal.open = false">取消</button>
             <HedgehogButton variant="primary" size="sm" @complete="confirmDelete">确认删除</HedgehogButton>
@@ -393,6 +393,7 @@ const snackbar = useSnackbar()
 const loading = ref(false)
 const activeId = ref(null)
 const assignments = ref<any[]>([])
+const classesAll = ref<any[]>([])
 const searchQuery = ref('')
 const sortKey = ref<string | null>(null)
 
@@ -423,11 +424,7 @@ const editorRef = ref(null)
 const active = computed(() => assignments.value.find(a => a.id === activeId.value) || null)
 
 const availableClasses = computed(() => {
-  const set = new Set<string>()
-  studentsAll.value.forEach((s: any) => {
-    if (s.className) set.add(s.className)
-  })
-  return [...set].sort()
+  return classesAll.value.map((c: any) => c.name).filter(Boolean).sort()
 })
 
 const selectedClasses = computed(() => {
@@ -520,7 +517,7 @@ function startEdit(a) {
     form.workType = a.workType || ''
     form.classes = a.className ? a.className.split('、') : []
     form.description = a.description || ''
-    form.dueDate = a.dueDate || ''
+    form.dueDate = toDatetimeLocal(a.dueAt || a.dueDate)
   }
   editing.value = true
   nextTick(autoResize)
@@ -550,9 +547,9 @@ watchEffect(() => {
 function toggleClass(cls) {
   const idx = form.classes.indexOf(cls)
   if (idx === -1) {
-    form.classes.push(cls)
+    form.classes = [cls]
   } else {
-    form.classes.splice(idx, 1)
+    form.classes = []
   }
 }
 
@@ -561,6 +558,18 @@ function formatDate(iso) {
   const d = new Date(iso)
   const pad = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function toDatetimeLocal(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function toApiDateTime(value) {
+  if (!value) return null
+  return value.length === 16 ? `${value}:00` : value
 }
 
 function autoResize() {
@@ -575,12 +584,35 @@ async function onSave() {
     snackbar.show('请输入作业名称', { variant: 'error' })
     return
   }
-  // TODO: call POST /api/assignments or PUT /api/assignments/:id when API is ready
-  clearDraft()
-  triggerRipple(window.innerWidth * 0.75, 200)
-  snackbar.show(isCreate.value ? '作业已发布' : '作业已更新', { variant: 'info' })
-  editing.value = false
-  fetchAssignments()
+  if (!form.workType.trim()) {
+    snackbar.show('请输入作业类型', { variant: 'error' })
+    return
+  }
+
+  const className = form.classes[0] || ''
+  const classItem = classesAll.value.find((c: any) => c.name === className)
+  const payload = {
+    title: form.title.trim(),
+    workType: form.workType.trim(),
+    description: form.description.trim(),
+    classId: classItem?.id || null,
+    className: classItem ? null : className || null,
+    dueAt: toApiDateTime(form.dueDate),
+  }
+
+  try {
+    const saved = isCreate.value
+      ? await http.post('/assignments', payload)
+      : await http.put(`/assignments/${form.id}`, payload)
+    clearDraft()
+    triggerRipple(window.innerWidth * 0.75, 200)
+    snackbar.show(isCreate.value ? '作业已发布' : '作业已更新', { variant: 'info' })
+    editing.value = false
+    activeId.value = saved.id
+    await fetchAssignments()
+  } catch (e: any) {
+    snackbar.show('保存失败：' + (e.message || '网络异常'), { variant: 'error' })
+  }
 }
 
 const deleteModal = reactive({ open: false, id: null, title: '' })
@@ -623,22 +655,15 @@ function confirmDelete() {
   onDelete({ id: deleteModal.id, title: deleteModal.title })
 }
 
-let undoItem = null
-
 async function onDelete(a) {
-  // TODO: call DELETE /api/assignments/:id when API is ready
-  if (activeId.value === a.id) activeId.value = null
-  undoItem = { ...a }
-  assignments.value = assignments.value.filter(x => x.id !== a.id)
-  snackbar.show(`「${a.title}」已删除`, { variant: 'info', action: '撤销', onAction: undoDelete, duration: 5000 })
-}
-
-function undoDelete() {
-  if (!undoItem) return
-  assignments.value = [...assignments.value, undoItem].sort((a, b) => b.submittedCount - a.submittedCount)
-  if (undoItem.id === activeId.value) activeId.value = undoItem.id
-  undoItem = null
-  snackbar.show('已撤销删除', { variant: 'info' })
+  try {
+    await http.delete(`/assignments/${a.id}`)
+    if (activeId.value === a.id) activeId.value = null
+    assignments.value = assignments.value.filter(x => x.id !== a.id)
+    snackbar.show(`「${a.title}」已删除`, { variant: 'info' })
+  } catch (e: any) {
+    snackbar.show('删除失败：' + (e.message || '网络异常'), { variant: 'error' })
+  }
 }
 
 const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
@@ -679,17 +704,19 @@ function buildRightButtons() {
   ]
 }
 
-// TODO: Replace with GET /api/assignments when API is ready.
 async function fetchAssignments() {
   loading.value = true
   try {
-    const [subs, evals, students] = await Promise.all([
+    const [assignmentRows, subs, evals, students, classes] = await Promise.all([
+      http.get('/assignments'),
       http.get('/submissions'),
       http.get('/evaluations'),
       http.get('/students'),
+      http.get('/classes'),
     ])
 
     studentsAll.value = students || []
+    classesAll.value = classes || []
 
     const evalMap = {}
     ;(evals || []).forEach(e => {
@@ -702,38 +729,35 @@ async function fetchAssignments() {
       classStudentCounts[cls] = (classStudentCounts[cls] || 0) + 1
     })
 
-    const map: Record<string, any> = {}
+    const submissionStats: Record<string, any> = {}
     ;(subs || []).forEach((s: any) => {
-      const type = s.workType || '其他'
-      if (!map[type]) map[type] = { count: 0, reviewed: 0, classes: new Set(), latestTime: '' }
-      map[type].count++
-      if (s.className) map[type].classes.add(s.className)
+      if (!s.assignmentId) return
+      const key = String(s.assignmentId)
+      if (!submissionStats[key]) submissionStats[key] = { count: 0, reviewed: 0, latestTime: '' }
+      submissionStats[key].count++
       const ev = evalMap[s.id]
-      if (ev && ev.status >= 2) map[type].reviewed++
-      if (s.submittedAt && s.submittedAt > map[type].latestTime) map[type].latestTime = s.submittedAt
+      if (ev && ev.status >= 2) submissionStats[key].reviewed++
+      if (s.submittedAt && s.submittedAt > submissionStats[key].latestTime) {
+        submissionStats[key].latestTime = s.submittedAt
+      }
     })
 
-    assignments.value = Object.entries(map)
-      .map(([type, d], i) => {
-        const classList = [...d.classes]
-        const total = classList.reduce((sum, cls) => sum + (classStudentCounts[cls] || 0), 0)
+    assignments.value = (assignmentRows || [])
+      .map((a: any) => {
+        const stat = submissionStats[String(a.id)] || { count: 0, reviewed: 0, latestTime: '' }
+        const total = a.className ? classStudentCounts[a.className] || 0 : studentsAll.value.length
         return {
-          id: `wt-${i}`,
-          title: type,
-          workType: type,
-          className: classList.join('、'),
-          description: '',
-          submittedCount: d.count,
-          reviewedCount: d.reviewed,
+          ...a,
+          dueDate: a.dueAt,
+          submittedCount: stat.count,
+          reviewedCount: stat.reviewed,
           totalStudents: total,
-          submitRate: total ? Math.round((d.count / total) * 100) : 0,
-          reviewProgress: d.count ? Math.round((d.reviewed / d.count) * 100) : 0,
-          latestTime: d.latestTime,
-          createdAt: '',
-          dueDate: '',
+          submitRate: total ? Math.round((stat.count / total) * 100) : 0,
+          reviewProgress: stat.count ? Math.round((stat.reviewed / stat.count) * 100) : 0,
+          latestTime: stat.latestTime || a.updatedAt || a.createdAt,
         }
       })
-      .sort((a, b) => b.submittedCount - a.submittedCount)
+      .sort((a, b) => (b.latestTime || '').localeCompare(a.latestTime || ''))
   } finally {
     loading.value = false
   }

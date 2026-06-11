@@ -3,8 +3,11 @@ package com.teachingeval.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -41,5 +44,19 @@ public class AssignmentController {
     @ResponseStatus(HttpStatus.CREATED)
     public Assignment createAssignment(@Valid @RequestBody AssignmentRequest request) {
         return assignmentService.createAssignment(request);
+    }
+
+    @Operation(summary = "更新作业", description = "更新作业标题、类型、班级归属和截止时间。")
+    @PutMapping("/{id}")
+    public Assignment updateAssignment(@PathVariable Long id,
+                                       @Valid @RequestBody AssignmentRequest request) {
+        return assignmentService.updateAssignment(id, request);
+    }
+
+    @Operation(summary = "删除作业", description = "删除没有提交记录关联的作业。")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAssignment(@PathVariable Long id) {
+        assignmentService.deleteAssignment(id);
     }
 }

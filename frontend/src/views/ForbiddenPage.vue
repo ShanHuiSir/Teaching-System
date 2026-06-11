@@ -46,14 +46,13 @@ import { useRouter } from 'vue-router'
 import { getCookie, delCookie } from '../utils/cookie'
 
 const router = useRouter()
-const hasToken = computed(() => !!getCookie('auth_token'))
+const hasToken = computed(() => !!getCookie('user_name'))
 
 function goHome() {
   router.replace('/dashboard')
 }
 
 function goLogin() {
-  delCookie('auth_token')
   delCookie('user_name')
   router.replace('/login')
 }

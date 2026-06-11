@@ -385,8 +385,12 @@ async function onResetDemo() {
   }
 }
 
-function logout() {
-  delCookie('auth_token')
+async function logout() {
+  try {
+    await http.post('/auth/logout')
+  } catch {
+    // Local logout still clears the visible user state.
+  }
   delCookie('user_name')
   menuOpen.value = false
   router.replace('/login')
