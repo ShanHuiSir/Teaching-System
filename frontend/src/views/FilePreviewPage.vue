@@ -21,9 +21,8 @@
 
     <!-- Content -->
     <div class="preview-body">
-      <div v-if="loading" class="preview-state">
-        <div class="fp-spinner" />
-        <span>加载中...</span>
+      <div v-if="loading" class="preview-skeleton">
+        <div v-for="i in 12" :key="i" class="preview-skeleton__line" :style="{ width: skeletonWidths[(i - 1) % skeletonWidths.length] }" />
       </div>
       <div v-else-if="error" class="preview-state preview-state--error">
         <p>{{ error }}</p>
@@ -42,6 +41,7 @@ const content = ref('')
 const fileName = ref('')
 const loading = ref(true)
 const error = ref('')
+const skeletonWidths = ['95%', '78%', '88%', '60%', '92%', '72%', '85%', '55%', '90%', '68%', '82%', '45%']
 
 function closeTab() {
   window.close()
@@ -150,13 +150,27 @@ onMounted(async () => {
   &--error { flex-direction: column; color: rgb(var(--md-sys-color-error)); }
 }
 
-// ── Spinner ──
-.fp-spinner {
-  width: 20px; height: 20px;
-  border: 2px solid rgb(var(--md-sys-color-outline-variant));
-  border-top-color: rgb(var(--md-sys-color-primary));
-  border-radius: 50%;
-  animation: fp-spin .6s linear infinite;
+// ── Skeleton ──
+.preview-skeleton {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  &__line {
+    height: 14px;
+    border-radius: 7px;
+    animation: preview-shimmer 1.8s ease-in-out infinite;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--md-sys-color-on-surface) / 0.04) 25%,
+      rgb(var(--md-sys-color-on-surface) / 0.08) 40%,
+      rgb(var(--md-sys-color-on-surface) / 0.04) 55%
+    );
+    background-size: 300% 100%;
+  }
 }
-@keyframes fp-spin { to { transform: rotate(360deg); } }
+@keyframes preview-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -50% 0; }
+}
 </style>

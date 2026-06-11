@@ -772,12 +772,11 @@ watch(refreshTick, fetchAssignments)
 <style lang="scss" scoped>
 .ap {
   display: flex;
-  height: 100%;
-  overflow: hidden;
 
   &__panel {
     flex: 0 0 50%;
-    overflow-y: auto;
+    height: calc(100vh - 112px);
+    overflow-y: scroll;
     min-width: 0;
   }
 

@@ -1266,14 +1266,12 @@ watch(filteredSubmissions, () => {
 <style lang="scss" scoped>
 .review {
   display: flex;
-  height: 100%;
-  overflow: hidden;
 
   &__panel {
     flex: 0 0 50%;
-    overflow-y: auto;
+    height: calc(100vh - 112px);
+    overflow-y: scroll;
     min-width: 0;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &__list {

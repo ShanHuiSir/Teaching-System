@@ -858,7 +858,7 @@ function go(path) {
 /* ── Content ── */
 .layout__content {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 24px;
 }
 </style>

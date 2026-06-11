@@ -47,6 +47,12 @@ body {
   --md-sys-color-shadow: 0 0 0;
 }
 
+/* ── Page layout ── */
+.page {
+  height: calc(100vh - 112px);
+  overflow-y: scroll;
+}
+
 /* MD3 Dark Theme */
 .dark {
   --md-sys-color-primary: 128 213 212;
@@ -78,7 +84,57 @@ body {
   --md-sys-color-surface-container: 26 33 33;
   --md-sys-color-surface-container-high: 37 43 43;
   --md-sys-color-surface-container-highest: 47 54 54;
-  --md-sys-color-inverse-surface: 221 228 227;
-  --md-sys-color-inverse-on-surface: 43 50 49;
   --md-sys-color-shadow: 0 0 0;
+}
+
+/* ── Custom Scrollbar (global) ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #4b5563;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af #e5e7eb;
+}
+
+/* MD3 Dark Theme scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+.dark ::-webkit-scrollbar-thumb:active {
+  background: #9ca3af;
+}
+
+.dark * {
+  scrollbar-color: #4b5563 #1f2937;
 }

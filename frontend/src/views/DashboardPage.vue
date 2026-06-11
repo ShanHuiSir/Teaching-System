@@ -113,8 +113,17 @@
     <section v-if="showClassStats" class="dash__section">
       <h2 class="dash__section-title">班级统计</h2>
       <div class="class-grid">
-        <div v-for="c in classStats" :key="c.name" class="class-card">
-          <span class="class-card__name">{{ c.name }}</span>
+        <div
+          v-for="c in classStats"
+          :key="c.name"
+          class="class-card"
+          :class="{ 'class-card--expanded': expandedClass === c.name }"
+          @click="expandedClass = expandedClass === c.name ? null : c.name"
+        >
+          <div class="class-card__head">
+            <span class="class-card__name">{{ c.name }}</span>
+            <span class="class-card__count">{{ c.studentCount }}人</span>
+          </div>
           <div class="class-card__bars">
             <div class="class-card__bar-row">
               <span class="class-card__bar-label">提交率</span>
@@ -132,6 +141,14 @@
             </div>
           </div>
           <span class="class-card__avg">平均分 {{ c.avgScore }}</span>
+          <div v-if="expandedClass === c.name" class="class-card__detail" @click.stop>
+            <div v-if="c.roster && c.roster.length" class="roster-mini">
+              <h4 class="roster-mini__title">提交情况</h4>
+              <div class="roster-mini__grid">
+                <span v-for="s in c.roster" :key="s.id" class="roster-mini__chip" :class="{ 'roster-mini__chip--done': s.submitted }">{{ s.name }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -328,6 +345,7 @@ const scoreCompare = ref([])
 const subTrendData = ref([])
 const efficiencyData = ref([])
 const chartMode = ref('bar')
+const expandedClass = ref<string | null>(null)
 
 // Section visibility
 const showClassStats = ref(getCookie('dash_class') !== '0')
@@ -477,9 +495,14 @@ async function fetchAll() {
     })
     classStats.value = Object.entries(classMap).map(([name, d]) => ({
       name,
+      studentCount: d.count,
       submitRate: d.count ? Math.round((d.submitted / d.count) * 100) : 0,
       reviewRate: d.submitted ? Math.round((d.reviewed / d.submitted) * 100) : 0,
       avgScore: d.scores.length ? (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(1) : '—',
+      roster: (students || []).filter((s: any) => (s.className || '未分班') === name).map((s: any) => ({
+        id: s.id, name: s.name,
+        submitted: (subs || []).some((sub: any) => sub.studentId === s.id),
+      })).sort((a: any, b: any) => Number(b.submitted) - Number(a.submitted)),
     }))
 
     // Work type stats
@@ -619,6 +642,9 @@ watch(refreshTick, fetchAll)
 
 <style lang="scss" scoped>
 .dash {
+  height: calc(100vh - 112px);
+  overflow-y: scroll;
+
   &__greeting {
     @include font(24px, 32px, 500);
     color: rgb(var(--md-sys-color-on-surface));
@@ -870,6 +896,20 @@ watch(refreshTick, fetchAll)
   &__avg {
     @include font(13px, 20px, 500);
     color: rgb(var(--md-sys-color-primary));
+  }
+  &__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  &__count { @include font(12px, 16px); color: rgb(var(--md-sys-color-on-surface-variant)); }
+  &--expanded { box-shadow: 0 0 0 2px rgb(var(--md-sys-color-primary) / 0.3); }
+  &__detail { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgb(var(--md-sys-color-outline-variant)); }
+}
+
+.roster-mini {
+  &__title { @include font(12px, 16px, 500); color: rgb(var(--md-sys-color-on-surface-variant)); margin-bottom: 8px; }
+  &__grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  &__chip {
+    padding: 3px 10px; border-radius: 6px; background: rgb(var(--md-sys-color-surface-container));
+    @include font(12px, 18px); color: rgb(var(--md-sys-color-on-surface-variant)); cursor: default;
+    &--done { background: rgb(var(--md-sys-color-primary-container)); color: rgb(var(--md-sys-color-on-primary-container)); }
   }
 }
 

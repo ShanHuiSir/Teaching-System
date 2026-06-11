@@ -655,12 +655,11 @@ watch(refreshTick, fetchClasses)
 <style lang="scss" scoped>
 .ap {
   display: flex;
-  height: 100%;
-  overflow: hidden;
 
   &__panel {
     flex: 0 0 50%;
-    overflow-y: auto;
+    height: calc(100vh - 112px);
+    overflow-y: scroll;
     min-width: 0;
   }
 
@@ -1286,7 +1285,7 @@ select.form-field__input {
     margin-bottom: 6px;
   }
   &__table {
-    max-height: 200px; overflow-y: auto;
+    max-height: 200px; overflow-y: scroll;
     border: 1px solid rgb(var(--md-sys-color-outline-variant));
     border-radius: 8px;
   }
