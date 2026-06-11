@@ -1,6 +1,7 @@
 package com.teachingeval.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -8,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -53,9 +56,31 @@ public class EvaluationResult {
     @Schema(description = "教师最终评语", example = "整体完成较好，建议继续完善代码注释。")
     private String teacherComment;
 
+    @Column(name = "created_at")
+    @Schema(description = "创建时间")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @Schema(description = "更新时间")
+    private LocalDateTime updatedAt;
+
     @Column(name = "status")
     @Schema(description = "评价状态：0 表示未评价，1 表示 AI 已评价，2 表示教师已确认", example = "1")
     private int status;
+
+    @PrePersist
+    void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) createdAt = now;
+        if (updatedAt == null) updatedAt = now;
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) createdAt = now;
+        updatedAt = now;
+    }
 
     public EvaluationResult() {}
 
@@ -83,6 +108,12 @@ public class EvaluationResult {
 
     public String getTeacherComment() { return teacherComment; }
     public void setTeacherComment(String teacherComment) { this.teacherComment = teacherComment; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }

@@ -873,18 +873,9 @@ async function submitReview() {
     })
     evalMap.value = em
     rebuildSemesters()
-  } catch (e) {
-    const saved = getCookie(`draft_${active.value.id}`)
-    if (saved) {
-      magicBar.status = '提交失败，已保存至本地草稿'
-      magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '提交失败，已保存至本地草稿') magicBar.status = ''
-      }, 3000)
-      snackbar.show('提交失败，评分已保存在本地草稿', { variant: 'error' })
-    } else {
-      snackbar.show('提交批改失败：' + (e.message || '网络异常'), { variant: 'error' })
-    }
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e.message || '网络异常'
+    snackbar.show('提交失败：' + msg, { variant: 'error' })
   } finally {
     submitting.value = false
   }

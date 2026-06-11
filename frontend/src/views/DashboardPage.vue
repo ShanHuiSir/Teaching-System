@@ -106,6 +106,32 @@
           </svg>
           <span class="quick-action__label">新建作业</span>
         </button>
+        <div ref="filterRef" class="dash__filter" @click.stop="onFilterClick">
+          <button class="quick-action">
+            <svg class="quick-action__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span class="quick-action__label">{{ selectedLabel }}</span>
+            <svg class="quick-action__chevron" :class="{ 'quick-action__chevron--open': filterOpen }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <div v-if="filterOpen" class="dash__filter-menu">
+            <div
+              class="dash__filter-item"
+              :class="{ 'dash__filter-item--active': selectedAssignmentId === null }"
+              @click.stop="selectAssignment(null)"
+            >全部作业</div>
+            <div
+              v-for="a in assignments"
+              :key="a.id"
+              class="dash__filter-item"
+              :class="{ 'dash__filter-item--active': selectedAssignmentId === a.id }"
+              @click.stop="selectAssignment(a.id)"
+            >{{ a.title }}</div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -346,6 +372,40 @@ const subTrendData = ref([])
 const efficiencyData = ref([])
 const chartMode = ref('bar')
 const expandedClass = ref<string | null>(null)
+const assignments = ref<any[]>([])
+const selectedAssignmentId = ref<number | null>(null)
+const filterOpen = ref(false)
+const filterRef = ref<HTMLElement | null>(null)
+
+function onFilterClick() {
+  filterOpen.value = !filterOpen.value
+}
+
+function onClickOutside(e: MouseEvent) {
+  if (filterRef.value && !filterRef.value.contains(e.target as Node)) {
+    filterOpen.value = false
+  }
+}
+
+watch(filterOpen, (val) => {
+  if (val) {
+    document.addEventListener('click', onClickOutside)
+  } else {
+    document.removeEventListener('click', onClickOutside)
+  }
+})
+
+const selectedLabel = computed(() => {
+  if (selectedAssignmentId.value == null) return '全部作业'
+  const a = assignments.value.find(x => x.id === selectedAssignmentId.value)
+  return a?.title || '全部作业'
+})
+
+function selectAssignment(id: number | null) {
+  selectedAssignmentId.value = id
+  filterOpen.value = false
+  fetchAll()
+}
 
 // Section visibility
 const showClassStats = ref(getCookie('dash_class') !== '0')
@@ -451,12 +511,17 @@ const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
 
 async function fetchAll() {
   try {
-    const [summary, subs, evals, students] = await Promise.all([
+    const [summary, allSubs, evals, students, allAssignments] = await Promise.all([
       http.get('/statistics/summary'),
       http.get('/submissions'),
       http.get('/evaluations'),
       http.get('/students'),
+      http.get('/assignments'),
     ])
+    assignments.value = allAssignments || []
+
+    const selId = selectedAssignmentId.value
+    const subs = selId ? (allSubs || []).filter((s: any) => s.assignmentId === selId) : (allSubs || [])
     stats.value = {
       aiReviewed: summary.aiEvaluatedCount - summary.teacherConfirmedCount,
       pending: summary.submissionCount - summary.aiEvaluatedCount,
@@ -645,10 +710,46 @@ watch(refreshTick, fetchAll)
   height: calc(100vh - 112px);
   overflow-y: scroll;
 
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  &__filter {
+    position: relative;
+    outline: none;
+  }
+  &__filter-menu {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    min-width: 200px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: rgb(var(--md-sys-color-surface-container));
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgb(var(--md-sys-color-shadow) / 0.12);
+    z-index: 50;
+    padding: 4px;
+  }
+  &__filter-item {
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    @include font(14px, 20px);
+    color: rgb(var(--md-sys-color-on-surface));
+    &:hover { background: rgb(var(--md-sys-color-surface-container-highest)); }
+    &--active { background: rgb(var(--md-sys-color-secondary-container)); color: rgb(var(--md-sys-color-on-secondary-container)); }
+  }
+
   &__greeting {
     @include font(24px, 32px, 500);
     color: rgb(var(--md-sys-color-on-surface));
     letter-spacing: 0.02em;
+    margin-bottom: 0;
   }
 
   &__cards {
@@ -798,6 +899,13 @@ watch(refreshTick, fetchAll)
   &__label {
     @include font(15px, 22px, 500);
     white-space: nowrap;
+  }
+  &__chevron {
+    width: 16px; height: 16px;
+    flex-shrink: 0;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    transition: transform 0.2s ease;
+    &--open { transform: rotate(180deg); }
   }
 }
 
