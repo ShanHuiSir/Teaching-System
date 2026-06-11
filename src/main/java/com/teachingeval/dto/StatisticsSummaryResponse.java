@@ -15,6 +15,10 @@ public record StatisticsSummaryResponse(
         @Schema(description = "教师已确认数", example = "18")
         long teacherConfirmedCount,
         @Schema(description = "教师最终平均分", example = "86.50")
-        BigDecimal averageTeacherScore
+        BigDecimal averageTeacherScore,
+        @Schema(description = "当前统计筛选的作业 ID；为空表示全部作业", example = "1")
+        Long assignmentId,
+        @Schema(description = "当前统计筛选的班级 ID；为空表示全部班级", example = "1")
+        Long classId
 ) {
 }

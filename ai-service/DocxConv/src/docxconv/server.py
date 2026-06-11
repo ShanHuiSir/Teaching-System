@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -34,6 +34,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_rate_buckets: dict[str, tuple[int, int]] = {}
+
+
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _check_ai_rate_limit(request: Request) -> None:
+    limit = getattr(config, "AI_RATE_LIMIT_PER_MINUTE", 10)
+    if limit <= 0:
+        return
+    key = _client_ip(request)
+    window = int(time.time() // 60)
+    bucket_window, count = _rate_buckets.get(key, (window, 0))
+    if bucket_window != window:
+        bucket_window, count = window, 0
+    count += 1
+    _rate_buckets[key] = (bucket_window, count)
+    if count > limit:
+        raise HTTPException(status_code=429, detail="AI接口调用过于频繁，请稍后再试")
 
 # ── response models ─────────────────────────────────────────────────────
 
@@ -616,11 +640,13 @@ async def evaluate(
     tags=["评分"],
 )
 async def evaluate_real(
+    request: Request,
     file: UploadFile = File(..., description="学生提交的作业文件"),
     studentName: str = Form(""),
     rubric: str = Form(None),
     subjectType: str = Form("general"),
 ):
+    _check_ai_rate_limit(request)
     if not studentName.strip():
         raise HTTPException(400, "studentName is required")
 
@@ -690,11 +716,13 @@ async def evaluate_real(
     tags=["评分"],
 )
 async def evaluate_stream_endpoint(
+    request: Request,
     file: UploadFile = File(..., description="学生提交的作业文件"),
     studentName: str = Form(""),
     rubric: str = Form(None),
     subjectType: str = Form("general"),
 ):
+    _check_ai_rate_limit(request)
     if not studentName.strip():
         raise HTTPException(400, "studentName is required")
 

@@ -47,6 +47,10 @@ RETRY_MAX_ATTEMPTS = int(os.getenv("RETRY_MAX_ATTEMPTS", "3"))
 RETRY_BASE_DELAY_SECONDS = float(os.getenv("RETRY_BASE_DELAY_SECONDS", "1.0"))
 RETRY_MAX_DELAY_SECONDS = float(os.getenv("RETRY_MAX_DELAY_SECONDS", "10.0"))
 
+# ── Rate limiting ─────────────────────────────────────────────────────
+
+AI_RATE_LIMIT_PER_MINUTE = int(os.getenv("AI_RATE_LIMIT_PER_MINUTE", "10"))
+
 # ── Evaluation logging ─────────────────────────────────────────────────
 
 EVAL_LOG_DIR = os.getenv("EVAL_LOG_DIR", str(Path(__file__).resolve().parent / "logs"))

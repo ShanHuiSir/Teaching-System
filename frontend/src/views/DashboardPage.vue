@@ -2,6 +2,23 @@
   <div class="dash">
     <h1 class="dash__greeting">{{ greeting }}，{{ teacherName }}老师</h1>
 
+    <div class="dash-filter">
+      <label class="dash-filter__field">
+        <span>作业</span>
+        <select v-model="selectedAssignmentId">
+          <option value="">全部作业</option>
+          <option v-for="a in assignmentOptions" :key="a.id" :value="String(a.id)">{{ a.title }}</option>
+        </select>
+      </label>
+      <label class="dash-filter__field">
+        <span>班级</span>
+        <select v-model="selectedClassId">
+          <option value="">全部班级</option>
+          <option v-for="c in classOptions" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
+        </select>
+      </label>
+    </div>
+
     <div class="dash__cards">
       <div class="stat-card" @click="router.push('/review?filter=pending')">
         <span class="stat-card__title">待复审</span>
@@ -328,6 +345,10 @@ const scoreCompare = ref([])
 const subTrendData = ref([])
 const efficiencyData = ref([])
 const chartMode = ref('bar')
+const assignmentOptions = ref<any[]>([])
+const classOptions = ref<any[]>([])
+const selectedAssignmentId = ref('')
+const selectedClassId = ref('')
 
 // Section visibility
 const showClassStats = ref(getCookie('dash_class') !== '0')
@@ -433,12 +454,35 @@ const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
 
 async function fetchAll() {
   try {
-    const [summary, subs, evals, students] = await Promise.all([
-      http.get('/statistics/summary'),
+    const params: Record<string, string> = {}
+    if (selectedAssignmentId.value) params.assignmentId = selectedAssignmentId.value
+    if (selectedClassId.value) params.classId = selectedClassId.value
+
+    const [summary, subsAll, evals, students, assignments, classes] = await Promise.all([
+      http.get('/statistics/summary', { params }),
       http.get('/submissions'),
       http.get('/evaluations'),
       http.get('/students'),
+      http.get('/assignments'),
+      http.get('/classes'),
     ])
+    assignmentOptions.value = assignments || []
+    classOptions.value = classes || []
+
+    const studentMap = {}
+    ;(students || []).forEach(s => {
+      studentMap[s.id] = s
+    })
+
+    const subs = (subsAll || []).filter((s: any) => {
+      if (selectedAssignmentId.value && String(s.assignmentId || '') !== selectedAssignmentId.value) return false
+      if (selectedClassId.value) {
+        const st = studentMap[s.studentId]
+        if (String(st?.classId || '') !== selectedClassId.value) return false
+      }
+      return true
+    })
+
     stats.value = {
       aiReviewed: summary.aiEvaluatedCount - summary.teacherConfirmedCount,
       pending: summary.submissionCount - summary.aiEvaluatedCount,
@@ -451,10 +495,6 @@ async function fetchAll() {
     const evalMap = {}
     ;(evals || []).forEach(e => {
       evalMap[e.submissionId] = e
-    })
-    const studentMap = {}
-    ;(students || []).forEach(s => {
-      studentMap[s.id] = s
     })
 
     // Class stats
@@ -501,7 +541,9 @@ async function fetchAll() {
 
     // Score distribution (teacherScore)
     const buckets = [0, 0, 0, 0, 0]
-    ;(evals || []).forEach(e => {
+    const filteredSubmissionIds = new Set(subs.map((s: any) => s.id))
+    const filteredEvals = (evals || []).filter(e => filteredSubmissionIds.has(e.submissionId))
+    ;(filteredEvals || []).forEach(e => {
       const s = e.teacherScore
       if (s == null) return
       if (s < 60) buckets[0]++
@@ -535,7 +577,7 @@ async function fetchAll() {
 
     // Teacher review trend — group by date
     const trendMap = {}
-    ;(evals || []).forEach(e => {
+    ;(filteredEvals || []).forEach(e => {
       if (e.status >= 2 && e.createdAt) {
         const d = e.createdAt.slice(0, 10)
         trendMap[d] = (trendMap[d] || 0) + 1
@@ -583,7 +625,7 @@ async function fetchAll() {
       { label: '80-89', ai: 0, teacher: 0 },
       { label: '90-100', ai: 0, teacher: 0 },
     ]
-    ;(evals || []).forEach(e => {
+    ;(filteredEvals || []).forEach(e => {
       const bucket = s => (s < 60 ? 0 : s < 70 ? 1 : s < 80 ? 2 : s < 90 ? 3 : 4)
       if (e.aiScore != null) cmp[bucket(e.aiScore)].ai++
       if (e.teacherScore != null) cmp[bucket(e.teacherScore)].teacher++
@@ -615,6 +657,7 @@ onDeactivated(() => {
   rightButtons.value = []
 })
 watch(refreshTick, fetchAll)
+watch([selectedAssignmentId, selectedClassId], fetchAll)
 </script>
 
 <style lang="scss" scoped>
@@ -652,6 +695,35 @@ watch(refreshTick, fetchAll)
   &__empty {
     @include font(14px, 20px);
     color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+}
+
+.dash-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+
+  &__field {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 220px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgb(var(--md-sys-color-surface-container-lowest));
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    @include font(13px, 20px, 500);
+
+    select {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: rgb(var(--md-sys-color-on-surface));
+      @include font(13px, 20px);
+    }
   }
 }
 

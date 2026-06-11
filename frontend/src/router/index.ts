@@ -73,7 +73,7 @@ const router = createRouter({
 })
 
 router.beforeEach(to => {
-  const hasToken = !!getCookie('auth_token')
+  const hasToken = !!getCookie('user_name')
   if (to.meta.requiresAuth && !hasToken) return '/forbidden'
   if (to.path === '/login' && hasToken) return '/dashboard'
   if (to.path === '/forbidden' && hasToken) return '/dashboard'

@@ -40,7 +40,7 @@ export function useFileActions() {
     previewError.value = ''
     previewVisible.value = true
     try {
-      const res = await fetch(`/api/submissions/${submissionId}/file`)
+      const res = await fetch(`/api/submissions/${submissionId}/file`, { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const text = await res.text()
       previewContent.value = text

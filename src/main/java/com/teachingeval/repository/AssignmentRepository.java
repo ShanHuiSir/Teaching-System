@@ -9,4 +9,6 @@ import com.teachingeval.entity.Assignment;
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
     List<Assignment> findByClassIdOrderByPublishedAtDesc(Long classId);
+
+    long countByClassId(Long classId);
 }

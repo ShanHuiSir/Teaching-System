@@ -51,8 +51,8 @@ npm run dev
 
 ## 当前功能
 
-- 登录：固定演示账号 `teacher / 123456`，登录后写入 `auth_token` Cookie。
-- 路由：`/` 默认跳转 `/login`；登录后进入 `/dashboard`；业务页无 token 时跳转 `/forbidden`。
+- 登录：固定演示账号默认 `teacher / 123456`，可通过 `TEACHING_EVAL_USERNAME` / `TEACHING_EVAL_PASSWORD` 覆盖；登录成功后后端写入 HttpOnly `auth_token` 会话 Cookie，前端仅保存 `user_name` 用于显示和路由状态。
+- 路由：`/` 默认跳转 `/login`；登录后进入 `/dashboard`；业务页无登录状态时跳转 `/forbidden`，后端 API 同步校验会话。
 - 仪表盘：展示提交、批改、学生、评分分布和趋势统计。
 - 班级管理：入口为 `/classes`，学生管理归入班级和花名册流程，不再设独立学生页。
 - 作业管理：入口为 `/assignments`，作业数据和 Excel 导出在作业管理中完成，不再设独立导出页。
@@ -60,6 +60,7 @@ npm run dev
 - AI 评价：Java 侧默认尝试真实 AI，Python 8000 不可用时降级到 `FakeAIService`；前端支持 `/api/evaluate/stream` 流式评分。
 - Py 预处理转发：上传后可调用 AI 服务 `/api/preprocess` 进行文本提取、DOCX 解析、OCR 和压缩包处理，默认关闭。
 - Excel 导出：`POST /api/export/excel` 返回 `.xlsx` 文件流，前端在 `/assignments` 中触发下载。
+- 安全收口：后端 API 已加轻量认证过滤器、CORS 白名单、写操作跨站请求头校验、AI 调用速率限制和审计日志。
 - 全局体验：MagicBar、双 Rail、主题切换、Cookie 偏好、Snackbar、骨架屏、错误边界和重试机制。
 
 ## 项目结构

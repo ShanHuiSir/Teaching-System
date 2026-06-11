@@ -3,8 +3,11 @@ package com.teachingeval.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -40,5 +43,19 @@ public class TeachingClassController {
     @ResponseStatus(HttpStatus.CREATED)
     public TeachingClass createClass(@Valid @RequestBody TeachingClassRequest request) {
         return teachingClassService.createClass(request);
+    }
+
+    @Operation(summary = "更新班级", description = "更新班级名称、年级和说明。")
+    @PutMapping("/{id}")
+    public TeachingClass updateClass(@PathVariable Long id,
+                                     @Valid @RequestBody TeachingClassRequest request) {
+        return teachingClassService.updateClass(id, request);
+    }
+
+    @Operation(summary = "删除班级", description = "删除没有学生和作业关联的班级。")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteClass(@PathVariable Long id) {
+        teachingClassService.deleteClass(id);
     }
 }

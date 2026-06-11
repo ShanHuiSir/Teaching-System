@@ -166,6 +166,7 @@ import { useRouter } from 'vue-router'
 import { setCookie, delCookie } from '../utils/cookie'
 import { CATEGORIES, loadPrefs, savePrefs, clearCategory } from '../utils/cookiePrefs'
 import { useSnackbar } from '../composables/useSnackbar'
+import http from '../utils/request'
 
 const router = useRouter()
 const snackbar = useSnackbar()
@@ -220,25 +221,23 @@ async function handleLogin() {
     snackbar.show('请输入账户名和密钥', { variant: 'error' })
     return
   }
-  if (account.value !== 'teacher' || secretKey.value !== '123456') {
-    snackbar.show('账户名或密钥错误', { variant: 'error' })
-    return
-  }
 
   loading.value = true
-  await new Promise(r => setTimeout(r, 800))
-
-  if (rememberMe.value) {
-    setCookie('auth_token', 'teacher-token', 7)
-    setCookie('user_name', account.value, 7)
-  } else {
-    setCookie('auth_token', 'teacher-token', 0)
-    setCookie('user_name', account.value, 0)
+  try {
+    const res = await http.post('/auth/login', {
+      username: account.value.trim(),
+      password: secretKey.value,
+      rememberMe: rememberMe.value,
+    })
+    const displayName = res?.username || account.value.trim()
+    setCookie('user_name', displayName, rememberMe.value ? 7 : 0.5)
+    snackbar.show('登录成功', { variant: 'info' })
+    router.replace('/dashboard')
+  } catch (e: any) {
+    snackbar.show(e?.message || '账户名或密钥错误', { variant: 'error' })
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
-  snackbar.show('登录成功', { variant: 'info' })
-  router.replace('/dashboard')
 }
 </script>
 
