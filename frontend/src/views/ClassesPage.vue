@@ -149,10 +149,15 @@
               <div class="roster__row roster__row--header">
                 <span class="roster__cell roster__cell--no">学号</span>
                 <span class="roster__cell roster__cell--name">姓名</span>
+                <span class="roster__cell roster__cell--status">提交状态</span>
               </div>
               <div v-for="s in active.roster" :key="s.id" class="roster__row">
                 <span class="roster__cell roster__cell--no">{{ s.studentNo || '—' }}</span>
                 <span class="roster__cell roster__cell--name">{{ s.name || '—' }}</span>
+                <span class="roster__cell roster__cell--status">
+                  <span v-if="s.submitted" class="roster__badge roster__badge--done">已交</span>
+                  <span v-else class="roster__badge roster__badge--pending">未交</span>
+                </span>
               </div>
             </div>
           </div>
@@ -220,6 +225,44 @@
               @input="autoResize"
             />
           </div>
+
+          <!-- Roster Import -->
+          <div v-if="isCreate" class="form-field">
+            <span class="form-field__label">导入花名册（可选）</span>
+            <div class="dropzone" :class="{ 'dropzone--has-file': rosterFile }" @click="triggerFileInput">
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept=".csv,.txt"
+                style="display:none"
+                @change="onRosterFileChange"
+              />
+              <template v-if="!rosterFile">
+                <svg class="dropzone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span class="dropzone__text">点击上传花名册文件（CSV 格式：学号,姓名）</span>
+              </template>
+              <template v-else>
+                <div class="dropzone__fileinfo">
+                  <span>{{ rosterFile.name }}</span>
+                  <button class="dropzone__clear" @click.stop="rosterFile = null; rosterPreview = []">移除</button>
+                </div>
+                <div v-if="rosterPreview.length" class="roster-preview">
+                  <span class="roster-preview__count">已解析 {{ rosterPreview.length }} 名学生</span>
+                  <div class="roster-preview__table">
+                    <div class="roster-preview__row" v-for="(s, i) in rosterPreview.slice(0, 8)" :key="i">
+                      <span>{{ s.studentNo }}</span>
+                      <span>{{ s.name }}</span>
+                    </div>
+                    <div v-if="rosterPreview.length > 8" class="roster-preview__more">... 等 {{ rosterPreview.length - 8 }} 人</div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -286,7 +329,10 @@ const activeId = ref(null)
 const editing = ref(false)
 const isCreate = ref(true)
 const editorRef = ref(null)
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const sortKey = ref<string | null>(null)
+const rosterFile = ref<File | null>(null)
+const rosterPreview = ref<{ studentNo: string; name: string }[]>([])
 
 const active = computed(() => classes.value.find(c => c.id === activeId.value) || null)
 
@@ -395,6 +441,33 @@ function startEdit(c) {
 
 function closeForm() {
   editing.value = false
+  rosterFile.value = null
+  rosterPreview.value = []
+}
+
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+function onRosterFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  rosterFile.value = file
+  const reader = new FileReader()
+  reader.onload = () => {
+    const text = reader.result as string
+    rosterPreview.value = text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#'))
+      .map(line => {
+        const parts = line.split(/[,，\t]/)
+        return { studentNo: (parts[0] || '').trim(), name: (parts[1] || '').trim() }
+      })
+      .filter(s => s.studentNo && s.name)
+  }
+  reader.readAsText(file, 'UTF-8')
 }
 
 watch(editing, (val, old) => {
@@ -426,33 +499,46 @@ async function onSave() {
     snackbar.show('请输入班级名称', { variant: 'error' })
     return
   }
-  // TODO: call POST /api/classes or PUT /api/classes/:id when API is ready
-  if (isCreate.value) {
-    const newId = 'cls-' + Date.now()
-    classes.value.push({
-      id: newId,
-      name: form.name.trim(),
-      grade: form.grade,
-      description: form.description.trim(),
-      studentCount: 0,
-      roster: [],
-    })
-    activeId.value = newId
-  } else {
-    const idx = classes.value.findIndex(c => c.id === form.id)
-    if (idx !== -1) {
-      classes.value[idx] = {
-        ...classes.value[idx],
+  try {
+    if (isCreate.value) {
+      const cls = await http.post('/classes', {
         name: form.name.trim(),
-        grade: form.grade,
-        description: form.description.trim(),
+        grade: form.grade || null,
+        description: form.description.trim() || null,
+      })
+      // Import roster students
+      if (rosterPreview.value.length) {
+        const results = await Promise.allSettled(
+          rosterPreview.value.map(s =>
+            http.post('/students', {
+              studentNo: s.studentNo,
+              name: s.name,
+              classId: cls.id,
+              className: cls.name,
+            }),
+          ),
+        )
+        const ok = results.filter(r => r.status === 'fulfilled').length
+        const fail = results.length - ok
+        snackbar.show(
+          `班级「${cls.name}」已创建，导入 ${ok} 名学生` + (fail ? `，${fail} 人失败` : ''),
+          { variant: 'info' },
+        )
+      } else {
+        snackbar.show(`班级「${cls.name}」已创建`, { variant: 'info' })
       }
+    } else {
+      snackbar.show('班级已更新（编辑功能暂不支持）', { variant: 'info' })
     }
+    clearDraft()
+    rosterFile.value = null
+    rosterPreview.value = []
+    triggerRipple(window.innerWidth * 0.75, 200)
+    editing.value = false
+    fetchClasses()
+  } catch (e: any) {
+    snackbar.show('保存失败：' + (e.message || '网络异常'), { variant: 'error' })
   }
-  clearDraft()
-  triggerRipple(window.innerWidth * 0.75, 200)
-  snackbar.show(isCreate.value ? '班级已创建' : '班级已更新', { variant: 'info' })
-  editing.value = false
 }
 
 const deleteModal = reactive({ open: false, id: null, name: '' })
@@ -506,46 +592,33 @@ function buildRightButtons() {
 async function fetchClasses() {
   loading.value = true
   try {
-    const students = await http.get('/students')
+    const [realClasses, students, subs] = await Promise.all([
+      http.get('/classes'),
+      http.get('/students'),
+      http.get('/submissions'),
+    ])
 
-    // Group students by className
-    const classMap: Record<string, any[]> = {}
+    const studentsByClass: Record<number, any[]> = {}
     ;(students || []).forEach((s: any) => {
-      const cls = s.className || '未分班'
-      if (!classMap[cls]) classMap[cls] = []
-      classMap[cls].push(s)
+      const cid = s.classId
+      if (!cid) return
+      if (!studentsByClass[cid]) studentsByClass[cid] = []
+      studentsByClass[cid].push(s)
     })
 
-    // Preserve locally-created classes and edited fields
-    const manualMap: Record<string, any> = {}
-    classes.value.forEach((c: any) => {
-      if (c.id.startsWith('cls-')) {
-        manualMap[c.name] = c
-      }
-    })
+    const submittedStudentIds = new Set((subs || []).map((s: any) => s.studentId))
 
-    const existingNames = new Set(Object.keys(classMap))
-
-    classes.value = Object.entries(classMap).map(([name, d], i) => {
-      const manual = manualMap[name]
+    classes.value = (realClasses || []).map((c: any) => {
+      const roster = (studentsByClass[c.id] || []).map(s => ({
+        id: s.id,
+        name: s.name || '',
+        studentNo: s.studentNo || '',
+        submitted: submittedStudentIds.has(s.id),
+      }))
       return {
-        id: manual?.id || `stu-${i}`,
-        name: manual?.name || name,
-        grade: manual?.grade || '',
-        description: manual?.description || '',
-        studentCount: d.length,
-        roster: d.map(s => ({
-          id: s.id,
-          name: s.name || '',
-          studentNo: s.studentNo || '',
-        })),
-      }
-    })
-
-    // Add purely manual classes not in student data
-    Object.values(manualMap).forEach(m => {
-      if (!existingNames.has(m.name) && !classes.value.find(c => c.id === m.id)) {
-        classes.value.push({ ...m, roster: [] })
+        ...c,
+        studentCount: roster.length,
+        roster,
       }
     })
   } finally {
@@ -1148,6 +1221,86 @@ select.form-field__input {
     &--name {
       flex: 1;
     }
+    &--status {
+      flex: 0 0 64px;
+      text-align: center;
+    }
+  }
+}
+
+// ── Roster badges ──
+.roster__badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  @include font(11px, 16px, 500);
+  &--done {
+    background: rgb(var(--md-sys-color-primary-container));
+    color: rgb(var(--md-sys-color-on-primary-container));
+  }
+  &--pending {
+    background: rgb(var(--md-sys-color-surface-container-highest));
+    color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+}
+
+// ── Dropzone ──
+.dropzone {
+  border: 2px dashed rgb(var(--md-sys-color-outline-variant));
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s ease;
+  &:hover { border-color: rgb(var(--md-sys-color-primary)); }
+  &--has-file { border-style: solid; border-color: rgb(var(--md-sys-color-primary)); }
+
+  &__icon { width: 32px; height: 32px; color: rgb(var(--md-sys-color-on-surface-variant)); margin: 0 auto 8px; }
+  &__text {
+    display: block;
+    @include font(13px, 20px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+  &__fileinfo {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    @include font(13px, 20px, 500);
+    color: rgb(var(--md-sys-color-on-surface));
+    margin-bottom: 8px;
+  }
+  &__clear {
+    border: none; background: transparent;
+    color: rgb(var(--md-sys-color-error));
+    cursor: pointer;
+    @include font(12px, 16px);
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// ── Roster preview ──
+.roster-preview {
+  text-align: left;
+  &__count {
+    display: block;
+    @include font(12px, 16px, 500);
+    color: rgb(var(--md-sys-color-primary));
+    margin-bottom: 6px;
+  }
+  &__table {
+    max-height: 200px; overflow-y: auto;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 8px;
+  }
+  &__row {
+    display: flex; gap: 12px;
+    padding: 6px 12px;
+    @include font(12px, 18px);
+    color: rgb(var(--md-sys-color-on-surface));
+    &:nth-child(even) { background: rgb(var(--md-sys-color-surface-container)); }
+  }
+  &__more {
+    padding: 6px 12px;
+    @include font(12px, 18px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
   }
 }
 
