@@ -53,6 +53,24 @@
           </button>
         </div>
         <SearchInput v-model="searchQuery" placeholder="搜索学生、学号、文件名、备注…" />
+        <div class="review__filter" ref="filterBtnRef" @click.stop="toggleFilter">
+          <button class="review__filter-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span>{{ selectedLabel }}</span>
+            <svg class="review__filter-chevron" :class="{ 'review__filter-chevron--open': filterOpen }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        </div>
+        <Teleport to="body">
+          <div v-if="filterOpen" class="review__filter-menu" :style="filterMenuStyle">
+            <div class="review__filter-item" :class="{ 'review__filter-item--active': selectedAssignmentId === null }" @click.stop="selectAssignment(null)">全部作业</div>
+            <div v-for="a in assignments" :key="a.id" class="review__filter-item" :class="{ 'review__filter-item--active': selectedAssignmentId === a.id }" @click.stop="selectAssignment(a.id)">{{ a.title }}</div>
+          </div>
+        </Teleport>
       </div>
 
       <!-- Published Assignments (tab 1) -->
@@ -551,12 +569,31 @@
       :submission-id="previewFileId"
       @closed="closePreview"
     />
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="rejectModal.open" class="modal-overlay" @click.self="rejectModal.open = false">
+          <div class="modal-card">
+            <svg class="modal-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p class="modal-card__text">确定要打回「{{ rejectModal.title }}」吗？<br />评价状态将重置为未评价（评分数据保留）。</p>
+            <div class="modal-card__btns">
+              <button class="modal-card__btn modal-card__btn--cancel" @click="rejectModal.open = false">取消</button>
+              <button class="modal-card__btn modal-card__btn--danger" @click="confirmReject">确认打回</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import {
   ref,
+  reactive,
   computed,
   onMounted,
   onActivated,
@@ -600,6 +637,47 @@ function formatFileSize(size?: number) {
 
 const activeTab = ref('assignments')
 
+const assignments = ref<any[]>([])
+const selectedAssignmentId = ref<number | null>(null)
+const filterOpen = ref(false)
+const filterBtnRef = ref<HTMLElement | null>(null)
+const filterMenuStyle = ref<Record<string, string>>({})
+
+const selectedLabel = computed(() => {
+  if (selectedAssignmentId.value == null) return '全部作业'
+  const a = assignments.value.find(x => x.id === selectedAssignmentId.value)
+  return a?.title || '全部作业'
+})
+
+function toggleFilter() {
+  filterOpen.value = !filterOpen.value
+  if (filterOpen.value && filterBtnRef.value) {
+    const rect = filterBtnRef.value.getBoundingClientRect()
+    filterMenuStyle.value = {
+      position: 'fixed',
+      top: rect.bottom + 4 + 'px',
+      left: rect.left + 'px',
+    }
+  }
+}
+
+function onClickOutsideFilter(e: MouseEvent) {
+  if (filterBtnRef.value && !filterBtnRef.value.contains(e.target as Node)) {
+    const menu = document.querySelector('.review__filter-menu')
+    if (menu && !menu.contains(e.target as Node)) filterOpen.value = false
+  }
+}
+watch(filterOpen, v => {
+  if (v) document.addEventListener('click', onClickOutsideFilter)
+  else document.removeEventListener('click', onClickOutsideFilter)
+})
+
+async function selectAssignment(id: number | null) {
+  selectedAssignmentId.value = id
+  filterOpen.value = false
+  await fetchSubmissions()
+}
+
 const assignmentsTabRef = ref(null)
 const submissionsTabRef = ref(null)
 
@@ -613,7 +691,7 @@ const tabIndicatorStyle = computed(() => {
 })
 
 const selectedWorkType = ref(null)
-const activeId = ref(null)
+const activeId = ref<number | null>(route.params.submissionId ? Number(route.params.submissionId) : null)
 const semesters = ref<any[]>([])
 const submissionsRaw = ref<any[]>([])
 const evalMap = ref<Record<string, any>>({})
@@ -996,8 +1074,28 @@ async function onAiEval() {
   }
 }
 
+const rejectModal = reactive({ open: false, id: null as number | null, title: '' })
+
 function onReject() {
-  /* TODO */
+  if (!active.value) return
+  rejectModal.id = active.value.id
+  rejectModal.title = active.value.fileName || active.value.studentName || ''
+  rejectModal.open = true
+}
+
+async function confirmReject() {
+  rejectModal.open = false
+  if (rejectModal.id == null) return
+  try {
+    await http.post(`/submissions/${rejectModal.id}/reject`)
+    const evals = await http.get('/evaluations')
+    const em: Record<string, any> = {}
+    ;(evals || []).forEach((e: any) => { em[e.submissionId] = e })
+    evalMap.value = em
+    snackbar.show('已打回，评价状态已重置', { variant: 'info' })
+  } catch (e: any) {
+    snackbar.show('打回失败：' + (e.response?.data?.message || e.message || '网络异常'), { variant: 'error' })
+  }
 }
 
 const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
@@ -1197,11 +1295,13 @@ function buildRightButtons() {
 
 async function fetchSubmissions() {
   try {
-    const [subs, evals, students] = await Promise.all([
+    const [subs, evals, students, allAssignments] = await Promise.all([
       http.get('/submissions'),
       http.get('/evaluations'),
       http.get('/students'),
+      http.get('/assignments'),
     ])
+    assignments.value = allAssignments || []
     const em = {}
     ;(evals || []).forEach(e => {
       em[e.submissionId] = e
@@ -1213,8 +1313,11 @@ async function fetchSubmissions() {
       studentMap[s.id] = s
     })
 
+    const selId = selectedAssignmentId.value
+    const filteredSubs = selId ? (subs || []).filter((s: any) => s.assignmentId === selId) : (subs || [])
+
     // Store full raw data for right panel
-    submissionsRaw.value = (subs || []).map(s => {
+    submissionsRaw.value = filteredSubs.map((s: any) => {
       const st = studentMap[s.studentId] || {}
       return {
         ...s,
@@ -1270,6 +1373,50 @@ watch(filteredSubmissions, () => {
     display: flex;
     flex-direction: column;
     gap: 20px;
+  }
+
+  &__filter {
+    position: relative;
+    flex-shrink: 0;
+  }
+  &__filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 16px;
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+    cursor: pointer;
+    @include font(12px, 16px, 500);
+    svg { width: 14px; height: 14px; }
+    &:hover { box-shadow: 0 0 12px rgb(var(--md-sys-color-primary) / 0.3); }
+  }
+  &__filter-chevron {
+    transition: transform 0.2s ease;
+    &--open { transform: rotate(180deg); }
+  }
+  &__filter-menu {
+    min-width: 180px;
+    max-height: calc(36px * 5 + 8px);
+    overflow-y: scroll;
+    background: rgb(var(--md-sys-color-surface-container));
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgb(var(--md-sys-color-shadow) / 0.12);
+    z-index: 50;
+    padding: 4px;
+  }
+  &__filter-item {
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    @include font(13px, 20px);
+    color: rgb(var(--md-sys-color-on-surface));
+    &:hover { background: rgb(var(--md-sys-color-surface-container-highest)); }
+    &--active { background: rgb(var(--md-sys-color-secondary-container)); color: rgb(var(--md-sys-color-on-secondary-container)); }
   }
 
   &__assignments {
@@ -2022,5 +2169,43 @@ watch(filteredSubmissions, () => {
   50% {
     opacity: 0.8;
   }
+}
+
+/* ── Reject Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0 0 0 / 0.4);
+  z-index: 300;
+}
+.modal-card {
+  width: 340px;
+  background: rgb(var(--md-sys-color-surface-container-lowest));
+  border-radius: 28px;
+  padding: 32px 28px 24px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px;
+  text-align: center;
+  &__icon { width: 48px; height: 48px; color: rgb(var(--md-sys-color-error)); }
+  &__text { @include font(15px, 24px); color: rgb(var(--md-sys-color-on-surface)); }
+  &__btns { display: flex; gap: 12px; width: 100%; margin-top: 4px; }
+  &__btn {
+    flex: 1; height: 40px; border: none; border-radius: 20px;
+    cursor: pointer; @include font(14px, 20px, 500);
+    &--cancel { background: rgb(var(--md-sys-color-surface-container-high)); color: rgb(var(--md-sys-color-on-surface)); }
+    &--danger { background: rgb(var(--md-sys-color-error-container)); color: rgb(var(--md-sys-color-on-error-container)); }
+  }
+}
+.modal-enter-active { transition: opacity 0.2s ease;
+  .modal-card { transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+}
+.modal-leave-active { transition: opacity 0.15s ease;
+  .modal-card { transition: transform 0.15s ease; }
+}
+.modal-enter-from { opacity: 0;
+  .modal-card { transform: scale(0.92) translateY(12px); }
+}
+.modal-leave-to { opacity: 0;
+  .modal-card { transform: scale(0.92) translateY(12px); }
 }
 </style>

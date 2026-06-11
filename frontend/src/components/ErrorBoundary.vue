@@ -1,5 +1,5 @@
 <template>
-  <slot v-if="!error" />
+  <slot v-if="!error" :key="retryKey" />
   <div v-else class="eb">
     <div class="eb__card">
       <div class="eb__emblem">

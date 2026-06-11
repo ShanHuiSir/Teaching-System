@@ -30,6 +30,14 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/evaluation/:submissionId',
+    component: () => import('../layouts/MainLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', component: () => import('../views/ReviewPage.vue') },
+    ],
+  },
+  {
     path: '/classes',
     component: () => import('../layouts/MainLayout.vue'),
     meta: { requiresAuth: true },

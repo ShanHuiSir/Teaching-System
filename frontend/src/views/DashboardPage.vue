@@ -144,7 +144,7 @@
           :key="c.name"
           class="class-card"
           :class="{ 'class-card--expanded': expandedClass === c.name }"
-          @click="expandedClass = expandedClass === c.name ? null : c.name"
+          @click="onClassCardClick(c.name)"
         >
           <div class="class-card__head">
             <span class="class-card__name">{{ c.name }}</span>
@@ -171,7 +171,7 @@
             <div v-if="c.roster && c.roster.length" class="roster-mini">
               <h4 class="roster-mini__title">提交情况</h4>
               <div class="roster-mini__grid">
-                <span v-for="s in c.roster" :key="s.id" class="roster-mini__chip" :class="{ 'roster-mini__chip--done': s.submitted }">{{ s.name }}</span>
+                <span v-for="s in c.roster" :key="s.id" class="roster-mini__chip" :class="{ 'roster-mini__chip--done': s.submitted }" @click.stop="onStudentClick(s)">{{ s.name }}</span>
               </div>
             </div>
           </div>
@@ -375,6 +375,27 @@ const expandedClass = ref<string | null>(null)
 const assignments = ref<any[]>([])
 const selectedAssignmentId = ref<number | null>(null)
 const filterOpen = ref(false)
+
+function onClassCardClick(className: string) {
+  if (expandedClass.value === className) {
+    expandedClass.value = null
+    if (selectedAssignmentId.value) {
+      router.push('/assignments')
+    } else {
+      router.push('/classes')
+    }
+  } else {
+    expandedClass.value = className
+  }
+}
+
+function onStudentClick(student: any) {
+  if (student.submissionId) {
+    router.push(`/evaluation/${student.submissionId}?studentId=${student.id}&studentName=${encodeURIComponent(student.name)}`)
+  } else {
+    snackbar.show(`「${student.name}」暂未提交作业`, { variant: 'warning' })
+  }
+}
 const filterRef = ref<HTMLElement | null>(null)
 
 function onFilterClick() {
@@ -564,10 +585,14 @@ async function fetchAll() {
       submitRate: d.count ? Math.round((d.submitted / d.count) * 100) : 0,
       reviewRate: d.submitted ? Math.round((d.reviewed / d.submitted) * 100) : 0,
       avgScore: d.scores.length ? (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(1) : '—',
-      roster: (students || []).filter((s: any) => (s.className || '未分班') === name).map((s: any) => ({
-        id: s.id, name: s.name,
-        submitted: (subs || []).some((sub: any) => sub.studentId === s.id),
-      })).sort((a: any, b: any) => Number(b.submitted) - Number(a.submitted)),
+      roster: (students || []).filter((s: any) => (s.className || '未分班') === name).map((s: any) => {
+        const match = (subs || []).find((sub: any) => sub.studentId === s.id && (!selId || sub.assignmentId === selId))
+        return {
+          id: s.id, name: s.name,
+          submitted: !!(subs || []).some((sub: any) => sub.studentId === s.id),
+          submissionId: match?.id || null,
+        }
+      }).sort((a: any, b: any) => Number(b.submitted) - Number(a.submitted)),
     }))
 
     // Work type stats

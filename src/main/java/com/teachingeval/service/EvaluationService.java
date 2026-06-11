@@ -159,6 +159,13 @@ public class EvaluationService {
         }
     }
 
+    public EvaluationResult rejectEvaluation(Long submissionId) {
+        EvaluationResult evaluation = evaluationRepository.findBySubmissionId(submissionId)
+                .orElseThrow(() -> new IllegalArgumentException("评价结果不存在"));
+        evaluation.setStatus(0);
+        return evaluationRepository.save(evaluation);
+    }
+
     public EvaluationResult getBySubmissionId(Long submissionId) {
         return evaluationRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("评价结果不存在"));

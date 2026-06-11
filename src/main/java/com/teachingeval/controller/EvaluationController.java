@@ -60,4 +60,10 @@ public class EvaluationController {
                                               @Valid @RequestBody TeacherReviewRequest request) {
         return evaluationService.saveTeacherReview(submissionId, request);
     }
+
+    @Operation(summary = "打回评价", description = "将评价状态重置为未评价，清除 AI 和教师评分数据。")
+    @PostMapping("/submissions/{submissionId}/reject")
+    public EvaluationResult rejectEvaluation(@PathVariable Long submissionId) {
+        return evaluationService.rejectEvaluation(submissionId);
+    }
 }
