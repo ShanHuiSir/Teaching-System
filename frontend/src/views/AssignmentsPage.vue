@@ -575,12 +575,31 @@ async function onSave() {
     snackbar.show('请输入作业名称', { variant: 'error' })
     return
   }
-  // TODO: call POST /api/assignments or PUT /api/assignments/:id when API is ready
-  clearDraft()
-  triggerRipple(window.innerWidth * 0.75, 200)
-  snackbar.show(isCreate.value ? '作业已发布' : '作业已更新', { variant: 'info' })
-  editing.value = false
-  fetchAssignments()
+  if (!form.workType.trim()) {
+    snackbar.show('请输入作业类型', { variant: 'error' })
+    return
+  }
+  try {
+    if (isCreate.value) {
+      const classes = form.classes.length ? form.classes : ['']
+      for (const className of classes) {
+        await http.post('/assignments', {
+          title: form.title.trim(),
+          description: form.description.trim() || null,
+          workType: form.workType.trim(),
+          className: className || null,
+          dueAt: form.dueDate ? new Date(form.dueDate).toISOString() : null,
+        })
+      }
+    }
+    clearDraft()
+    triggerRipple(window.innerWidth * 0.75, 200)
+    snackbar.show(isCreate.value ? '作业已发布' : '作业已更新', { variant: 'info' })
+    editing.value = false
+    fetchAssignments()
+  } catch (e: any) {
+    snackbar.show('保存失败：' + (e.message || '网络异常'), { variant: 'error' })
+  }
 }
 
 const deleteModal = reactive({ open: false, id: null, title: '' })
@@ -679,11 +698,11 @@ function buildRightButtons() {
   ]
 }
 
-// TODO: Replace with GET /api/assignments when API is ready.
 async function fetchAssignments() {
   loading.value = true
   try {
-    const [subs, evals, students] = await Promise.all([
+    const [realAssignments, subs, evals, students] = await Promise.all([
+      http.get('/assignments'),
       http.get('/submissions'),
       http.get('/evaluations'),
       http.get('/students'),
@@ -691,49 +710,34 @@ async function fetchAssignments() {
 
     studentsAll.value = students || []
 
-    const evalMap = {}
-    ;(evals || []).forEach(e => {
+    const evalMap: Record<string, any> = {}
+    ;(evals || []).forEach((e: any) => {
       evalMap[e.submissionId] = e
     })
 
     const classStudentCounts: Record<string, number> = {}
-    ;(students || []).forEach(s => {
+    ;(students || []).forEach((s: any) => {
       const cls = s.className || '未分班'
       classStudentCounts[cls] = (classStudentCounts[cls] || 0) + 1
     })
 
-    const map: Record<string, any> = {}
-    ;(subs || []).forEach((s: any) => {
-      const type = s.workType || '其他'
-      if (!map[type]) map[type] = { count: 0, reviewed: 0, classes: new Set(), latestTime: '' }
-      map[type].count++
-      if (s.className) map[type].classes.add(s.className)
-      const ev = evalMap[s.id]
-      if (ev && ev.status >= 2) map[type].reviewed++
-      if (s.submittedAt && s.submittedAt > map[type].latestTime) map[type].latestTime = s.submittedAt
+    assignments.value = (realAssignments || []).map((a: any) => {
+      const relatedSubs = (subs || []).filter((s: any) => s.assignmentId === a.id)
+      const reviewedCount = relatedSubs.filter((s: any) => {
+        const ev = evalMap[s.id]
+        return ev && ev.status >= 2
+      }).length
+      const cls = a.className || ''
+      const total = classStudentCounts[cls] || 0
+      return {
+        ...a,
+        submittedCount: relatedSubs.length,
+        reviewedCount,
+        totalStudents: total,
+        submitRate: total ? Math.round((relatedSubs.length / total) * 100) : 0,
+        reviewProgress: relatedSubs.length ? Math.round((reviewedCount / relatedSubs.length) * 100) : 0,
+      }
     })
-
-    assignments.value = Object.entries(map)
-      .map(([type, d], i) => {
-        const classList = [...d.classes]
-        const total = classList.reduce((sum, cls) => sum + (classStudentCounts[cls] || 0), 0)
-        return {
-          id: `wt-${i}`,
-          title: type,
-          workType: type,
-          className: classList.join('、'),
-          description: '',
-          submittedCount: d.count,
-          reviewedCount: d.reviewed,
-          totalStudents: total,
-          submitRate: total ? Math.round((d.count / total) * 100) : 0,
-          reviewProgress: d.count ? Math.round((d.reviewed / d.count) * 100) : 0,
-          latestTime: d.latestTime,
-          createdAt: '',
-          dueDate: '',
-        }
-      })
-      .sort((a, b) => b.submittedCount - a.submittedCount)
   } finally {
     loading.value = false
   }
