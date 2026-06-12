@@ -1,5 +1,6 @@
 package com.teachingeval.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,6 @@ public interface TeachingClassRepository extends JpaRepository<TeachingClass, Lo
     boolean existsByName(String name);
 
     Optional<TeachingClass> findByName(String name);
+
+    List<TeachingClass> findByTeacherId(Long teacherId);
 }

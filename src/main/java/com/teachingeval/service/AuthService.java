@@ -8,33 +8,52 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.teachingeval.repository.TeacherRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import jakarta.annotation.PostConstruct;
 
 @Service
 public class AuthService {
 
     public static final String AUTH_USER_ATTRIBUTE = "authUser";
 
-    private final String username;
-    private final String password;
+    private final Map<String, String> credentials = new ConcurrentHashMap<>();
     private final Duration sessionTtl;
     private final Duration rememberTtl;
     private final SecureRandom secureRandom = new SecureRandom();
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
+    private final TeacherRepository teacherRepository;
 
     public AuthService(@Value("${app.auth.username:teacher}") String username,
                        @Value("${app.auth.password:123456}") String password,
+                       @Value("${app.auth.accounts:}") String additionalAccounts,
                        @Value("${app.auth.session-ttl-hours:12}") long sessionTtlHours,
-                       @Value("${app.auth.remember-ttl-days:7}") long rememberTtlDays) {
-        this.username = username;
-        this.password = password;
+                       @Value("${app.auth.remember-ttl-days:7}") long rememberTtlDays,
+                       TeacherRepository teacherRepository) {
+        this.credentials.put(username, password);
+        for (String account : additionalAccounts.split(",")) {
+            String trimmed = account.trim();
+            if (trimmed.isEmpty()) continue;
+            String[] parts = trimmed.split(":", 2);
+            if (parts.length == 2) {
+                credentials.put(parts[0], parts[1]);
+            }
+        }
         this.sessionTtl = Duration.ofHours(sessionTtlHours);
         this.rememberTtl = Duration.ofDays(rememberTtlDays);
+        this.teacherRepository = teacherRepository;
+    }
+
+    @PostConstruct
+    void loadTeacherCredentials() {
+        teacherRepository.findAll().forEach(t -> credentials.put(t.getUsername(), t.getPassword()));
     }
 
     public LoginSession login(String username, String password, boolean rememberMe) {
-        if (!this.username.equals(username) || !this.password.equals(password)) {
+        String expectedPassword = credentials.get(username);
+        if (expectedPassword == null || !expectedPassword.equals(password)) {
             throw new IllegalArgumentException("账户名或密钥错误");
         }
 

@@ -32,16 +32,34 @@ public class StatisticsService {
     }
 
     public StatisticsSummaryResponse getSummary() {
-        return getSummary(null, null);
+        return getSummary(null, null, null);
     }
 
     public StatisticsSummaryResponse getSummary(Long assignmentId, Long classId) {
-        List<Student> students = studentRepository.findAll();
+        return getSummary(assignmentId, classId, null);
+    }
+
+    public StatisticsSummaryResponse getSummary(Long assignmentId, Long classId, List<Long> teacherClassIds) {
+        List<Student> allStudents = studentRepository.findAll();
+        List<Student> scopedStudents = (teacherClassIds != null)
+                ? allStudents.stream()
+                    .filter(s -> s.getClassId() != null && teacherClassIds.contains(s.getClassId()))
+                    .toList()
+                : allStudents;
         List<WorkSubmission> submissions = submissionRepository.findAll();
+        if (teacherClassIds != null) {
+            java.util.Set<Long> studentIds = scopedStudents.stream()
+                    .map(com.teachingeval.entity.Student::getId)
+                    .collect(java.util.stream.Collectors.toSet());
+            submissions = submissions.stream()
+                    .filter(s -> studentIds.contains(s.getStudentId()))
+                    .toList();
+        }
         if (classId != null) {
+            final List<Student> studentsRef = scopedStudents;
             submissions = submissions.stream()
                     .filter(submission -> {
-                        Student student = students.stream()
+                        Student student = studentsRef.stream()
                                 .filter(item -> item.getId().equals(submission.getStudentId()))
                                 .findFirst()
                                 .orElse(null);
@@ -76,7 +94,7 @@ public class StatisticsService {
         }
 
         return new StatisticsSummaryResponse(
-                classId == null ? students.size() : students.stream().filter(student -> classId.equals(student.getClassId())).count(),
+                classId == null ? scopedStudents.size() : scopedStudents.stream().filter(student -> classId.equals(student.getClassId())).count(),
                 submissions.size(),
                 evaluations.stream().filter(evaluation -> evaluation.getStatus() >= EvaluationResult.STATUS_AI_REVIEWED).count(),
                 evaluations.stream().filter(evaluation -> evaluation.getStatus() >= EvaluationResult.STATUS_TEACHER_CONFIRMED).count(),
