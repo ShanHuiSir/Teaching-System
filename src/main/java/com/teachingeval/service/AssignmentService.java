@@ -40,6 +40,11 @@ public class AssignmentService {
 
     @Transactional(readOnly = true)
     public List<Assignment> listAssignments(Long classId) {
+        return listAssignments(classId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Assignment> listAssignments(Long classId, List<Long> teacherClassIds) {
         List<Assignment> assignments;
         if (classId != null) {
             List<Long> assignmentIds = assignmentClassRepository.findAssignmentIdsByClassId(classId);
@@ -57,8 +62,30 @@ public class AssignmentService {
         } else {
             assignments = assignmentRepository.findAll(Sort.by("publishedAt").descending().and(Sort.by("id").ascending()));
         }
+        if (teacherClassIds != null) {
+            assignments = assignments.stream()
+                    .filter(a -> assignmentBelongsToTeacher(a, teacherClassIds))
+                    .toList();
+        }
         attachClassLists(assignments);
         return assignments;
+    }
+
+    public void verifyClassOwnership(Long assignmentId, List<Long> teacherClassIds) {
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new IllegalArgumentException("作业不存在"));
+        if (!assignmentBelongsToTeacher(assignment, teacherClassIds)) {
+            throw new IllegalArgumentException("无权操作此作业");
+        }
+    }
+
+    private boolean assignmentBelongsToTeacher(Assignment assignment, List<Long> teacherClassIds) {
+        List<AssignmentClass> rows = assignmentClassRepository.findByAssignmentIdOrderByIdAsc(assignment.getId());
+        if (rows.isEmpty()) {
+            Long legacyClassId = assignment.getClassId();
+            return legacyClassId != null && teacherClassIds.contains(legacyClassId);
+        }
+        return rows.stream().anyMatch(row -> teacherClassIds.contains(row.getClassId()));
     }
 
     @Transactional

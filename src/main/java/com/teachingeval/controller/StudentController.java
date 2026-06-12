@@ -4,8 +4,10 @@ import com.teachingeval.dto.StudentPageResponse;
 import com.teachingeval.dto.StudentRequest;
 import com.teachingeval.entity.Student;
 import com.teachingeval.service.StudentService;
+import com.teachingeval.service.TeachingClassService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,23 +28,28 @@ import java.util.List;
 public class StudentController {
 
     private final StudentService studentService;
+    private final TeachingClassService teachingClassService;
 
-    public StudentController(StudentService studentService) {
+    public StudentController(StudentService studentService,
+                             TeachingClassService teachingClassService) {
         this.studentService = studentService;
+        this.teachingClassService = teachingClassService;
     }
 
-    @Operation(summary = "查询学生列表", description = "返回系统中已录入的全部学生基础信息。")
+    @Operation(summary = "查询学生列表", description = "返回当前教师管辖班级的学生基础信息。")
     @GetMapping("/students")
-    public List<Student> listStudents() {
-        return studentService.listStudents();
+    public List<Student> listStudents(HttpServletRequest request) {
+        return studentService.listStudents(teachingClassService.resolveTeacherClassIds(request));
     }
 
-    @Operation(summary = "分页查询学生", description = "按页返回学生基础信息，支持按学号或姓名关键字搜索。page 从 0 开始，size 最大为 200。")
+    @Operation(summary = "分页查询学生", description = "按页返回当前教师管辖班级的学生基础信息，支持按学号或姓名关键字搜索。")
     @GetMapping("/students/page")
     public StudentPageResponse listStudentPage(@RequestParam(required = false) Integer page,
                                                @RequestParam(required = false) Integer size,
-                                               @RequestParam(required = false) String keyword) {
-        return StudentPageResponse.from(studentService.listStudentPage(page, size, keyword));
+                                               @RequestParam(required = false) String keyword,
+                                               HttpServletRequest request) {
+        return StudentPageResponse.from(studentService.listStudentPage(
+                page, size, keyword, teachingClassService.resolveTeacherClassIds(request)));
     }
 
     @Operation(summary = "新增学生", description = "录入学生学号、姓名和班级信息，学号不能为空且不能重复。")

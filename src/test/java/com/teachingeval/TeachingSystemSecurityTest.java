@@ -105,6 +105,23 @@ class TeachingSystemSecurityTest {
     }
 
     @Test
+    void submissionFileDownloadRequiresLogin() throws Exception {
+        mockMvc.perform(get("/api/submissions/1/file"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("请先登录"));
+    }
+
+    @Test
+    void submissionFileDownloadSucceedsForAuthenticatedUser() throws Exception {
+        Cookie authCookie = login();
+
+        Long submissionId = submissionRepository.findAll().get(0).getId();
+        mockMvc.perform(get("/api/submissions/{id}/file", submissionId)
+                        .cookie(authCookie))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void aiEvaluationRequestsAreRateLimitedPerMinute() throws Exception {
         Cookie authCookie = login();
         Long submissionId = submissionRepository.findAll().get(0).getId();
