@@ -1,15 +1,19 @@
 package com.teachingeval.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.teachingeval.dto.TeachingClassRequest;
+import com.teachingeval.entity.Teacher;
 import com.teachingeval.entity.TeachingClass;
 import com.teachingeval.repository.AssignmentClassRepository;
 import com.teachingeval.repository.AssignmentRepository;
 import com.teachingeval.repository.StudentRepository;
+import com.teachingeval.repository.TeacherRepository;
 import com.teachingeval.repository.TeachingClassRepository;
 
 @Service
@@ -19,19 +23,43 @@ public class TeachingClassService {
     private final StudentRepository studentRepository;
     private final AssignmentRepository assignmentRepository;
     private final AssignmentClassRepository assignmentClassRepository;
+    private final TeacherRepository teacherRepository;
 
     public TeachingClassService(TeachingClassRepository teachingClassRepository,
                                 StudentRepository studentRepository,
                                 AssignmentRepository assignmentRepository,
-                                AssignmentClassRepository assignmentClassRepository) {
+                                AssignmentClassRepository assignmentClassRepository,
+                                TeacherRepository teacherRepository) {
         this.teachingClassRepository = teachingClassRepository;
         this.studentRepository = studentRepository;
         this.assignmentRepository = assignmentRepository;
         this.assignmentClassRepository = assignmentClassRepository;
+        this.teacherRepository = teacherRepository;
     }
 
     public List<TeachingClass> listClasses() {
         return teachingClassRepository.findAll(Sort.by("id").ascending());
+    }
+
+    public List<TeachingClass> listClassesForTeacher(HttpServletRequest request) {
+        List<Long> ids = resolveTeacherClassIds(request);
+        if (ids == null) return listClasses();
+        return teachingClassRepository.findAllById(ids).stream()
+                .sorted((a, b) -> a.getId().compareTo(b.getId()))
+                .toList();
+    }
+
+    public List<Long> resolveTeacherClassIds(HttpServletRequest request) {
+        String username = (String) request.getAttribute(AuthService.AUTH_USER_ATTRIBUTE);
+        if (username == null) return null;
+        Teacher teacher = teacherRepository.findByUsername(username).orElse(null);
+        if (teacher == null) return List.of();
+        List<TeachingClass> classes = teachingClassRepository.findByTeacherId(teacher.getId());
+        List<Long> ids = new ArrayList<>();
+        for (TeachingClass c : classes) {
+            ids.add(c.getId());
+        }
+        return ids;
     }
 
     public TeachingClass createClass(TeachingClassRequest request) {

@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -71,6 +73,13 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleIllegalStateException(IllegalStateException exception) {
         return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ErrorResponse handleResponseStatus(ResponseStatusException exception, HttpServletResponse response) {
+        response.setStatus(exception.getStatusCode().value());
+        String reason = exception.getReason();
+        return new ErrorResponse(reason != null ? reason : "请求错误");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

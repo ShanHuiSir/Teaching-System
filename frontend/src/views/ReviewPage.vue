@@ -63,7 +63,7 @@
           <!-- "全部作业" — shows all submissions -->
           <div
             class="assign-item"
-            :class="{ 'assign-item--active': !selectedWorkType }"
+            :class="{ 'assign-item--active': !selectedAssignmentId }"
             @click="onSelectWorkType(null)"
           >
             <div class="assign-item__top">
@@ -79,8 +79,8 @@
             v-for="wt in workTypes"
             :key="wt.type"
             class="assign-item"
-            :class="{ 'assign-item--active': selectedWorkType === wt.type }"
-            @click="onSelectWorkType(wt.type)"
+            :class="{ 'assign-item--active': selectedAssignmentId === wt.id }"
+            @click="onSelectWorkType(wt.id)"
           >
             <div class="assign-item__top">
               <span class="assign-item__student">{{ wt.type }}</span>
@@ -612,7 +612,7 @@ const tabIndicatorStyle = computed(() => {
   }
 })
 
-const selectedWorkType = ref(null)
+const selectedAssignmentId = ref<number | null>(null)
 const activeId = ref(null)
 const semesters = ref<any[]>([])
 const submissionsRaw = ref<any[]>([])
@@ -733,6 +733,7 @@ const workTypes = computed(() => {
           ? classNames.reduce((sum, name) => sum + (classStudentCounts[name] || 0), 0)
           : studentsAll.value.length
       return {
+        id: a.id,
         type: a.title,
         submittedCount: stats.count,
         reviewedCount: stats.reviewed,
@@ -773,14 +774,19 @@ const triggerRipple = inject(TRIGGER_RIPPLE_KEY)!
 
 function updateMagicTrail() {
   const parts = []
-  parts.push(selectedWorkType.value || '全部作业')
+  if (selectedAssignmentId.value) {
+    const assignment = assignmentsAll.value.find((a: any) => a.id === selectedAssignmentId.value)
+    parts.push(assignment?.title || '全部作业')
+  } else {
+    parts.push('全部作业')
+  }
   const a = active.value
   if (a) parts.push(a.studentName)
   magicBar.sub = parts.join(' · ')
 }
 
-function onSelectWorkType(type) {
-  selectedWorkType.value = type
+function onSelectWorkType(assignmentId: number | null) {
+  selectedAssignmentId.value = assignmentId
   activeTab.value = 'submissions'
   activeId.value = null
   updateMagicTrail()
@@ -1042,7 +1048,7 @@ const filterStatus = ref<string>(
 )
 
 const hasActiveFilter = computed(() => {
-  return filterStatus.value !== 'all' || selectedWorkType.value !== null
+  return filterStatus.value !== 'all' || selectedAssignmentId.value !== null
 })
 
 function rebuildSemesters() {
@@ -1054,6 +1060,7 @@ function rebuildSemesters() {
     const confirmed = ev && ev.status >= 2
     return {
       id: s.id,
+      assignmentId: s.assignmentId,
       studentName: s.studentName || '未知',
       fileType: s.fileType,
       fileName: s.fileName || '未命名',
@@ -1090,17 +1097,24 @@ function rebuildSemesters() {
     filtered = []
   }
 
-  // Filter by selected workType (from assignments tab)
-  if (selectedWorkType.value) {
-    filtered = filtered.filter(it => it.workType === selectedWorkType.value)
+  // Filter by selected assignment (from assignments tab)
+  if (selectedAssignmentId.value) {
+    filtered = filtered.filter(it => it.assignmentId === selectedAssignmentId.value)
   }
 
-  // Find unsubmitted students
+  // Find unsubmitted students — only from the selected assignment's target classes
   const submittedIds = new Set(submissionsRaw.value.map(s => s.studentId))
+  const targetClassIds: Set<number> | null = selectedAssignmentId.value
+    ? new Set(
+        (assignmentsAll.value.find((a: any) => a.id === selectedAssignmentId.value)?.classIds || [])
+          .map(Number)
+      )
+    : null
   const sq = searchQuery.value.trim().toLowerCase()
   const unsubmitted = (studentsAll.value || [])
     .filter(s => {
       if (submittedIds.has(s.id)) return false
+      if (targetClassIds && s.classId != null && !targetClassIds.has(Number(s.classId))) return false
       if (sq) {
         return (
           (s.name || '').toLowerCase().includes(sq) ||
