@@ -215,6 +215,7 @@
                     :d="p.d"
                     :fill="p.fill"
                     :fill-rule="p.fillRule"
+                    :stroke="p.stroke"
                     :stroke-dasharray="p.strokeDasharray"
                   />
                 </svg>
@@ -406,6 +407,7 @@
                   :d="p.d"
                   :fill="p.fill"
                   :fill-rule="p.fillRule"
+                  :stroke="p.stroke"
                   :stroke-dasharray="p.strokeDasharray"
                 />
               </svg>
