@@ -94,6 +94,8 @@ class TeachingSystemFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(6)))
                 .andExpect(jsonPath("$[0].classId", greaterThan(0)))
+                .andExpect(jsonPath("$[0].classIds", hasSize(1)))
+                .andExpect(jsonPath("$[0].classNames", hasSize(1)))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -103,6 +105,45 @@ class TeachingSystemFlowTest {
                         .param("classId", String.valueOf(classId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].classId").value(classId));
+    }
+
+    @Test
+    void assignmentCanTargetMultipleClasses() throws Exception {
+        String classResponse = mockMvc.perform(get("/api/classes"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Integer firstClassId = com.jayway.jsonpath.JsonPath.read(classResponse, "$[0].id");
+        Integer secondClassId = com.jayway.jsonpath.JsonPath.read(classResponse, "$[1].id");
+        String firstClassName = com.jayway.jsonpath.JsonPath.read(classResponse, "$[0].name");
+        String secondClassName = com.jayway.jsonpath.JsonPath.read(classResponse, "$[1].name");
+
+        String assignmentResponse = mockMvc.perform(post("/api/assignments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "多班级受理作业",
+                                  "description": "覆盖多班级保存和筛选",
+                                  "workType": "实验报告",
+                                  "classIds": [%d, %d]
+                                }
+                                """.formatted(firstClassId, secondClassId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("多班级受理作业"))
+                .andExpect(jsonPath("$.classId").value(firstClassId))
+                .andExpect(jsonPath("$.classIds", hasSize(2)))
+                .andExpect(jsonPath("$.classNames[0]").value(firstClassName))
+                .andExpect(jsonPath("$.classNames[1]").value(secondClassName))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Integer assignmentId = com.jayway.jsonpath.JsonPath.read(assignmentResponse, "$.id");
+
+        mockMvc.perform(get("/api/assignments")
+                        .param("classId", String.valueOf(secondClassId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == %d)]".formatted(assignmentId), hasSize(1)));
     }
 
     @Test

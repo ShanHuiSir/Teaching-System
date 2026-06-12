@@ -1,6 +1,8 @@
 package com.teachingeval.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -11,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "assignment")
@@ -41,6 +44,14 @@ public class Assignment {
     @Column(name = "class_name", length = 64)
     @Schema(description = "班级名称快照", example = "软件 1 班")
     private String className;
+
+    @Transient
+    @Schema(description = "受理班级 ID 列表；为空表示跨班级作业", example = "[1, 2]")
+    private List<Long> classIds = new ArrayList<>();
+
+    @Transient
+    @Schema(description = "受理班级名称列表；为空表示跨班级作业", example = "[\"软件 1 班\", \"软件 2 班\"]")
+    private List<String> classNames = new ArrayList<>();
 
     @Column(name = "published_at", nullable = false)
     @Schema(description = "发布时间")
@@ -123,6 +134,22 @@ public class Assignment {
 
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public List<Long> getClassIds() {
+        return classIds;
+    }
+
+    public void setClassIds(List<Long> classIds) {
+        this.classIds = classIds == null ? new ArrayList<>() : new ArrayList<>(classIds);
+    }
+
+    public List<String> getClassNames() {
+        return classNames;
+    }
+
+    public void setClassNames(List<String> classNames) {
+        this.classNames = classNames == null ? new ArrayList<>() : new ArrayList<>(classNames);
     }
 
     public LocalDateTime getPublishedAt() {

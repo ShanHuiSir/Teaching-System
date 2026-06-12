@@ -67,7 +67,7 @@
                   <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
-                <span>{{ a.className || '—' }}</span>
+                <span>{{ formatClassNames(a) }}</span>
               </span>
             </div>
 
@@ -203,7 +203,7 @@
             </div>
             <div class="info-field">
               <span class="info-field__label">受理班级</span>
-              <span class="info-field__value">{{ active.className || '—' }}</span>
+              <span class="info-field__value">{{ formatClassNames(active) }}</span>
             </div>
             <div class="info-field">
               <span class="info-field__label">提交进度</span>
@@ -405,7 +405,7 @@ const filteredAssignments = computed(() => {
       a =>
         (a.title || '').toLowerCase().includes(q) ||
         (a.workType || '').toLowerCase().includes(q) ||
-        (a.className || '').toLowerCase().includes(q) ||
+        formatClassNames(a).toLowerCase().includes(q) ||
         (a.description || '').toLowerCase().includes(q),
     )
   }
@@ -515,7 +515,7 @@ function startEdit(a) {
   if (!hasDraft) {
     form.title = a.title
     form.workType = a.workType || ''
-    form.classes = a.className ? a.className.split('、') : []
+    form.classes = normalizeAssignmentClassNames(a)
     form.description = a.description || ''
     form.dueDate = toDatetimeLocal(a.dueAt || a.dueDate)
   }
@@ -547,10 +547,31 @@ watchEffect(() => {
 function toggleClass(cls) {
   const idx = form.classes.indexOf(cls)
   if (idx === -1) {
-    form.classes = [cls]
+    form.classes = [...form.classes, cls]
   } else {
-    form.classes = []
+    form.classes = form.classes.filter(item => item !== cls)
   }
+}
+
+function normalizeAssignmentClassNames(assignment) {
+  if (!assignment) return []
+  if (Array.isArray(assignment.classNames) && assignment.classNames.length) {
+    return assignment.classNames.filter(Boolean)
+  }
+  return assignment.className ? assignment.className.split('、').filter(Boolean) : []
+}
+
+function normalizeAssignmentClassIds(assignment) {
+  if (!assignment) return []
+  if (Array.isArray(assignment.classIds) && assignment.classIds.length) {
+    return assignment.classIds.filter(id => id != null)
+  }
+  return assignment.classId ? [assignment.classId] : []
+}
+
+function formatClassNames(assignment) {
+  const names = normalizeAssignmentClassNames(assignment)
+  return names.length ? names.join('、') : '全部班级'
 }
 
 function formatDate(iso) {
@@ -589,14 +610,17 @@ async function onSave() {
     return
   }
 
-  const className = form.classes[0] || ''
-  const classItem = classesAll.value.find((c: any) => c.name === className)
+  const selectedClassItems = form.classes
+    .map(name => classesAll.value.find((c: any) => c.name === name))
+    .filter(Boolean)
   const payload = {
     title: form.title.trim(),
     workType: form.workType.trim(),
     description: form.description.trim(),
-    classId: classItem?.id || null,
-    className: classItem ? null : className || null,
+    classId: selectedClassItems[0]?.id || null,
+    className: selectedClassItems.length ? null : form.classes[0] || null,
+    classIds: selectedClassItems.map((item: any) => item.id),
+    classNames: selectedClassItems.length ? [] : form.classes,
     dueAt: toApiDateTime(form.dueDate),
   }
 
@@ -724,9 +748,14 @@ async function fetchAssignments() {
     })
 
     const classStudentCounts: Record<string, number> = {}
+    const classStudentCountsById: Record<string, number> = {}
     ;(students || []).forEach(s => {
       const cls = s.className || '未分班'
       classStudentCounts[cls] = (classStudentCounts[cls] || 0) + 1
+      if (s.classId != null) {
+        const key = String(s.classId)
+        classStudentCountsById[key] = (classStudentCountsById[key] || 0) + 1
+      }
     })
 
     const submissionStats: Record<string, any> = {}
@@ -745,7 +774,13 @@ async function fetchAssignments() {
     assignments.value = (assignmentRows || [])
       .map((a: any) => {
         const stat = submissionStats[String(a.id)] || { count: 0, reviewed: 0, latestTime: '' }
-        const total = a.className ? classStudentCounts[a.className] || 0 : studentsAll.value.length
+        const classIds = normalizeAssignmentClassIds(a)
+        const classNames = normalizeAssignmentClassNames(a)
+        const total = classIds.length
+          ? classIds.reduce((sum, id) => sum + (classStudentCountsById[String(id)] || 0), 0)
+          : classNames.length
+            ? classNames.reduce((sum, name) => sum + (classStudentCounts[name] || 0), 0)
+            : studentsAll.value.length
         return {
           ...a,
           dueDate: a.dueAt,

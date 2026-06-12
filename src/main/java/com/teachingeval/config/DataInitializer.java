@@ -1,11 +1,13 @@
 package com.teachingeval.config;
 
 import com.teachingeval.entity.Assignment;
+import com.teachingeval.entity.AssignmentClass;
 import com.teachingeval.entity.EvaluationResult;
 import com.teachingeval.entity.Student;
 import com.teachingeval.entity.SubmissionFile;
 import com.teachingeval.entity.TeachingClass;
 import com.teachingeval.entity.WorkSubmission;
+import com.teachingeval.repository.AssignmentClassRepository;
 import com.teachingeval.repository.AssignmentRepository;
 import com.teachingeval.repository.EvaluationRepository;
 import com.teachingeval.repository.StudentRepository;
@@ -30,6 +32,7 @@ public class DataInitializer implements CommandLineRunner {
     private final StudentRepository studentRepository;
     private final TeachingClassRepository teachingClassRepository;
     private final AssignmentRepository assignmentRepository;
+    private final AssignmentClassRepository assignmentClassRepository;
     private final SubmissionRepository submissionRepository;
     private final SubmissionFileRepository submissionFileRepository;
     private final EvaluationRepository evaluationRepository;
@@ -38,6 +41,7 @@ public class DataInitializer implements CommandLineRunner {
     public DataInitializer(StudentRepository studentRepository,
                            TeachingClassRepository teachingClassRepository,
                            AssignmentRepository assignmentRepository,
+                           AssignmentClassRepository assignmentClassRepository,
                            SubmissionRepository submissionRepository,
                            SubmissionFileRepository submissionFileRepository,
                            EvaluationRepository evaluationRepository,
@@ -45,6 +49,7 @@ public class DataInitializer implements CommandLineRunner {
         this.studentRepository = studentRepository;
         this.teachingClassRepository = teachingClassRepository;
         this.assignmentRepository = assignmentRepository;
+        this.assignmentClassRepository = assignmentClassRepository;
         this.submissionRepository = submissionRepository;
         this.submissionFileRepository = submissionFileRepository;
         this.evaluationRepository = evaluationRepository;
@@ -60,6 +65,7 @@ public class DataInitializer implements CommandLineRunner {
         if (studentRepository.count() == 0
                 && teachingClassRepository.count() == 0
                 && assignmentRepository.count() == 0
+                && assignmentClassRepository.count() == 0
                 && submissionRepository.count() == 0
                 && submissionFileRepository.count() == 0
                 && evaluationRepository.count() == 0) {
@@ -71,6 +77,7 @@ public class DataInitializer implements CommandLineRunner {
         evaluationRepository.deleteAll();
         submissionFileRepository.deleteAll();
         submissionRepository.deleteAll();
+        assignmentClassRepository.deleteAll();
         assignmentRepository.deleteAll();
         studentRepository.deleteAll();
         teachingClassRepository.deleteAll();
@@ -155,7 +162,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private List<Assignment> seedAssignments(List<TeachingClass> classes) {
-        return assignmentRepository.saveAll(List.of(
+        List<Assignment> assignments = assignmentRepository.saveAll(List.of(
                 buildAssignment("第二阶段实训报告", "课程论文", classes.get(0), "提交阶段报告、源码和运行截图"),
                 buildAssignment("算法设计与分析", "代码作业", classes.get(0), "提交算法实现与测试说明"),
                 buildAssignment("数据结构课程设计", "代码作业", classes.get(1), "提交课程设计源码和说明"),
@@ -163,6 +170,10 @@ public class DataInitializer implements CommandLineRunner {
                 buildAssignment("操作系统实验报告", "实验报告", classes.get(4), "提交实验记录和调度算法分析"),
                 buildAssignment("软件工程课程论文", "课程论文", classes.get(4), "提交课程论文和项目总结")
         ));
+        assignmentClassRepository.saveAll(assignments.stream()
+                .map(assignment -> buildAssignmentClass(assignment, assignment.getClassId(), assignment.getClassName()))
+                .toList());
+        return assignments;
     }
 
     private List<WorkSubmission> seedSubmissions(List<Student> students, List<Assignment> assignments) {
@@ -299,6 +310,14 @@ public class DataInitializer implements CommandLineRunner {
         assignment.setClassId(teachingClass.getId());
         assignment.setClassName(teachingClass.getName());
         return assignment;
+    }
+
+    private static AssignmentClass buildAssignmentClass(Assignment assignment, Long classId, String className) {
+        AssignmentClass assignmentClass = new AssignmentClass();
+        assignmentClass.setAssignmentId(assignment.getId());
+        assignmentClass.setClassId(classId);
+        assignmentClass.setClassName(className);
+        return assignmentClass;
     }
 
     private static Student buildStudent(String studentNo, String name, TeachingClass teachingClass) {

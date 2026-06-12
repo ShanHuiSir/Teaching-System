@@ -702,9 +702,14 @@ const totalSubmissionCount = computed(() => filteredSubmissions.value.length)
 
 const workTypes = computed(() => {
   const classStudentCounts: Record<string, number> = {}
+  const classStudentCountsById: Record<string, number> = {}
   studentsAll.value.forEach((s: any) => {
     const cls = s.className || '未分班'
     classStudentCounts[cls] = (classStudentCounts[cls] || 0) + 1
+    if (s.classId != null) {
+      const key = String(s.classId)
+      classStudentCountsById[key] = (classStudentCountsById[key] || 0) + 1
+    }
   })
 
   const assignmentStats: Record<string, any> = {}
@@ -720,13 +725,19 @@ const workTypes = computed(() => {
   return assignmentsAll.value
     .map((a: any) => {
       const stats = assignmentStats[String(a.id)] || { count: 0, reviewed: 0 }
-      const total = a.className ? classStudentCounts[a.className] || 0 : studentsAll.value.length
+      const classIds = normalizeAssignmentClassIds(a)
+      const classNames = normalizeAssignmentClassNames(a)
+      const total = classIds.length
+        ? classIds.reduce((sum, id) => sum + (classStudentCountsById[String(id)] || 0), 0)
+        : classNames.length
+          ? classNames.reduce((sum, name) => sum + (classStudentCounts[name] || 0), 0)
+          : studentsAll.value.length
       return {
         type: a.title,
         submittedCount: stats.count,
         reviewedCount: stats.reviewed,
         totalStudents: total,
-        className: a.className || '全部班级',
+        className: formatAssignmentClassNames(a),
         submitRate: total ? Math.round((stats.count / total) * 100) : 0,
         reviewProgress: stats.count ? Math.round((stats.reviewed / stats.count) * 100) : 0,
         createdAt: a.createdAt ? formatTime(a.createdAt) : '—',
@@ -735,6 +746,27 @@ const workTypes = computed(() => {
     })
     .sort((a, b) => b.submittedCount - a.submittedCount)
 })
+
+function normalizeAssignmentClassNames(assignment) {
+  if (!assignment) return []
+  if (Array.isArray(assignment.classNames) && assignment.classNames.length) {
+    return assignment.classNames.filter(Boolean)
+  }
+  return assignment.className ? assignment.className.split('、').filter(Boolean) : []
+}
+
+function normalizeAssignmentClassIds(assignment) {
+  if (!assignment) return []
+  if (Array.isArray(assignment.classIds) && assignment.classIds.length) {
+    return assignment.classIds.filter(id => id != null)
+  }
+  return assignment.classId ? [assignment.classId] : []
+}
+
+function formatAssignmentClassNames(assignment) {
+  const names = normalizeAssignmentClassNames(assignment)
+  return names.length ? names.join('、') : '全部班级'
+}
 
 const magicBar = inject(MAGIC_BAR_KEY)!
 const triggerRipple = inject(TRIGGER_RIPPLE_KEY)!

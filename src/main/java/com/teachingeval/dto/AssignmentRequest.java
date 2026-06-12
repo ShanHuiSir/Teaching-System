@@ -1,6 +1,7 @@
 package com.teachingeval.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -24,6 +25,12 @@ public class AssignmentRequest {
 
     @Schema(description = "班级名称；classId 为空时可用于创建/匹配班级", example = "软件 1 班")
     private String className;
+
+    @Schema(description = "受理班级 ID 列表；优先于 classId", example = "[1, 2]")
+    private List<Long> classIds;
+
+    @Schema(description = "受理班级名称列表；classIds 为空时可用于创建/匹配班级", example = "[\"软件 1 班\", \"软件 2 班\"]")
+    private List<String> classNames;
 
     @Schema(description = "截止时间", example = "2026-06-15T23:59:59")
     private LocalDateTime dueAt;
@@ -66,6 +73,22 @@ public class AssignmentRequest {
 
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public List<Long> getClassIds() {
+        return classIds;
+    }
+
+    public void setClassIds(List<Long> classIds) {
+        this.classIds = classIds;
+    }
+
+    public List<String> getClassNames() {
+        return classNames;
+    }
+
+    public void setClassNames(List<String> classNames) {
+        this.classNames = classNames;
     }
 
     public LocalDateTime getDueAt() {

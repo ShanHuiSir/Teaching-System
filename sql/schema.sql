@@ -39,6 +39,17 @@ CREATE TABLE assignment (
     INDEX idx_assignment_published_at (published_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作业表';
 
+CREATE TABLE assignment_class (
+    id            BIGINT      NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    assignment_id BIGINT      NOT NULL                COMMENT '作业ID',
+    class_id      BIGINT      NOT NULL                COMMENT '班级ID',
+    class_name    VARCHAR(64) NOT NULL                COMMENT '班级名称快照',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_assignment_class_assignment_class (assignment_id, class_id),
+    INDEX idx_assignment_class_assignment_id (assignment_id),
+    INDEX idx_assignment_class_class_id (class_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作业受理班级关联表';
+
 CREATE TABLE submission (
     id              BIGINT       NOT NULL AUTO_INCREMENT  COMMENT '主键ID',
     student_id      BIGINT       NOT NULL                 COMMENT '学生ID',
