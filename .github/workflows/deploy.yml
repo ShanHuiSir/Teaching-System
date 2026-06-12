@@ -46,7 +46,16 @@ jobs:
         run: |
           cd frontend
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run typecheck
+          npm run lint:check
           npm run build
+
+      # ── Python sanity check ─────────────────────────────────────────
+
+      - name: Check AI Service Python Sources
+        run: |
+          cd ai-service
+          python -m compileall -q config.py DocxConv/src Evaluator/src ScreenshotProc/src ArchiveProc/src
 
       # ── Stage artifacts ──────────────────────────────────────────
 

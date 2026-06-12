@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { getCookie } from '../utils/cookie'
+import { fetchCurrentSession } from '../utils/session'
 
 import LoginPage from '../views/LoginPage.vue'
 
@@ -72,11 +72,13 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach(to => {
-  const hasToken = !!getCookie('user_name')
-  if (to.meta.requiresAuth && !hasToken) return '/forbidden'
-  if (to.path === '/login' && hasToken) return '/dashboard'
-  if (to.path === '/forbidden' && hasToken) return '/dashboard'
+router.beforeEach(async to => {
+  const needsSession = to.meta.requiresAuth || to.path === '/login' || to.path === '/forbidden'
+  const session = needsSession ? await fetchCurrentSession() : null
+
+  if (to.meta.requiresAuth && !session) return '/forbidden'
+  if (to.path === '/login' && session) return '/dashboard'
+  if (to.path === '/forbidden' && session) return '/dashboard'
 })
 
 export default router

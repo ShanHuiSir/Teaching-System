@@ -46,6 +46,10 @@ public class AuthService {
     }
 
     public Optional<String> validate(String token) {
+        return currentSession(token).map(CurrentSession::username);
+    }
+
+    public Optional<CurrentSession> currentSession(String token) {
         if (token == null || token.isBlank()) {
             return Optional.empty();
         }
@@ -58,7 +62,8 @@ public class AuthService {
             sessions.remove(token);
             return Optional.empty();
         }
-        return Optional.of(session.username());
+        Duration remainingTtl = Duration.between(Instant.now(), session.expiresAt());
+        return Optional.of(new CurrentSession(session.username(), remainingTtl));
     }
 
     public void logout(String token) {
@@ -77,5 +82,8 @@ public class AuthService {
     }
 
     public record LoginSession(String token, String username, Duration ttl) {
+    }
+
+    public record CurrentSession(String username, Duration ttl) {
     }
 }

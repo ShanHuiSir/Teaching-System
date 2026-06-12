@@ -333,6 +333,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { getCookie, delCookie } from '../utils/cookie'
 import { useSnackbar } from '../composables/useSnackbar'
 import http from '../utils/request'
+import { clearSessionUser } from '../utils/session'
 import { useTheme } from '../composables/useTheme'
 import { useMagicBar } from '../composables/useMagicBar'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, SHOW_GREETING_KEY } from '../types'
@@ -392,6 +393,7 @@ async function logout() {
     // Local logout still clears the visible user state.
   }
   delCookie('user_name')
+  clearSessionUser()
   menuOpen.value = false
   router.replace('/login')
 }

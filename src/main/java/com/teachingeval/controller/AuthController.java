@@ -3,6 +3,7 @@ package com.teachingeval.controller;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,7 +73,19 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
+    @Operation(summary = "查询当前登录会话", description = "根据 HttpOnly 会话 Cookie 返回当前教师身份。")
+    @GetMapping("/me")
+    public LoginResponse currentSession(HttpServletRequest request) {
+        AuthService.CurrentSession session = authService.currentSession(resolveToken(request))
+                .orElseThrow(() -> new IllegalArgumentException("请先登录"));
+        return new LoginResponse(session.username(), session.ttl().toSeconds());
+    }
+
     private String resolveToken(HttpServletRequest request) {
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            return authorization.substring("Bearer ".length());
+        }
         if (request.getCookies() == null) {
             return null;
         }

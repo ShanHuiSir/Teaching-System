@@ -36,19 +36,22 @@ public class EvaluationService {
     private final RestTemplateBuilder restTemplateBuilder;
     private final Environment environment;
     private final ObjectMapper objectMapper;
+    private final boolean evalLogEnabled;
 
     public EvaluationService(AIService aiService,
                              EvaluationRepository evaluationRepository,
                              SubmissionRepository submissionRepository,
                              RestTemplateBuilder restTemplateBuilder,
                              Environment environment,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             @org.springframework.beans.factory.annotation.Value("${app.ai.eval-log.enabled:false}") boolean evalLogEnabled) {
         this.aiService = aiService;
         this.evaluationRepository = evaluationRepository;
         this.submissionRepository = submissionRepository;
         this.restTemplateBuilder = restTemplateBuilder;
         this.environment = environment;
         this.objectMapper = objectMapper;
+        this.evalLogEnabled = evalLogEnabled;
     }
 
     public EvaluationResult evaluate(Long submissionId, AIEvalRequest request) {
@@ -93,11 +96,13 @@ public class EvaluationService {
         evaluation.setStatus(2);
         EvaluationResult saved = evaluationRepository.save(evaluation);
 
-        // After successful save, notify Python ai-service to write the final log entry
-        try {
-            postEvalLog(submissionId, saved);
-        } catch (Exception e) {
-            log.warn("评价日志写入失败，不影响批改结果: submissionId={}", submissionId, e);
+        if (evalLogEnabled) {
+            try {
+                postEvalLog(submissionId, saved);
+            } catch (Exception e) {
+                log.warn("评价日志写入失败，不影响批改结果: submissionId={}, message={}",
+                        submissionId, e.getMessage());
+            }
         }
 
         return saved;
