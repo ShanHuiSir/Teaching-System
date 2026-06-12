@@ -1174,6 +1174,7 @@ watch([selectedAssignmentId, selectedClassId], fetchAll)
 }
 .compare-row__bar {
   height: 14px;
+  min-width: 3px;
   border-radius: 3px;
   transition: width 0.5s ease;
 }
