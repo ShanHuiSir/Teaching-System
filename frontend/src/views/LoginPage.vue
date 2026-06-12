@@ -163,10 +163,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { setCookie, delCookie } from '../utils/cookie'
+import { delCookie } from '../utils/cookie'
 import { CATEGORIES, loadPrefs, savePrefs, clearCategory } from '../utils/cookiePrefs'
 import { useSnackbar } from '../composables/useSnackbar'
 import http from '../utils/request'
+import { setSessionUser } from '../utils/session'
 
 const router = useRouter()
 const snackbar = useSnackbar()
@@ -230,7 +231,7 @@ async function handleLogin() {
       rememberMe: rememberMe.value,
     })
     const displayName = res?.username || account.value.trim()
-    setCookie('user_name', displayName, rememberMe.value ? 7 : 0.5)
+    setSessionUser(displayName, rememberMe.value ? 7 : 0.5)
     snackbar.show('登录成功', { variant: 'info' })
     router.replace('/dashboard')
   } catch (e: any) {

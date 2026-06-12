@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="float">
-      <div v-if="modelValue" class="fp-overlay" @mousedown.self="$emit('update:modelValue', false)">
+      <div v-if="modelValue" class="fp-overlay" @mousedown.self="closePreview(false)">
         <div
           class="fp-window"
           :style="windowStyle"
@@ -28,7 +28,7 @@
                 <span class="fp-tooltip">在新标签页中打开</span>
               </div>
               <div class="fp-tooltip-wrap">
-                <button class="fp-bar__btn fp-bar__btn--close" @click.stop="$emit('update:modelValue', false); $emit('closed')">
+                <button class="fp-bar__btn fp-bar__btn--close" @click.stop="closePreview(true)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -106,6 +106,11 @@ function openInNewTab() {
   if (props.submissionId != null) {
     window.open(`/preview/${props.submissionId}`, '_blank')
   }
+}
+
+function closePreview(emitClosed: boolean) {
+  emit('update:modelValue', false)
+  if (emitClosed) emit('closed')
 }
 
 function clamp(v: number, lo: number, hi: number) {
