@@ -466,10 +466,14 @@ function onSelectCard(a) {
   activeId.value = a.id
 }
 
-const DRAFT_KEY = 'ap_draft'
+const DRAFT_PREFIX = 'ap_draft'
+
+function draftKey() {
+  return form.id ? `${DRAFT_PREFIX}_${form.id}` : DRAFT_PREFIX
+}
 
 function loadDraft() {
-  const raw = getCookie(DRAFT_KEY)
+  const raw = getCookie(draftKey())
   if (!raw) return false
   try {
     const d = JSON.parse(raw)
@@ -492,11 +496,11 @@ function saveDraft() {
     description: form.description,
     dueDate: form.dueDate,
   }
-  setCookie(DRAFT_KEY, JSON.stringify(data), 7)
+  setCookie(draftKey(), JSON.stringify(data), 7)
 }
 
 function clearDraft() {
-  setCookie(DRAFT_KEY, '', -1)
+  setCookie(draftKey(), '', -1)
 }
 
 function startCreate() {
@@ -526,7 +530,7 @@ function startEdit(a) {
 // Notify on close without save
 watch(editing, (val, old) => {
   if (old && !val) {
-    if (getCookie(DRAFT_KEY)) {
+    if (getCookie(draftKey())) {
       notify({ type: 'info', snackbar: '编辑内容已保存至草稿', magicbar: '编辑内容已保存至本地' })
     }
   }
