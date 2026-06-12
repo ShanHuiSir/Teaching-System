@@ -111,6 +111,7 @@ public class AssignmentService {
 
     private void saveAssignmentClasses(Assignment assignment, AssignmentRequest request) {
         assignmentClassRepository.deleteByAssignmentId(assignment.getId());
+        assignmentClassRepository.flush();
         List<AssignmentClass> rows = resolveTeachingClasses(request).stream()
                 .map(teachingClass -> {
                     AssignmentClass row = new AssignmentClass();
