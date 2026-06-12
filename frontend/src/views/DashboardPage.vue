@@ -313,7 +313,7 @@ import { useRouter } from 'vue-router'
 import { getCookie, setCookie } from '../utils/cookie'
 import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
-import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
 
 const router = useRouter()
 const { notify } = useNotify()
@@ -451,6 +451,7 @@ const pieGradient = computed(() => {
 })
 
 const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
+const dataVersion = inject(DATA_VERSION_KEY, ref(0))
 
 async function fetchAll() {
   try {
@@ -657,6 +658,7 @@ onDeactivated(() => {
   rightButtons.value = []
 })
 watch(refreshTick, fetchAll)
+watch(dataVersion, fetchAll)
 watch([selectedAssignmentId, selectedClassId], fetchAll)
 </script>
 
@@ -1172,6 +1174,7 @@ watch([selectedAssignmentId, selectedClassId], fetchAll)
 }
 .compare-row__bar {
   height: 14px;
+  min-width: 3px;
   border-radius: 3px;
   transition: width 0.5s ease;
 }

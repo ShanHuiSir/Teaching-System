@@ -109,6 +109,8 @@ CREATE TABLE evaluation (
     teacher_score     DECIMAL(5,2)                        COMMENT '教师评分',
     teacher_comment TEXT                                  COMMENT '教师评语',
     status          TINYINT      NOT NULL DEFAULT 0       COMMENT '状态：0-未评价，1-AI已评价，2-教师已确认',
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),
     INDEX idx_evaluation_submission_id (submission_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评价表';
