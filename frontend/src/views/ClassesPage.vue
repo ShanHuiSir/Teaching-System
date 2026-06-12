@@ -269,7 +269,7 @@ import {
 } from 'vue'
 import http, { retryFetch } from '../utils/request'
 import { getCookie, setCookie } from '../utils/cookie'
-import { useSnackbar } from '../composables/useSnackbar'
+import { useNotify } from '../composables/useNotify'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
@@ -278,7 +278,7 @@ import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 // ConfirmDialog reserved for delete modal
 
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 const loading = ref(false)
 const classes = ref<any[]>([])
@@ -338,10 +338,14 @@ function onSelectClass(c) {
   activeId.value = c.id
 }
 
-const DRAFT_KEY = 'cp_draft'
+const DRAFT_PREFIX = 'cp_draft'
+
+function draftKey() {
+  return form.id ? `${DRAFT_PREFIX}_${form.id}` : DRAFT_PREFIX
+}
 
 function loadDraft() {
-  const raw = getCookie(DRAFT_KEY)
+  const raw = getCookie(draftKey())
   if (!raw) return false
   try {
     const d = JSON.parse(raw)
@@ -356,7 +360,7 @@ function loadDraft() {
 
 function saveDraft() {
   setCookie(
-    DRAFT_KEY,
+    draftKey(),
     JSON.stringify({
       name: form.name,
       grade: form.grade,
@@ -367,7 +371,7 @@ function saveDraft() {
 }
 
 function clearDraft() {
-  setCookie(DRAFT_KEY, '', -1)
+  setCookie(draftKey(), '', -1)
 }
 
 function startCreate() {
@@ -399,13 +403,8 @@ function closeForm() {
 
 watch(editing, (val, old) => {
   if (old && !val) {
-    if (getCookie(DRAFT_KEY)) {
-      magicBar.status = '编辑内容已保存至本地'
-      magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '编辑内容已保存至本地') magicBar.status = ''
-      }, 2500)
-      snackbar.show('编辑内容已保存至草稿', { variant: 'info', duration: 2500 })
+    if (getCookie(draftKey())) {
+      notify({ type: 'info', snackbar: '编辑内容已保存至草稿', magicbar: '编辑内容已保存至本地' })
     }
   }
 })
@@ -423,7 +422,7 @@ function autoResize() {
 
 async function onSave() {
   if (!form.name.trim()) {
-    snackbar.show('请输入班级名称', { variant: 'error' })
+    notify({ type: 'error', snackbar: '请输入班级名称' })
     return
   }
   const payload = {
@@ -438,12 +437,12 @@ async function onSave() {
       : await http.put(`/classes/${form.id}`, payload)
     clearDraft()
     triggerRipple(window.innerWidth * 0.75, 200)
-    snackbar.show(isCreate.value ? '班级已创建' : '班级已更新', { variant: 'info' })
+    notify({ type: 'success', snackbar: isCreate.value ? '班级已创建' : '班级已更新', magicbar: '班级信息已保存' })
     editing.value = false
     activeId.value = saved.id
     await fetchClasses()
   } catch (e: any) {
-    snackbar.show('保存失败：' + (e.message || '网络异常'), { variant: 'error' })
+    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存班级时遇到了问题' })
   }
 }
 
@@ -463,9 +462,9 @@ async function confirmDelete() {
     await http.delete(`/classes/${c.id}`)
     if (activeId.value === c.id) activeId.value = null
     classes.value = classes.value.filter(x => x.id !== c.id)
-    snackbar.show(`「${c.name}」已删除`, { variant: 'info' })
+    notify({ type: 'success', snackbar: `「${c.name}」已删除` })
   } catch (e: any) {
-    snackbar.show('删除失败：' + (e.message || '网络异常'), { variant: 'error' })
+    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除班级时遇到了问题' })
   }
 }
 
@@ -534,7 +533,7 @@ onMounted(() => {
   magicBar.sub = active.value?.name || ''
   retryFetch(
     () => fetchClasses(),
-    (e: any) => snackbar.show('班级列表加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+    (e: any) => notify({ type: 'error', snackbar: '班级列表加载失败：' + (e.message || '网络异常'), magicbar: '加载班级列表时遇到了问题' }),
   )
 })
 onActivated(() => {

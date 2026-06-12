@@ -331,15 +331,15 @@
 import { ref, computed, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCookie, delCookie } from '../utils/cookie'
-import { useSnackbar } from '../composables/useSnackbar'
+import { useNotify } from '../composables/useNotify'
 import http from '../utils/request'
 import { clearSessionUser } from '../utils/session'
 import { useTheme } from '../composables/useTheme'
 import { useMagicBar } from '../composables/useMagicBar'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, SHOW_GREETING_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, SHOW_GREETING_KEY, DATA_VERSION_KEY } from '../types'
 import MagicBar from '../components/MagicBar.vue'
 
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 const router = useRouter()
 const route = useRoute()
@@ -378,9 +378,9 @@ async function onResetDemo() {
   resetting.value = true
   try {
     await http.post('/dev/reset-demo-data')
-    snackbar.show('测试环境已恢复', { variant: 'info' })
+    notify({ type: 'success', snackbar: '测试环境已恢复' })
   } catch {
-    snackbar.show('恢复失败，请检查后端服务', { variant: 'error' })
+    notify({ type: 'error', snackbar: '恢复失败，请检查后端服务', magicbar: '重置演示数据时遇到了问题' })
   } finally {
     resetting.value = false
   }
@@ -435,17 +435,19 @@ const indicatorStyle = computed(() => {
 })
 
 const refreshTick = ref(0)
+const dataVersion = ref(0)
 const rightButtons = ref([])
 provide(REFRESH_TICK_KEY, refreshTick)
+provide(DATA_VERSION_KEY, dataVersion)
 provide(RIGHT_BUTTONS_KEY, rightButtons)
 
 async function doRefresh() {
   try {
     await http.get('/health')
     refreshTick.value++
-    snackbar.show('数据已刷新', { variant: 'info', duration: 2000 })
+    notify({ type: 'success', snackbar: '数据已刷新', snackbarDuration: 2000 })
   } catch {
-    snackbar.show('刷新失败，服务器无响应', { variant: 'error', duration: 3000 })
+    notify({ type: 'error', snackbar: '刷新失败，服务器无响应', magicbar: '刷新数据时遇到了问题', snackbarDuration: 3000 })
   }
 }
 

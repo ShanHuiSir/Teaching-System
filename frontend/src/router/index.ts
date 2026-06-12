@@ -59,6 +59,7 @@ const routes: RouteRecordRaw[] = [
     path: '/preview/:submissionId',
     name: 'FilePreview',
     component: () => import('../views/FilePreviewPage.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/:pathMatch(.*)*',
@@ -78,7 +79,6 @@ router.beforeEach(async to => {
 
   if (to.meta.requiresAuth && !session) return '/forbidden'
   if (to.path === '/login' && session) return '/dashboard'
-  if (to.path === '/forbidden' && session) return '/dashboard'
 })
 
 export default router

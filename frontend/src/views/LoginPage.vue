@@ -165,12 +165,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { delCookie } from '../utils/cookie'
 import { CATEGORIES, loadPrefs, savePrefs, clearCategory } from '../utils/cookiePrefs'
-import { useSnackbar } from '../composables/useSnackbar'
+import { useNotify } from '../composables/useNotify'
 import http from '../utils/request'
 import { setSessionUser } from '../utils/session'
 
 const router = useRouter()
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 const activeLayer = ref('welcome')
 const account = ref('')
@@ -197,7 +197,7 @@ function onClearAll() {
     const name = c.trim().split('=')[0]
     if (name) delCookie(name)
   })
-  snackbar.show('已清除全部Cookie', { variant: 'info' })
+  notify({ type: 'success', snackbar: '已清除全部Cookie' })
 }
 
 const greeting = computed(() => {
@@ -219,7 +219,7 @@ function onKeyLogin() {
 
 async function handleLogin() {
   if (!account.value.trim() || !secretKey.value.trim()) {
-    snackbar.show('请输入账户名和密钥', { variant: 'error' })
+    notify({ type: 'error', snackbar: '请输入账户名和密钥' })
     return
   }
 
@@ -232,10 +232,10 @@ async function handleLogin() {
     })
     const displayName = res?.username || account.value.trim()
     setSessionUser(displayName, rememberMe.value ? 7 : 0.5)
-    snackbar.show('登录成功', { variant: 'info' })
+    notify({ type: 'success', snackbar: '登录成功' })
     router.replace('/dashboard')
   } catch (e: any) {
-    snackbar.show(e?.message || '账户名或密钥错误', { variant: 'error' })
+    notify({ type: 'error', snackbar: e?.message || '账户名或密钥错误' })
   } finally {
     loading.value = false
   }
