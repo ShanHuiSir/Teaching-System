@@ -312,11 +312,11 @@ import { ref, computed, onMounted, onActivated, onDeactivated, inject, watch } f
 import { useRouter } from 'vue-router'
 import { getCookie, setCookie } from '../utils/cookie'
 import http, { retryFetch } from '../utils/request'
-import { useSnackbar } from '../composables/useSnackbar'
-import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+import { useNotify } from '../composables/useNotify'
+import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
 
 const router = useRouter()
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 const teacherName = computed(() => getCookie('user_name') || 'teacher')
 
@@ -451,6 +451,7 @@ const pieGradient = computed(() => {
 })
 
 const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
+const dataVersion = inject(DATA_VERSION_KEY, ref(0))
 
 async function fetchAll() {
   try {
@@ -644,7 +645,7 @@ onMounted(() => {
   magicBar.sub = ''
   retryFetch(
     () => fetchAll(),
-    (e: any) => snackbar.show('数据加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+    (e: any) => notify({ type: 'error', snackbar: '数据加载失败：' + (e.message || '网络异常'), magicbar: '加载仪表盘数据时遇到了问题' }),
   )
   showGreeting('仪表盘')
 })
@@ -657,6 +658,7 @@ onDeactivated(() => {
   rightButtons.value = []
 })
 watch(refreshTick, fetchAll)
+watch(dataVersion, fetchAll)
 watch([selectedAssignmentId, selectedClassId], fetchAll)
 </script>
 
@@ -1172,6 +1174,7 @@ watch([selectedAssignmentId, selectedClassId], fetchAll)
 }
 .compare-row__bar {
   height: 14px;
+  min-width: 3px;
   border-radius: 3px;
   transition: width 0.5s ease;
 }

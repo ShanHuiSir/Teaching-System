@@ -63,7 +63,7 @@
           <!-- "全部作业" — shows all submissions -->
           <div
             class="assign-item"
-            :class="{ 'assign-item--active': !selectedWorkType }"
+            :class="{ 'assign-item--active': !selectedAssignmentId }"
             @click="onSelectWorkType(null)"
           >
             <div class="assign-item__top">
@@ -79,8 +79,8 @@
             v-for="wt in workTypes"
             :key="wt.type"
             class="assign-item"
-            :class="{ 'assign-item--active': selectedWorkType === wt.type }"
-            @click="onSelectWorkType(wt.type)"
+            :class="{ 'assign-item--active': selectedAssignmentId === wt.id }"
+            @click="onSelectWorkType(wt.id)"
           >
             <div class="assign-item__top">
               <span class="assign-item__student">{{ wt.type }}</span>
@@ -215,6 +215,7 @@
                     :d="p.d"
                     :fill="p.fill"
                     :fill-rule="p.fillRule"
+                    :stroke="p.stroke"
                     :stroke-dasharray="p.strokeDasharray"
                   />
                 </svg>
@@ -406,6 +407,7 @@
                   :d="p.d"
                   :fill="p.fill"
                   :fill-rule="p.fillRule"
+                  :stroke="p.stroke"
                   :stroke-dasharray="p.strokeDasharray"
                 />
               </svg>
@@ -568,10 +570,10 @@ import {
 } from 'vue'
 import { useRoute } from 'vue-router'
 import http, { retryFetch } from '../utils/request'
-import { useSnackbar } from '../composables/useSnackbar'
+import { useNotify } from '../composables/useNotify'
 import { getCookie, setCookie } from '../utils/cookie'
 import { detectFileType, FILE_ICONS } from '../utils/fileIcons'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
@@ -580,7 +582,7 @@ import FloatingPreview from '../components/FloatingPreview.vue'
 import { useFileActions } from '../composables/useFileActions'
 
 const route = useRoute()
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 function iconPaths(type) {
   const raw = FILE_ICONS[type]?.paths || FILE_ICONS.text.paths
@@ -612,7 +614,7 @@ const tabIndicatorStyle = computed(() => {
   }
 })
 
-const selectedWorkType = ref(null)
+const selectedAssignmentId = ref<number | null>(null)
 const activeId = ref(null)
 const semesters = ref<any[]>([])
 const submissionsRaw = ref<any[]>([])
@@ -733,6 +735,7 @@ const workTypes = computed(() => {
           ? classNames.reduce((sum, name) => sum + (classStudentCounts[name] || 0), 0)
           : studentsAll.value.length
       return {
+        id: a.id,
         type: a.title,
         submittedCount: stats.count,
         reviewedCount: stats.reviewed,
@@ -773,14 +776,19 @@ const triggerRipple = inject(TRIGGER_RIPPLE_KEY)!
 
 function updateMagicTrail() {
   const parts = []
-  parts.push(selectedWorkType.value || '全部作业')
+  if (selectedAssignmentId.value) {
+    const assignment = assignmentsAll.value.find((a: any) => a.id === selectedAssignmentId.value)
+    parts.push(assignment?.title || '全部作业')
+  } else {
+    parts.push('全部作业')
+  }
   const a = active.value
   if (a) parts.push(a.studentName)
   magicBar.sub = parts.join(' · ')
 }
 
-function onSelectWorkType(type) {
-  selectedWorkType.value = type
+function onSelectWorkType(assignmentId: number | null) {
+  selectedAssignmentId.value = assignmentId
   activeTab.value = 'submissions'
   activeId.value = null
   updateMagicTrail()
@@ -811,7 +819,7 @@ async function onReview() {
       teacherScore.value = d.score ?? ev?.teacherScore ?? ev?.aiScore ?? 0
       teacherComment.value = d.comment ?? ev?.teacherComment ?? ''
     } catch {
-      snackbar.show('草稿数据损坏，已重置', { variant: 'warning' })
+      notify({ type: 'warning', snackbar: '草稿数据损坏，已重置' })
     }
   } else {
     teacherScore.value = ev?.teacherScore ?? ev?.aiScore ?? 0
@@ -828,14 +836,10 @@ watch(reviewMode, (val, old) => {
     draftStamp.value++
     const key = `draft_${active.value.id}`
     if (getCookie(key) && !(activeEval.value?.status >= 2)) {
-      magicBar.status = '批改草稿已保存至本地'
-      magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '批改草稿已保存至本地') magicBar.status = ''
-      }, 2500)
-      snackbar.show(`${active.value.studentName} 的 ${active.value.workType || '作业'} 批改已保存`, {
-        variant: 'info',
-        duration: 2500,
+      notify({
+        type: 'info',
+        snackbar: `${active.value.studentName} 的 ${active.value.workType || '作业'} 批改已保存`,
+        magicbar: '批改草稿已保存至本地',
       })
     }
   }
@@ -896,7 +900,8 @@ async function submitReview() {
     } else {
       triggerRipple()
     }
-    snackbar.show('批改已提交', { variant: 'info' })
+    notify({ type: 'success', snackbar: '批改已提交', magicbar: '批改已提交' })
+    dataVersion.value++
     // Background refresh
     const evals = await http.get('/evaluations')
     const em = {}
@@ -908,14 +913,9 @@ async function submitReview() {
   } catch (e) {
     const saved = getCookie(`draft_${active.value.id}`)
     if (saved) {
-      magicBar.status = '提交失败，已保存至本地草稿'
-      magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '提交失败，已保存至本地草稿') magicBar.status = ''
-      }, 3000)
-      snackbar.show('提交失败，评分已保存在本地草稿', { variant: 'error' })
+      notify({ type: 'error', snackbar: '提交失败，评分已保存在本地草稿', magicbar: '提交失败，已保存至本地草稿' })
     } else {
-      snackbar.show('提交批改失败：' + (e.message || '网络异常'), { variant: 'error' })
+      notify({ type: 'error', snackbar: '提交批改失败：' + (e.message || '网络异常'), magicbar: '提交批改时遇到了问题' })
     }
   } finally {
     submitting.value = false
@@ -1030,8 +1030,7 @@ async function onAiEval() {
       if (magicBar.status === 'AI 评价已完成') magicBar.status = ''
     }, 2500)
   } catch (e: any) {
-    snackbar.show('AI评价失败：' + (e.message || '网络异常'), { variant: 'error' })
-    magicBar.status = ''
+    notify({ type: 'error', snackbar: 'AI评价失败：' + (e.message || '网络异常'), magicbar: 'AI 评分时遇到了问题' })
   } finally {
     aiLoading.value = false
   }
@@ -1042,6 +1041,7 @@ function onReject() {
 }
 
 const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
+const dataVersion = inject(DATA_VERSION_KEY, ref(0))
 const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 const sortClass = ref(getCookie('sort_class') === '1')
@@ -1052,7 +1052,7 @@ const filterStatus = ref<string>(
 )
 
 const hasActiveFilter = computed(() => {
-  return filterStatus.value !== 'all' || selectedWorkType.value !== null
+  return filterStatus.value !== 'all' || selectedAssignmentId.value !== null
 })
 
 function rebuildSemesters() {
@@ -1064,6 +1064,7 @@ function rebuildSemesters() {
     const confirmed = ev && ev.status >= 2
     return {
       id: s.id,
+      assignmentId: s.assignmentId,
       studentName: s.studentName || '未知',
       fileType: s.fileType,
       fileName: s.fileName || '未命名',
@@ -1100,17 +1101,24 @@ function rebuildSemesters() {
     filtered = []
   }
 
-  // Filter by selected workType (from assignments tab)
-  if (selectedWorkType.value) {
-    filtered = filtered.filter(it => it.workType === selectedWorkType.value)
+  // Filter by selected assignment (from assignments tab)
+  if (selectedAssignmentId.value) {
+    filtered = filtered.filter(it => it.assignmentId === selectedAssignmentId.value)
   }
 
-  // Find unsubmitted students
+  // Find unsubmitted students — only from the selected assignment's target classes
   const submittedIds = new Set(submissionsRaw.value.map(s => s.studentId))
+  const targetClassIds: Set<number> | null = selectedAssignmentId.value
+    ? new Set(
+        (assignmentsAll.value.find((a: any) => a.id === selectedAssignmentId.value)?.classIds || [])
+          .map(Number)
+      )
+    : null
   const sq = searchQuery.value.trim().toLowerCase()
   const unsubmitted = (studentsAll.value || [])
     .filter(s => {
       if (submittedIds.has(s.id)) return false
+      if (targetClassIds && s.classId != null && !targetClassIds.has(Number(s.classId))) return false
       if (sq) {
         return (
           (s.name || '').toLowerCase().includes(sq) ||
@@ -1276,7 +1284,7 @@ async function fetchSubmissions() {
 onMounted(() => {
   retryFetch(
     () => fetchSubmissions(),
-    (e: any) => snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
   )
 })
 onMounted(() => {

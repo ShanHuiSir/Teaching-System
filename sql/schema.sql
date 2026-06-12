@@ -1,15 +1,26 @@
 -- 教学评价系统
 -- MySQL 8.0+
 
+CREATE TABLE teacher (
+    id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    username     VARCHAR(32)  NOT NULL                COMMENT '登录用户名',
+    password     VARCHAR(128) NOT NULL                COMMENT '登录密码',
+    display_name VARCHAR(64)  NOT NULL                COMMENT '显示名称',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_teacher_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='教师表';
+
 CREATE TABLE teaching_class (
     id          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     name        VARCHAR(64)  NOT NULL                COMMENT '班级名称',
     grade       VARCHAR(16)                          COMMENT '年级',
+    teacher_id  BIGINT                               COMMENT '所属教师ID',
     description TEXT                                 COMMENT '班级说明',
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_teaching_class_name (name)
+    UNIQUE KEY uk_teaching_class_name (name),
+    INDEX idx_teaching_class_teacher_id (teacher_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='班级表';
 
 CREATE TABLE student (
@@ -98,6 +109,8 @@ CREATE TABLE evaluation (
     teacher_score     DECIMAL(5,2)                        COMMENT '教师评分',
     teacher_comment TEXT                                  COMMENT '教师评语',
     status          TINYINT      NOT NULL DEFAULT 0       COMMENT '状态：0-未评价，1-AI已评价，2-教师已确认',
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),
     INDEX idx_evaluation_submission_id (submission_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评价表';

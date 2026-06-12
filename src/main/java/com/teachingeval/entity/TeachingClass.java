@@ -30,6 +30,10 @@ public class TeachingClass {
     @Schema(description = "年级", example = "2026")
     private String grade;
 
+    @Column(name = "teacher_id")
+    @Schema(description = "所属教师 ID", example = "1")
+    private Long teacherId;
+
     @Column(name = "description", columnDefinition = "TEXT")
     @Schema(description = "班级说明", example = "软件工程实训演示班级")
     private String description;
@@ -80,6 +84,14 @@ public class TeachingClass {
 
     public void setGrade(String grade) {
         this.grade = grade;
+    }
+
+    public Long getTeacherId() {
+        return teacherId;
+    }
+
+    public void setTeacherId(Long teacherId) {
+        this.teacherId = teacherId;
     }
 
     public String getDescription() {

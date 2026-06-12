@@ -5,6 +5,7 @@ import com.teachingeval.entity.AssignmentClass;
 import com.teachingeval.entity.EvaluationResult;
 import com.teachingeval.entity.Student;
 import com.teachingeval.entity.SubmissionFile;
+import com.teachingeval.entity.Teacher;
 import com.teachingeval.entity.TeachingClass;
 import com.teachingeval.entity.WorkSubmission;
 import com.teachingeval.repository.AssignmentClassRepository;
@@ -13,6 +14,7 @@ import com.teachingeval.repository.EvaluationRepository;
 import com.teachingeval.repository.StudentRepository;
 import com.teachingeval.repository.SubmissionFileRepository;
 import com.teachingeval.repository.SubmissionRepository;
+import com.teachingeval.repository.TeacherRepository;
 import com.teachingeval.repository.TeachingClassRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -36,6 +39,7 @@ public class DataInitializer implements CommandLineRunner {
     private final SubmissionRepository submissionRepository;
     private final SubmissionFileRepository submissionFileRepository;
     private final EvaluationRepository evaluationRepository;
+    private final TeacherRepository teacherRepository;
     private final Path uploadRoot;
 
     public DataInitializer(StudentRepository studentRepository,
@@ -45,6 +49,7 @@ public class DataInitializer implements CommandLineRunner {
                            SubmissionRepository submissionRepository,
                            SubmissionFileRepository submissionFileRepository,
                            EvaluationRepository evaluationRepository,
+                           TeacherRepository teacherRepository,
                            @Value("${app.upload.root:uploads}") String uploadRoot) {
         this.studentRepository = studentRepository;
         this.teachingClassRepository = teachingClassRepository;
@@ -53,6 +58,7 @@ public class DataInitializer implements CommandLineRunner {
         this.submissionRepository = submissionRepository;
         this.submissionFileRepository = submissionFileRepository;
         this.evaluationRepository = evaluationRepository;
+        this.teacherRepository = teacherRepository;
         this.uploadRoot = Paths.get(uploadRoot).normalize().toAbsolutePath().normalize();
     }
 
@@ -64,6 +70,7 @@ public class DataInitializer implements CommandLineRunner {
     public void seedIfEmpty() {
         if (studentRepository.count() == 0
                 && teachingClassRepository.count() == 0
+                && teacherRepository.count() == 0
                 && assignmentRepository.count() == 0
                 && assignmentClassRepository.count() == 0
                 && submissionRepository.count() == 0
@@ -81,8 +88,10 @@ public class DataInitializer implements CommandLineRunner {
         assignmentRepository.deleteAll();
         studentRepository.deleteAll();
         teachingClassRepository.deleteAll();
+        teacherRepository.deleteAll();
 
-        List<TeachingClass> classes = seedClasses();
+        List<Teacher> teachers = seedTeachers();
+        List<TeachingClass> classes = seedClasses(teachers);
         List<Student> students = seedStudents(classes);
         List<Assignment> assignments = seedAssignments(classes);
         List<WorkSubmission> submissions = seedSubmissions(students, assignments);
@@ -138,13 +147,23 @@ public class DataInitializer implements CommandLineRunner {
         };
     }
 
-    private List<TeachingClass> seedClasses() {
+    private List<Teacher> seedTeachers() {
+        return teacherRepository.saveAll(List.of(
+                buildTeacher("teacher", "123456", "张老师"),
+                buildTeacher("temp", "123456", "李老师")
+        ));
+    }
+
+    private List<TeachingClass> seedClasses(List<Teacher> teachers) {
+        Teacher t1 = teachers.get(0);
+        Teacher t2 = teachers.get(1);
         return teachingClassRepository.saveAll(List.of(
-                buildClass("软件 1 班", "2026", "软件工程实训演示班级"),
-                buildClass("软件 2 班", "2026", "软件工程实训演示班级"),
-                buildClass("计算机科学 1 班", "2026", "计算机科学实训演示班级"),
-                buildClass("计算机科学 2 班", "2026", "计算机科学实训演示班级"),
-                buildClass("软件 3 班", "2026", "软件工程实训演示班级")
+                buildClass("软件 1 班", "2026", "软件工程实训演示班级", t1.getId()),
+                buildClass("软件 2 班", "2026", "软件工程实训演示班级", t1.getId()),
+                buildClass("计算机科学 1 班", "2026", "计算机科学实训演示班级", t1.getId()),
+                buildClass("计算机科学 2 班", "2026", "计算机科学实训演示班级", t1.getId()),
+                buildClass("软件 3 班", "2026", "软件工程实训演示班级", t2.getId()),
+                buildClass("大数据 1 班", "2026", "大数据技术实训演示班级", t2.getId())
         ));
     }
 
@@ -152,102 +171,137 @@ public class DataInitializer implements CommandLineRunner {
         return studentRepository.saveAll(List.of(
                 buildStudent("2026001", "张三", classes.get(0)),
                 buildStudent("2026002", "李四", classes.get(0)),
-                buildStudent("2026003", "王五", classes.get(1)),
-                buildStudent("2026004", "赵六", classes.get(1)),
-                buildStudent("2026005", "孙七", classes.get(2)),
-                buildStudent("2026006", "周八", classes.get(3)),
-                buildStudent("2026007", "吴九", classes.get(4)),
-                buildStudent("2026008", "郑十", classes.get(4))
+                buildStudent("2026003", "王小明", classes.get(0)),
+                buildStudent("2026004", "王五", classes.get(1)),
+                buildStudent("2026005", "赵六", classes.get(1)),
+                buildStudent("2026006", "陈小红", classes.get(1)),
+                buildStudent("2026007", "孙七", classes.get(2)),
+                buildStudent("2026008", "杨洋", classes.get(2)),
+                buildStudent("2026009", "刘大伟", classes.get(2)),
+                buildStudent("2026010", "周八", classes.get(3)),
+                buildStudent("2026011", "黄丽", classes.get(3)),
+                buildStudent("2026012", "马超", classes.get(3)),
+                buildStudent("2026013", "吴九", classes.get(4)),
+                buildStudent("2026014", "郑十", classes.get(4)),
+                buildStudent("2026015", "林小芳", classes.get(4)),
+                buildStudent("2026016", "钱十一", classes.get(5)),
+                buildStudent("2026017", "朱十二", classes.get(5)),
+                buildStudent("2026018", "徐明", classes.get(5))
         ));
     }
 
     private List<Assignment> seedAssignments(List<TeachingClass> classes) {
-        List<Assignment> assignments = assignmentRepository.saveAll(List.of(
-                buildAssignment("第二阶段实训报告", "课程论文", classes.get(0), "提交阶段报告、源码和运行截图"),
-                buildAssignment("算法设计与分析", "代码作业", classes.get(0), "提交算法实现与测试说明"),
-                buildAssignment("数据结构课程设计", "代码作业", classes.get(1), "提交课程设计源码和说明"),
-                buildAssignment("数据库课程设计", "课程论文", classes.get(3), "提交 ER 图、SQL 脚本和设计说明"),
-                buildAssignment("操作系统实验报告", "实验报告", classes.get(4), "提交实验记录和调度算法分析"),
-                buildAssignment("软件工程课程论文", "课程论文", classes.get(4), "提交课程论文和项目总结")
+        TeachingClass c1 = classes.get(0); // 软件 1 班
+        TeachingClass c2 = classes.get(1); // 软件 2 班
+        TeachingClass c3 = classes.get(2); // 计算机科学 1 班
+        TeachingClass c4 = classes.get(3); // 计算机科学 2 班
+        TeachingClass c5 = classes.get(4); // 软件 3 班
+        TeachingClass c6 = classes.get(5); // 大数据 1 班
+
+        Assignment a1 = buildAssignment("第二阶段实训报告", "课程论文", c1, "提交阶段报告、源码和运行截图");
+        Assignment a2 = buildAssignment("算法设计与分析", "代码作业", c1, "提交算法实现与测试说明");
+        Assignment a3 = buildAssignment("数据结构课程设计", "代码作业", c2, "提交课程设计源码和说明");
+        Assignment a4 = buildAssignment("数据库课程设计", "课程论文", c4, "提交 ER 图、SQL 脚本和设计说明");
+        Assignment a5 = buildAssignment("操作系统实验报告", "实验报告", c5, "提交实验记录和调度算法分析");
+        Assignment a6 = buildAssignment("软件工程课程论文", "课程论文", c5, "提交课程论文和项目总结");
+        Assignment a7 = buildAssignment("机器学习项目", "代码作业", c3, "提交模型代码、训练日志与评估报告");
+        Assignment a8 = buildAssignment("大数据分析报告", "实验报告", c6, "提交数据清洗流程、分析代码与可视化结果");
+        Assignment a9 = buildAssignment("Web 前端开发实战", "代码作业", c2, "提交 HTML/CSS/JS 前端项目源码与设计文档");
+
+        List<Assignment> assignments = assignmentRepository.saveAll(
+                List.of(a1, a2, a3, a4, a5, a6, a7, a8, a9)
+        );
+
+        assignmentClassRepository.saveAll(List.of(
+                buildAssignmentClass(a1, c1.getId(), c1.getName()),
+                buildAssignmentClass(a2, c1.getId(), c1.getName()),
+                buildAssignmentClass(a3, c2.getId(), c2.getName()),
+                buildAssignmentClass(a4, c4.getId(), c4.getName()),
+                buildAssignmentClass(a5, c5.getId(), c5.getName()),
+                buildAssignmentClass(a6, c5.getId(), c5.getName()),
+                buildAssignmentClass(a7, c3.getId(), c3.getName()),
+                buildAssignmentClass(a8, c6.getId(), c6.getName()),
+                buildAssignmentClass(a9, c2.getId(), c2.getName()),
+                buildAssignmentClass(a9, c3.getId(), c3.getName())
         ));
-        assignmentClassRepository.saveAll(assignments.stream()
-                .map(assignment -> buildAssignmentClass(assignment, assignment.getClassId(), assignment.getClassName()))
-                .toList());
         return assignments;
     }
 
     private List<WorkSubmission> seedSubmissions(List<Student> students, List<Assignment> assignments) {
-        if (students.size() < 8) {
-            throw new IllegalStateException("演示学生数据不足，无法初始化作业数据");
+        // Build convenience: S0=张三, S1=李四, S2=王小明, S3=王五, S4=赵六, S5=陈小红
+        // S6=孙七, S7=杨洋, S8=刘大伟, S9=周八, S10=黄丽, S11=马超
+        // S12=吴九, S13=郑十, S14=林小芳, S15=钱十一, S16=朱十二, S17=徐明
+        var s = students;
+        var a = assignments; // a0=第二阶段实训报告, a1=算法设计, a2=数据结构, a3=数据库, a4=操作系统
+                             // a5=软件工程, a6=机器学习, a7=大数据分析, a8=Web前端
+
+        WorkSubmission[] subs = {
+                sub(s.get(0), a.get(0), "第二阶段实训报告", "project-report.txt", "课程论文",
+                        "包含源码和报告"),
+                sub(s.get(1), a.get(1), "算法设计与分析", "binary-search.cpp", "代码作业",
+                        "二分查找算法实现与测试"),
+                sub(s.get(2), a.get(0), "第二阶段实训报告", "project-report.txt", "课程论文",
+                        "实训项目总结与源码"),
+                sub(s.get(3), a.get(2), "数据结构课程设计", "binary-search.cpp", "代码作业",
+                        "二叉搜索树与平衡树对比实现"),
+                sub(s.get(4), a.get(3), "数据库课程设计", "database-design.txt", "课程论文",
+                        ""),
+                sub(s.get(5), a.get(8), "Web 前端开发实战", "database-design.txt", "代码作业",
+                        "在线商城前端页面设计与实现"),
+                sub(s.get(6), a.get(6), "机器学习项目", "binary-search.cpp", "代码作业",
+                        "手写数字识别 CNN 模型"),
+                sub(s.get(7), a.get(7), "大数据分析报告", "os-experiment.txt", "实验报告",
+                        "电商用户行为数据分析"),
+                sub(s.get(8), a.get(6), "机器学习项目", "database-design.txt", "代码作业",
+                        "自然语言处理情感分析模型"),
+                sub(s.get(9), a.get(3), "数据库课程设计", "database-design.txt", "课程论文",
+                        "学生选课管理系统 ER 图与 SQL 脚本"),
+                sub(s.get(10), a.get(4), "操作系统实验报告", "os-experiment.txt", "实验报告",
+                        ""),
+                sub(s.get(11), a.get(5), "软件工程课程论文", "project-report.txt", "课程论文",
+                        "敏捷开发实践与项目管理总结"),
+                sub(s.get(12), a.get(4), "操作系统实验报告", "os-experiment.txt", "实验报告",
+                        "进程调度算法对比分析"),
+                sub(s.get(13), a.get(5), "软件工程课程论文", "project-report.txt", "课程论文",
+                        "在线教学评价系统开发总结"),
+                sub(s.get(14), a.get(7), "大数据分析报告", "database-design.txt", "实验报告",
+                        "社交网络用户画像分析"),
+                sub(s.get(15), a.get(7), "大数据分析报告", "project-report.txt", "实验报告",
+                        "实时流数据处理管道设计"),
+                sub(s.get(16), a.get(8), "Web 前端开发实战", "binary-search.cpp", "代码作业",
+                        "在线答题系统前端实现"),
+                sub(s.get(17), a.get(6), "机器学习项目", "database-design.txt", "代码作业",
+                        "图像分类迁移学习实验"),
+        };
+
+        List<WorkSubmission> saved = submissionRepository.saveAll(List.of(subs));
+        // Vary submittedAt across the past two weeks for realistic trend data
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 0; i < saved.size(); i++) {
+            WorkSubmission sub = saved.get(i);
+            sub.setSubmittedAt(now.minusDays(14 - i).minusHours(i * 3L).minusMinutes(i * 17L));
         }
-        if (assignments.size() < 6) {
-            throw new IllegalStateException("演示作业数据不足，无法初始化提交数据");
-        }
+        return submissionRepository.saveAll(saved);
+    }
 
-        WorkSubmission s1 = new WorkSubmission();
-        s1.setStudentId(students.get(0).getId());
-        s1.setStudentName(students.get(0).getName());
-        applyAssignment(s1, assignments.get(0));
-        s1.setTitle("第二阶段实训报告");
-        s1.setFileName("project-report.txt");
-        s1.setWorkType("课程论文");
-        s1.setRemark("包含源码和报告");
-
-        WorkSubmission s2 = new WorkSubmission();
-        s2.setStudentId(students.get(1).getId());
-        s2.setStudentName(students.get(1).getName());
-        applyAssignment(s2, assignments.get(1));
-        s2.setTitle("算法设计与分析");
-        s2.setFileName("binary-search.cpp");
-        s2.setWorkType("代码作业");
-        s2.setRemark("二分查找算法实现与测试");
-
-        WorkSubmission s3 = new WorkSubmission();
-        s3.setStudentId(students.get(2).getId());
-        s3.setStudentName(students.get(2).getName());
-        applyAssignment(s3, assignments.get(2));
-        s3.setTitle("数据结构课程设计");
-        s3.setFileName("binary-search.cpp");
-        s3.setWorkType("代码作业");
-        s3.setRemark("");
-
-        WorkSubmission s4 = new WorkSubmission();
-        s4.setStudentId(students.get(5).getId());
-        s4.setStudentName(students.get(5).getName());
-        applyAssignment(s4, assignments.get(3));
-        s4.setTitle("数据库课程设计");
-        s4.setFileName("database-design.txt");
-        s4.setWorkType("课程论文");
-        s4.setRemark("学生选课管理系统 ER 图与 SQL 脚本");
-
-        WorkSubmission s5 = new WorkSubmission();
-        s5.setStudentId(students.get(6).getId());
-        s5.setStudentName(students.get(6).getName());
-        applyAssignment(s5, assignments.get(4));
-        s5.setTitle("操作系统实验报告");
-        s5.setFileName("os-experiment.txt");
-        s5.setWorkType("实验报告");
-        s5.setRemark("进程调度算法对比分析");
-
-        WorkSubmission s6 = new WorkSubmission();
-        s6.setStudentId(students.get(7).getId());
-        s6.setStudentName(students.get(7).getName());
-        applyAssignment(s6, assignments.get(5));
-        s6.setTitle("软件工程课程论文");
-        s6.setFileName("project-report.txt");
-        s6.setWorkType("课程论文");
-        s6.setRemark("在线教学评价系统开发总结");
-
-        return submissionRepository.saveAll(List.of(s1, s2, s3, s4, s5, s6));
+    private WorkSubmission sub(Student student, Assignment assignment,
+                                String title, String fileName, String workType, String remark) {
+        WorkSubmission s = new WorkSubmission();
+        s.setStudentId(student.getId());
+        s.setStudentName(student.getName());
+        applyAssignment(s, assignment);
+        s.setTitle(title);
+        s.setFileName(fileName);
+        s.setWorkType(workType);
+        s.setRemark(remark);
+        return s;
     }
 
     private void seedEvaluations(List<WorkSubmission> submissions) {
-        if (submissions.size() < 6) {
-            throw new IllegalStateException("演示作业数据不足，无法初始化评价数据");
-        }
+        var s = submissions;
 
         EvaluationResult ai1 = new EvaluationResult();
-        ai1.setSubmissionId(submissions.get(3).getId());
+        ai1.setSubmissionId(s.get(8).getId());
         ai1.setAiScore(new BigDecimal("85.50"));
         ai1.setAiIssues("1. ER 图中部分关系未标注基数\n2. 缺少索引优化说明");
         ai1.setAiComment("数据库设计整体规范，ER 图表达较完整，但在关系标注和性能优化方面还有提升空间。");
@@ -255,26 +309,58 @@ public class DataInitializer implements CommandLineRunner {
         ai1.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
 
         EvaluationResult ai2 = new EvaluationResult();
-        ai2.setSubmissionId(submissions.get(4).getId());
+        ai2.setSubmissionId(s.get(12).getId());
         ai2.setAiScore(new BigDecimal("78.00"));
         ai2.setAiIssues("1. 进程调度算法对比不够深入\n2. 缺少死锁预防方案的讨论");
         ai2.setAiComment("实验报告内容较全面，但算法对比分析和异常场景讨论方面有待加强。");
         ai2.setDimensionScores("[{\"name\":\"内容完整性\",\"score\":80,\"comment\":\"覆盖主要实验内容\"},{\"name\":\"逻辑与结构\",\"score\":75,\"comment\":\"结构可优化\"},{\"name\":\"格式规范\",\"score\":78,\"comment\":\"格式基本规范\"},{\"name\":\"表达与创新\",\"score\":79,\"comment\":\"分析略浅\"}]");
         ai2.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
 
-        EvaluationResult tc = new EvaluationResult();
-        tc.setSubmissionId(submissions.get(5).getId());
-        tc.setAiScore(new BigDecimal("90.00"));
-        tc.setAiIssues("1. 缺少具体的团队实践数据支撑");
-        tc.setAiComment("选题切合实际，论文结构清晰，建议补充更多实际项目数据来增强说服力。");
-        tc.setDimensionScores("[{\"name\":\"内容完整性\",\"score\":92,\"comment\":\"内容充实\"},{\"name\":\"逻辑与结构\",\"score\":90,\"comment\":\"逻辑清晰\"},{\"name\":\"格式规范\",\"score\":89,\"comment\":\"格式规范\"},{\"name\":\"表达与创新\",\"score\":88,\"comment\":\"有一定独立见解\"}]");
-        tc.setTeacherScore(new BigDecimal("92.00"));
-        tc.setTeacherComment("整体完成较好，论述逻辑清晰，建议后续补充量化数据以增强论文说服力。");
-        tc.setStatus(EvaluationResult.STATUS_TEACHER_CONFIRMED);
+        EvaluationResult ai3 = new EvaluationResult();
+        ai3.setSubmissionId(s.get(6).getId());
+        ai3.setAiScore(new BigDecimal("88.00"));
+        ai3.setAiIssues("1. 模型准确率未达最优\n2. 缺少数据增强策略说明");
+        ai3.setAiComment("CNN 模型实现正确，训练流程完整，建议增加数据增强和超参数调优内容。");
+        ai3.setDimensionScores("[{\"name\":\"代码质量\",\"score\":90,\"comment\":\"代码结构清晰\"},{\"name\":\"模型设计\",\"score\":86,\"comment\":\"架构合理\"},{\"name\":\"实验分析\",\"score\":84,\"comment\":\"分析较全面\"},{\"name\":\"文档规范\",\"score\":92,\"comment\":\"文档详实\"}]");
+        ai3.setStatus(EvaluationResult.STATUS_AI_REVIEWED);
 
-        evaluationRepository.save(ai1);
-        evaluationRepository.save(ai2);
-        evaluationRepository.save(tc);
+        EvaluationResult tc1 = new EvaluationResult();
+        tc1.setSubmissionId(s.get(13).getId());
+        tc1.setAiScore(new BigDecimal("90.00"));
+        tc1.setAiIssues("1. 缺少具体的团队实践数据支撑");
+        tc1.setAiComment("选题切合实际，论文结构清晰，建议补充更多实际项目数据来增强说服力。");
+        tc1.setDimensionScores("[{\"name\":\"内容完整性\",\"score\":92,\"comment\":\"内容充实\"},{\"name\":\"逻辑与结构\",\"score\":90,\"comment\":\"逻辑清晰\"},{\"name\":\"格式规范\",\"score\":89,\"comment\":\"格式规范\"},{\"name\":\"表达与创新\",\"score\":88,\"comment\":\"有一定独立见解\"}]");
+        tc1.setTeacherScore(new BigDecimal("92.00"));
+        tc1.setTeacherComment("整体完成较好，论述逻辑清晰，建议后续补充量化数据以增强论文说服力。");
+        tc1.setStatus(EvaluationResult.STATUS_TEACHER_CONFIRMED);
+
+        EvaluationResult tc2 = new EvaluationResult();
+        tc2.setSubmissionId(s.get(7).getId());
+        tc2.setAiScore(new BigDecimal("82.00"));
+        tc2.setAiIssues("1. 数据清洗步骤可进一步完善\n2. 可视化图表类型选择可优化");
+        tc2.setAiComment("数据分析流程完整，方法选用合理，但在数据预处理和可视化表达上有提升空间。");
+        tc2.setDimensionScores("[{\"name\":\"数据质量\",\"score\":80,\"comment\":\"数据基本清洗\"},{\"name\":\"分析方法\",\"score\":84,\"comment\":\"方法合理\"},{\"name\":\"可视化效果\",\"score\":78,\"comment\":\"可优化\"},{\"name\":\"报告撰写\",\"score\":86,\"comment\":\"结构清晰\"}]");
+        tc2.setTeacherScore(new BigDecimal("84.00"));
+        tc2.setTeacherComment("分析思路清晰，数据处理基本到位，建议完善数据清洗环节并丰富可视化呈现。");
+        tc2.setStatus(EvaluationResult.STATUS_TEACHER_CONFIRMED);
+
+        List<EvaluationResult> savedEvals = evaluationRepository.saveAll(List.of(ai1, ai2, ai3, tc1, tc2));
+        // Vary evaluation timestamps to produce meaningful trend/efficiency data.
+        // Confirmed evaluations get updatedAt set a few days after the submission.
+        for (EvaluationResult ev : savedEvals) {
+            WorkSubmission sub = submissions.stream()
+                    .filter(x -> x.getId().equals(ev.getSubmissionId()))
+                    .findFirst().orElse(null);
+            if (sub == null || sub.getSubmittedAt() == null) continue;
+            LocalDateTime subDate = sub.getSubmittedAt();
+            ev.setCreatedAt(subDate.plusHours(2));
+            if (ev.getStatus() >= EvaluationResult.STATUS_TEACHER_CONFIRMED) {
+                ev.setUpdatedAt(subDate.plusDays(1 + ev.getId()).plusHours(5));
+            } else {
+                ev.setUpdatedAt(subDate.plusHours(2));
+            }
+        }
+        evaluationRepository.saveAll(savedEvals);
     }
 
     private void savePrimaryFile(WorkSubmission submission) {
@@ -291,11 +377,20 @@ public class DataInitializer implements CommandLineRunner {
         submissionFileRepository.save(file);
     }
 
-    private static TeachingClass buildClass(String name, String grade, String description) {
+    private static Teacher buildTeacher(String username, String password, String displayName) {
+        Teacher teacher = new Teacher();
+        teacher.setUsername(username);
+        teacher.setPassword(password);
+        teacher.setDisplayName(displayName);
+        return teacher;
+    }
+
+    private static TeachingClass buildClass(String name, String grade, String description, Long teacherId) {
         TeachingClass teachingClass = new TeachingClass();
         teachingClass.setName(name);
         teachingClass.setGrade(grade);
         teachingClass.setDescription(description);
+        teachingClass.setTeacherId(teacherId);
         return teachingClass;
     }
 

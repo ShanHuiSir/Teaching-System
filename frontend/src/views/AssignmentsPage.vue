@@ -165,15 +165,8 @@
                 <span>编辑</span>
               </button>
               <button class="act-btn act-btn--outline" :disabled="exporting" @click="onExport(active)">
-                <svg
-                  :viewBox="xlsxIcon.viewBox"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path v-for="(d, i) in xlsxIcon.paths" :key="i" :d="d" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path fill-rule="evenodd" d="M17,10 L17,8 L18,8 C19.6568542,8 21,9.34314575 21,11 L21,19 C21,20.6568542 19.6568542,22 18,22 L6,22 C4.34314575,22 3,20.6568542 3,19 L3,11 C3,9.34314575 4.34314575,8 6,8 L7,8 L7,10 L6,10 C5.44771525,10 5,10.4477153 5,11 L5,19 C5,19.5522847 5.44771525,20 6,20 L18,20 C18.5522847,20 19,19.5522847 19,19 L19,11 C19,10.4477153 18.5522847,10 18,10 L17,10 Z M10.9551845,5.95272695 L9.78361162,7.11045387 C9.37558579,7.51365754 8.71404521,7.51365754 8.30601937,7.11045387 C7.89799354,6.70725019 7.89799354,6.05352787 8.30601937,5.65032419 L12,2 L15.6939806,5.65032419 C16.1020065,6.05352787 16.1020065,6.70725019 15.6939806,7.11045387 C15.2859548,7.51365754 14.6244142,7.51365754 14.2163884,7.11045387 L13.0448155,5.95272695 L13.0448155,13.9675324 C13.0448155,14.5377485 12.5770357,15 12,15 C11.4229643,15 10.9551845,14.5377485 10.9551845,13.9675324 L10.9551845,5.95272695 Z"/>
                 </svg>
                 <span>{{ exporting ? '导出中...' : '导出为Excel' }}</span>
               </button>
@@ -375,12 +368,9 @@ import {
   watchEffect,
 } from 'vue'
 import http, { retryFetch } from '../utils/request'
-import { useSnackbar } from '../composables/useSnackbar'
+import { useNotify } from '../composables/useNotify'
 import { getCookie, setCookie } from '../utils/cookie'
-import { FILE_ICONS } from '../utils/fileIcons'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
-
-const xlsxIcon: any = FILE_ICONS.xlsx
 import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
@@ -388,7 +378,7 @@ import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 // ConfirmDialog reserved for delete modal
 
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 const loading = ref(false)
 const activeId = ref(null)
@@ -466,10 +456,14 @@ function onSelectCard(a) {
   activeId.value = a.id
 }
 
-const DRAFT_KEY = 'ap_draft'
+const DRAFT_PREFIX = 'ap_draft'
+
+function draftKey() {
+  return form.id ? `${DRAFT_PREFIX}_${form.id}` : DRAFT_PREFIX
+}
 
 function loadDraft() {
-  const raw = getCookie(DRAFT_KEY)
+  const raw = getCookie(draftKey())
   if (!raw) return false
   try {
     const d = JSON.parse(raw)
@@ -492,11 +486,11 @@ function saveDraft() {
     description: form.description,
     dueDate: form.dueDate,
   }
-  setCookie(DRAFT_KEY, JSON.stringify(data), 7)
+  setCookie(draftKey(), JSON.stringify(data), 7)
 }
 
 function clearDraft() {
-  setCookie(DRAFT_KEY, '', -1)
+  setCookie(draftKey(), '', -1)
 }
 
 function startCreate() {
@@ -526,13 +520,8 @@ function startEdit(a) {
 // Notify on close without save
 watch(editing, (val, old) => {
   if (old && !val) {
-    if (getCookie(DRAFT_KEY)) {
-      magicBar.status = '编辑内容已保存至本地'
-      magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '编辑内容已保存至本地') magicBar.status = ''
-      }, 2500)
-      snackbar.show('编辑内容已保存至草稿', { variant: 'info', duration: 2500 })
+    if (getCookie(draftKey())) {
+      notify({ type: 'info', snackbar: '编辑内容已保存至草稿', magicbar: '编辑内容已保存至本地' })
     }
   }
 })
@@ -602,11 +591,11 @@ function autoResize() {
 
 async function onSave() {
   if (!form.title.trim()) {
-    snackbar.show('请输入作业名称', { variant: 'error' })
+    notify({ type: 'error', snackbar: '请输入作业名称' })
     return
   }
   if (!form.workType.trim()) {
-    snackbar.show('请输入作业类型', { variant: 'error' })
+    notify({ type: 'error', snackbar: '请输入作业类型' })
     return
   }
 
@@ -630,12 +619,12 @@ async function onSave() {
       : await http.put(`/assignments/${form.id}`, payload)
     clearDraft()
     triggerRipple(window.innerWidth * 0.75, 200)
-    snackbar.show(isCreate.value ? '作业已发布' : '作业已更新', { variant: 'info' })
+    notify({ type: 'success', snackbar: isCreate.value ? '作业已发布' : '作业已更新', magicbar: '作业信息已保存' })
     editing.value = false
     activeId.value = saved.id
     await fetchAssignments()
   } catch (e: any) {
-    snackbar.show('保存失败：' + (e.message || '网络异常'), { variant: 'error' })
+    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存作业时遇到了问题' })
   }
 }
 
@@ -660,15 +649,9 @@ async function onExport(item) {
     link.download = `成绩汇总_${item.title}_${new Date().toISOString().slice(0, 10)}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
-    magicBar.status = '导出完成'
-    magicBar.statusType = 'success'
-    setTimeout(() => {
-      if (magicBar.status === '导出完成') magicBar.status = ''
-    }, 2500)
-    snackbar.show('导出成功', { variant: 'info' })
-  } catch (e) {
-    magicBar.status = ''
-    snackbar.show('导出失败：' + (e.message || '网络异常'), { variant: 'error' })
+    notify({ type: 'success', snackbar: '导出成功', magicbar: '导出完成' })
+  } catch (e: any) {
+    notify({ type: 'error', snackbar: '导出失败：' + (e.message || '网络异常'), magicbar: '导出成绩时遇到了问题' })
   } finally {
     exporting.value = false
   }
@@ -684,9 +667,9 @@ async function onDelete(a) {
     await http.delete(`/assignments/${a.id}`)
     if (activeId.value === a.id) activeId.value = null
     assignments.value = assignments.value.filter(x => x.id !== a.id)
-    snackbar.show(`「${a.title}」已删除`, { variant: 'info' })
+    notify({ type: 'success', snackbar: `「${a.title}」已删除` })
   } catch (e: any) {
-    snackbar.show('删除失败：' + (e.message || '网络异常'), { variant: 'error' })
+    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除作业时遇到了问题' })
   }
 }
 
@@ -810,7 +793,7 @@ onMounted(() => {
   magicBar.sub = active.value?.title || ''
   retryFetch(
     () => fetchAssignments(),
-    (e: any) => snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
   )
 })
 onActivated(() => {
