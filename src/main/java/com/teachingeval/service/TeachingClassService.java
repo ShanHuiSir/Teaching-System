@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.teachingeval.dto.TeachingClassRequest;
 import com.teachingeval.entity.TeachingClass;
+import com.teachingeval.repository.AssignmentClassRepository;
 import com.teachingeval.repository.AssignmentRepository;
 import com.teachingeval.repository.StudentRepository;
 import com.teachingeval.repository.TeachingClassRepository;
@@ -17,13 +18,16 @@ public class TeachingClassService {
     private final TeachingClassRepository teachingClassRepository;
     private final StudentRepository studentRepository;
     private final AssignmentRepository assignmentRepository;
+    private final AssignmentClassRepository assignmentClassRepository;
 
     public TeachingClassService(TeachingClassRepository teachingClassRepository,
                                 StudentRepository studentRepository,
-                                AssignmentRepository assignmentRepository) {
+                                AssignmentRepository assignmentRepository,
+                                AssignmentClassRepository assignmentClassRepository) {
         this.teachingClassRepository = teachingClassRepository;
         this.studentRepository = studentRepository;
         this.assignmentRepository = assignmentRepository;
+        this.assignmentClassRepository = assignmentClassRepository;
     }
 
     public List<TeachingClass> listClasses() {
@@ -61,7 +65,9 @@ public class TeachingClassService {
         if (!teachingClassRepository.existsById(id)) {
             throw new IllegalArgumentException("班级不存在");
         }
-        if (studentRepository.countByClassId(id) > 0 || assignmentRepository.countByClassId(id) > 0) {
+        if (studentRepository.countByClassId(id) > 0
+                || assignmentRepository.countByClassId(id) > 0
+                || assignmentClassRepository.countByClassId(id) > 0) {
             throw new IllegalArgumentException("班级已有学生或作业关联，不能删除");
         }
         teachingClassRepository.deleteById(id);
