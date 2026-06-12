@@ -571,7 +571,7 @@ import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
 import { getCookie, setCookie } from '../utils/cookie'
 import { detectFileType, FILE_ICONS } from '../utils/fileIcons'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
@@ -899,6 +899,7 @@ async function submitReview() {
       triggerRipple()
     }
     notify({ type: 'success', snackbar: '批改已提交', magicbar: '批改已提交' })
+    dataVersion.value++
     // Background refresh
     const evals = await http.get('/evaluations')
     const em = {}
@@ -1038,6 +1039,7 @@ function onReject() {
 }
 
 const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
+const dataVersion = inject(DATA_VERSION_KEY, ref(0))
 const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 const sortClass = ref(getCookie('sort_class') === '1')

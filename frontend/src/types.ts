@@ -25,3 +25,4 @@ export const TRIGGER_RIPPLE_KEY: InjectionKey<(x?: number, y?: number) => void> 
 export const REFRESH_TICK_KEY: InjectionKey<Ref<number>> = Symbol('refreshTick')
 export const RIGHT_BUTTONS_KEY: InjectionKey<Ref<RightButton[]>> = Symbol('rightButtons')
 export const SHOW_GREETING_KEY: InjectionKey<(pagePrimary: string) => void> = Symbol('showGreeting')
+export const DATA_VERSION_KEY: InjectionKey<Ref<number>> = Symbol('dataVersion')

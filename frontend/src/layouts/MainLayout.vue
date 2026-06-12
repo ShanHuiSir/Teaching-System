@@ -336,7 +336,7 @@ import http from '../utils/request'
 import { clearSessionUser } from '../utils/session'
 import { useTheme } from '../composables/useTheme'
 import { useMagicBar } from '../composables/useMagicBar'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, SHOW_GREETING_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, SHOW_GREETING_KEY, DATA_VERSION_KEY } from '../types'
 import MagicBar from '../components/MagicBar.vue'
 
 const { notify } = useNotify()
@@ -435,8 +435,10 @@ const indicatorStyle = computed(() => {
 })
 
 const refreshTick = ref(0)
+const dataVersion = ref(0)
 const rightButtons = ref([])
 provide(REFRESH_TICK_KEY, refreshTick)
+provide(DATA_VERSION_KEY, dataVersion)
 provide(RIGHT_BUTTONS_KEY, rightButtons)
 
 async function doRefresh() {
