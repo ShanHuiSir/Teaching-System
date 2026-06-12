@@ -375,7 +375,7 @@ import {
   watchEffect,
 } from 'vue'
 import http, { retryFetch } from '../utils/request'
-import { useSnackbar } from '../composables/useSnackbar'
+import { useNotify } from '../composables/useNotify'
 import { getCookie, setCookie } from '../utils/cookie'
 import { FILE_ICONS } from '../utils/fileIcons'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
@@ -388,7 +388,7 @@ import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 // ConfirmDialog reserved for delete modal
 
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 const loading = ref(false)
 const activeId = ref(null)
@@ -527,12 +527,7 @@ function startEdit(a) {
 watch(editing, (val, old) => {
   if (old && !val) {
     if (getCookie(DRAFT_KEY)) {
-      magicBar.status = '编辑内容已保存至本地'
-      magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '编辑内容已保存至本地') magicBar.status = ''
-      }, 2500)
-      snackbar.show('编辑内容已保存至草稿', { variant: 'info', duration: 2500 })
+      notify({ type: 'info', snackbar: '编辑内容已保存至草稿', magicbar: '编辑内容已保存至本地' })
     }
   }
 })
@@ -602,11 +597,11 @@ function autoResize() {
 
 async function onSave() {
   if (!form.title.trim()) {
-    snackbar.show('请输入作业名称', { variant: 'error' })
+    notify({ type: 'error', snackbar: '请输入作业名称' })
     return
   }
   if (!form.workType.trim()) {
-    snackbar.show('请输入作业类型', { variant: 'error' })
+    notify({ type: 'error', snackbar: '请输入作业类型' })
     return
   }
 
@@ -630,12 +625,12 @@ async function onSave() {
       : await http.put(`/assignments/${form.id}`, payload)
     clearDraft()
     triggerRipple(window.innerWidth * 0.75, 200)
-    snackbar.show(isCreate.value ? '作业已发布' : '作业已更新', { variant: 'info' })
+    notify({ type: 'success', snackbar: isCreate.value ? '作业已发布' : '作业已更新', magicbar: '作业信息已保存' })
     editing.value = false
     activeId.value = saved.id
     await fetchAssignments()
   } catch (e: any) {
-    snackbar.show('保存失败：' + (e.message || '网络异常'), { variant: 'error' })
+    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存作业时遇到了问题' })
   }
 }
 
@@ -660,15 +655,9 @@ async function onExport(item) {
     link.download = `成绩汇总_${item.title}_${new Date().toISOString().slice(0, 10)}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
-    magicBar.status = '导出完成'
-    magicBar.statusType = 'success'
-    setTimeout(() => {
-      if (magicBar.status === '导出完成') magicBar.status = ''
-    }, 2500)
-    snackbar.show('导出成功', { variant: 'info' })
-  } catch (e) {
-    magicBar.status = ''
-    snackbar.show('导出失败：' + (e.message || '网络异常'), { variant: 'error' })
+    notify({ type: 'success', snackbar: '导出成功', magicbar: '导出完成' })
+  } catch (e: any) {
+    notify({ type: 'error', snackbar: '导出失败：' + (e.message || '网络异常'), magicbar: '导出成绩时遇到了问题' })
   } finally {
     exporting.value = false
   }
@@ -684,9 +673,9 @@ async function onDelete(a) {
     await http.delete(`/assignments/${a.id}`)
     if (activeId.value === a.id) activeId.value = null
     assignments.value = assignments.value.filter(x => x.id !== a.id)
-    snackbar.show(`「${a.title}」已删除`, { variant: 'info' })
+    notify({ type: 'success', snackbar: `「${a.title}」已删除` })
   } catch (e: any) {
-    snackbar.show('删除失败：' + (e.message || '网络异常'), { variant: 'error' })
+    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除作业时遇到了问题' })
   }
 }
 
@@ -810,7 +799,7 @@ onMounted(() => {
   magicBar.sub = active.value?.title || ''
   retryFetch(
     () => fetchAssignments(),
-    (e: any) => snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
   )
 })
 onActivated(() => {

@@ -312,11 +312,11 @@ import { ref, computed, onMounted, onActivated, onDeactivated, inject, watch } f
 import { useRouter } from 'vue-router'
 import { getCookie, setCookie } from '../utils/cookie'
 import http, { retryFetch } from '../utils/request'
-import { useSnackbar } from '../composables/useSnackbar'
+import { useNotify } from '../composables/useNotify'
 import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
 
 const router = useRouter()
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 const teacherName = computed(() => getCookie('user_name') || 'teacher')
 
@@ -644,7 +644,7 @@ onMounted(() => {
   magicBar.sub = ''
   retryFetch(
     () => fetchAll(),
-    (e: any) => snackbar.show('数据加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+    (e: any) => notify({ type: 'error', snackbar: '数据加载失败：' + (e.message || '网络异常'), magicbar: '加载仪表盘数据时遇到了问题' }),
   )
   showGreeting('仪表盘')
 })
