@@ -568,7 +568,7 @@ import {
 } from 'vue'
 import { useRoute } from 'vue-router'
 import http, { retryFetch } from '../utils/request'
-import { useSnackbar } from '../composables/useSnackbar'
+import { useNotify } from '../composables/useNotify'
 import { getCookie, setCookie } from '../utils/cookie'
 import { detectFileType, FILE_ICONS } from '../utils/fileIcons'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
@@ -580,7 +580,7 @@ import FloatingPreview from '../components/FloatingPreview.vue'
 import { useFileActions } from '../composables/useFileActions'
 
 const route = useRoute()
-const snackbar = useSnackbar()
+const { notify } = useNotify()
 
 function iconPaths(type) {
   const raw = FILE_ICONS[type]?.paths || FILE_ICONS.text.paths
@@ -811,7 +811,7 @@ async function onReview() {
       teacherScore.value = d.score ?? ev?.teacherScore ?? ev?.aiScore ?? 0
       teacherComment.value = d.comment ?? ev?.teacherComment ?? ''
     } catch {
-      snackbar.show('草稿数据损坏，已重置', { variant: 'warning' })
+      notify({ type: 'warning', snackbar: '草稿数据损坏，已重置' })
     }
   } else {
     teacherScore.value = ev?.teacherScore ?? ev?.aiScore ?? 0
@@ -828,14 +828,10 @@ watch(reviewMode, (val, old) => {
     draftStamp.value++
     const key = `draft_${active.value.id}`
     if (getCookie(key) && !(activeEval.value?.status >= 2)) {
-      magicBar.status = '批改草稿已保存至本地'
-      magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '批改草稿已保存至本地') magicBar.status = ''
-      }, 2500)
-      snackbar.show(`${active.value.studentName} 的 ${active.value.workType || '作业'} 批改已保存`, {
-        variant: 'info',
-        duration: 2500,
+      notify({
+        type: 'info',
+        snackbar: `${active.value.studentName} 的 ${active.value.workType || '作业'} 批改已保存`,
+        magicbar: '批改草稿已保存至本地',
       })
     }
   }
@@ -896,7 +892,7 @@ async function submitReview() {
     } else {
       triggerRipple()
     }
-    snackbar.show('批改已提交', { variant: 'info' })
+    notify({ type: 'success', snackbar: '批改已提交', magicbar: '批改已提交' })
     // Background refresh
     const evals = await http.get('/evaluations')
     const em = {}
@@ -908,14 +904,9 @@ async function submitReview() {
   } catch (e) {
     const saved = getCookie(`draft_${active.value.id}`)
     if (saved) {
-      magicBar.status = '提交失败，已保存至本地草稿'
-      magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '提交失败，已保存至本地草稿') magicBar.status = ''
-      }, 3000)
-      snackbar.show('提交失败，评分已保存在本地草稿', { variant: 'error' })
+      notify({ type: 'error', snackbar: '提交失败，评分已保存在本地草稿', magicbar: '提交失败，已保存至本地草稿' })
     } else {
-      snackbar.show('提交批改失败：' + (e.message || '网络异常'), { variant: 'error' })
+      notify({ type: 'error', snackbar: '提交批改失败：' + (e.message || '网络异常'), magicbar: '提交批改时遇到了问题' })
     }
   } finally {
     submitting.value = false
@@ -1030,8 +1021,7 @@ async function onAiEval() {
       if (magicBar.status === 'AI 评价已完成') magicBar.status = ''
     }, 2500)
   } catch (e: any) {
-    snackbar.show('AI评价失败：' + (e.message || '网络异常'), { variant: 'error' })
-    magicBar.status = ''
+    notify({ type: 'error', snackbar: 'AI评价失败：' + (e.message || '网络异常'), magicbar: 'AI 评分时遇到了问题' })
   } finally {
     aiLoading.value = false
   }
@@ -1276,7 +1266,7 @@ async function fetchSubmissions() {
 onMounted(() => {
   retryFetch(
     () => fetchSubmissions(),
-    (e: any) => snackbar.show('作业列表加载失败：' + (e.message || '网络异常'), { variant: 'error' }),
+    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
   )
 })
 onMounted(() => {
