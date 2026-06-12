@@ -2,6 +2,7 @@ package com.teachingeval.controller;
 
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,10 +33,10 @@ public class TeachingClassController {
         this.teachingClassService = teachingClassService;
     }
 
-    @Operation(summary = "查询班级列表", description = "返回系统中的正式班级表数据。")
+    @Operation(summary = "查询班级列表", description = "返回当前教师管辖的正式班级表数据。")
     @GetMapping
-    public List<TeachingClass> listClasses() {
-        return teachingClassService.listClasses();
+    public List<TeachingClass> listClasses(HttpServletRequest request) {
+        return teachingClassService.listClassesForTeacher(request);
     }
 
     @Operation(summary = "新增班级", description = "录入班级名称、年级和说明。班级名称不能重复。")

@@ -1,6 +1,10 @@
 package com.teachingeval;
 
 import com.teachingeval.config.DataInitializer;
+import com.teachingeval.entity.Student;
+import com.teachingeval.entity.WorkSubmission;
+import com.teachingeval.repository.StudentRepository;
+import com.teachingeval.repository.SubmissionRepository;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +29,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,6 +46,12 @@ class TeachingSystemFlowTest {
 
     @Autowired
     private DataInitializer dataInitializer;
+
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     @BeforeEach
     void resetData() {
@@ -65,8 +76,8 @@ class TeachingSystemFlowTest {
                 .andExpect(jsonPath("$.content", hasSize(3)))
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(3))
-                .andExpect(jsonPath("$.totalElements").value(8))
-                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.totalElements").value(18))
+                .andExpect(jsonPath("$.totalPages").value(6))
                 .andExpect(jsonPath("$.hasNext").value(true))
                 .andExpect(jsonPath("$.content[0].classId", greaterThan(0)))
                 .andExpect(jsonPath("$.content[0].className").value("软件 1 班"));
@@ -86,13 +97,13 @@ class TeachingSystemFlowTest {
     void classAndAssignmentModelsExposeStableRelationships() throws Exception {
         mockMvc.perform(get("/api/classes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(5)))
+                .andExpect(jsonPath("$", hasSize(6)))
                 .andExpect(jsonPath("$[0].name").value("软件 1 班"))
                 .andExpect(jsonPath("$[0].grade").value("2026"));
 
         String assignmentResponse = mockMvc.perform(get("/api/assignments"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(6)))
+                .andExpect(jsonPath("$", hasSize(9)))
                 .andExpect(jsonPath("$[0].classId", greaterThan(0)))
                 .andExpect(jsonPath("$[0].classIds", hasSize(1)))
                 .andExpect(jsonPath("$[0].classNames", hasSize(1)))
@@ -242,11 +253,11 @@ class TeachingSystemFlowTest {
 
         mockMvc.perform(get("/api/statistics/summary"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.studentCount").value(8))
-                .andExpect(jsonPath("$.submissionCount").value(7))
-                .andExpect(jsonPath("$.aiEvaluatedCount").value(4))
-                .andExpect(jsonPath("$.teacherConfirmedCount").value(2))
-                .andExpect(jsonPath("$.averageTeacherScore").value(91.50));
+                .andExpect(jsonPath("$.studentCount").value(18))
+                .andExpect(jsonPath("$.submissionCount").value(19))
+                .andExpect(jsonPath("$.aiEvaluatedCount").value(6))
+                .andExpect(jsonPath("$.teacherConfirmedCount").value(3))
+                .andExpect(jsonPath("$.averageTeacherScore").value(89.00));
     }
 
     @Test
@@ -487,6 +498,114 @@ class TeachingSystemFlowTest {
                 .andExpect(jsonPath("$.aiComment").isString())
                 .andExpect(jsonPath("$.dimensionScores").isArray())
                 .andExpect(jsonPath("$.status").value(1));
+    }
+
+    @Test
+    void assignmentUpdatePreservesClassRelationships() throws Exception {
+        Integer classId = com.jayway.jsonpath.JsonPath.read(
+                mockMvc.perform(get("/api/classes"))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(),
+                "$[0].id"
+        );
+
+        String created = mockMvc.perform(post("/api/assignments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "更新测试作业",
+                                  "description": "验证同班级更新不触发约束冲突",
+                                  "workType": "实验报告",
+                                  "classIds": [%d]
+                                }
+                                """.formatted(classId)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Integer assignmentId = com.jayway.jsonpath.JsonPath.read(created, "$.id");
+
+        mockMvc.perform(put("/api/assignments/{id}", assignmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "更新测试作业（已修改）",
+                                  "description": "同一班级更新",
+                                  "workType": "实验报告",
+                                  "classIds": [%d]
+                                }
+                                """.formatted(classId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(assignmentId))
+                .andExpect(jsonPath("$.title").value("更新测试作业（已修改）"))
+                .andExpect(jsonPath("$.classIds[0]").value(classId));
+    }
+
+    @Test
+    void invalidPathVariableReturnsBadRequest() throws Exception {
+        mockMvc.perform(put("/api/assignments/null")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "测试",
+                                  "workType": "实验报告"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("无效的参数值：null"));
+
+        mockMvc.perform(put("/api/classes/null")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "测试班级",
+                                  "grade": "2026"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("无效的参数值：null"));
+    }
+
+    @Test
+    void submissionFileDownloadBlocksUnauthorizedStudent() throws Exception {
+        Student student = studentRepository.findAll().get(0);
+        Long previousClassId = student.getClassId();
+        student.setClassId(null);
+        studentRepository.saveAndFlush(student);
+
+        try {
+            String submissionResp = mockMvc.perform(post("/api/submissions")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "studentId": %d,
+                                      "title": "无班级归属测试",
+                                      "fileName": "orphan.txt",
+                                      "workType": "实验报告"
+                                    }
+                                    """.formatted(student.getId())))
+                    .andExpect(status().isCreated())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            Integer submissionId = com.jayway.jsonpath.JsonPath.read(submissionResp, "$.id");
+
+            mockMvc.perform(get("/api/submissions/{id}/file", submissionId))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.message").value("无权访问此提交"));
+        } finally {
+            student.setClassId(previousClassId);
+            studentRepository.saveAndFlush(student);
+        }
+    }
+
+    @Test
+    void responseStatusExceptionPreservesStatusCode() throws Exception {
+        mockMvc.perform(get("/api/submissions/{id}/file", 99999))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("提交记录不存在"));
     }
 
     private void respondWithPreprocessResult(HttpExchange exchange,

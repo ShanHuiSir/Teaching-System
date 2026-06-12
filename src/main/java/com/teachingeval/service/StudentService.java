@@ -32,21 +32,38 @@ public class StudentService {
                 .getContent();
     }
 
+    public List<Student> listStudents(List<Long> teacherClassIds) {
+        if (teacherClassIds == null) return listStudents();
+        return studentRepository.findAll().stream()
+                .filter(s -> s.getClassId() != null && teacherClassIds.contains(s.getClassId()))
+                .sorted((a, b) -> a.getId().compareTo(b.getId()))
+                .toList();
+    }
+
     public Page<Student> listStudentPage(Integer page, Integer size, String keyword) {
+        return listStudentPage(page, size, keyword, null);
+    }
+
+    public Page<Student> listStudentPage(Integer page, Integer size, String keyword, List<Long> teacherClassIds) {
         int safePage = page == null ? 0 : Math.max(page, 0);
         int safeSize = size == null ? DEFAULT_PAGE_SIZE : Math.max(size, 1);
         safeSize = Math.min(safeSize, MAX_PAGE_SIZE);
 
-        PageRequest pageRequest = PageRequest.of(safePage, safeSize, Sort.by("id").ascending());
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
-        if (normalizedKeyword.isEmpty()) {
-            return studentRepository.findAll(pageRequest);
-        }
-        return studentRepository.findByStudentNoContainingIgnoreCaseOrNameContainingIgnoreCase(
-                normalizedKeyword,
-                normalizedKeyword,
-                pageRequest
-        );
+        List<Student> filtered = listStudents(teacherClassIds).stream()
+                .filter(s -> normalizedKeyword.isEmpty()
+                        || (s.getStudentNo() != null && s.getStudentNo().toLowerCase().contains(normalizedKeyword.toLowerCase()))
+                        || (s.getName() != null && s.getName().toLowerCase().contains(normalizedKeyword.toLowerCase())))
+                .toList();
+
+        int total = filtered.size();
+        int totalPages = total == 0 ? 1 : (int) Math.ceil((double) total / safeSize);
+        int fromIndex = Math.min(safePage * safeSize, total);
+        int toIndex = Math.min(fromIndex + safeSize, total);
+        List<Student> pageContent = filtered.subList(fromIndex, toIndex);
+
+        return new org.springframework.data.domain.PageImpl<>(pageContent,
+                org.springframework.data.domain.PageRequest.of(safePage, safeSize), total);
     }
 
     public Student createStudent(StudentRequest request) {

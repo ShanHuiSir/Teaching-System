@@ -35,9 +35,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 const content = ref('')
 const fileName = ref('')
 const loading = ref(true)
@@ -51,6 +52,10 @@ onMounted(async () => {
   const id = route.params.submissionId
   try {
     const res = await fetch(`/api/submissions/${id}/file`, { credentials: 'include' })
+    if (res.status === 401 || res.status === 403) {
+      router.replace('/forbidden')
+      return
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const disposition = res.headers.get('content-disposition')
     if (disposition) {
