@@ -509,8 +509,8 @@ function startCreate() {
 
 function startEdit(a) {
   isCreate.value = false
-  form.id = a.id
   resetForm()
+  form.id = a.id
   const hasDraft = loadDraft()
   if (!hasDraft) {
     form.title = a.title
