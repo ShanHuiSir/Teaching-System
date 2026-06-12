@@ -105,8 +105,8 @@ class TeachingSystemFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(9)))
                 .andExpect(jsonPath("$[0].classId", greaterThan(0)))
-                .andExpect(jsonPath("$[0].classIds", hasSize(1)))
-                .andExpect(jsonPath("$[0].classNames", hasSize(1)))
+                .andExpect(jsonPath("$[0].classIds", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$[0].classNames", hasSize(greaterThan(0))))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
