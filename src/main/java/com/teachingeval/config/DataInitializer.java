@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -273,7 +274,14 @@ public class DataInitializer implements CommandLineRunner {
                         "图像分类迁移学习实验"),
         };
 
-        return submissionRepository.saveAll(List.of(subs));
+        List<WorkSubmission> saved = submissionRepository.saveAll(List.of(subs));
+        // Vary submittedAt across the past two weeks for realistic trend data
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 0; i < saved.size(); i++) {
+            WorkSubmission sub = saved.get(i);
+            sub.setSubmittedAt(now.minusDays(14 - i).minusHours(i * 3L).minusMinutes(i * 17L));
+        }
+        return submissionRepository.saveAll(saved);
     }
 
     private WorkSubmission sub(Student student, Assignment assignment,
@@ -336,7 +344,23 @@ public class DataInitializer implements CommandLineRunner {
         tc2.setTeacherComment("分析思路清晰，数据处理基本到位，建议完善数据清洗环节并丰富可视化呈现。");
         tc2.setStatus(EvaluationResult.STATUS_TEACHER_CONFIRMED);
 
-        evaluationRepository.saveAll(List.of(ai1, ai2, ai3, tc1, tc2));
+        List<EvaluationResult> savedEvals = evaluationRepository.saveAll(List.of(ai1, ai2, ai3, tc1, tc2));
+        // Vary evaluation timestamps to produce meaningful trend/efficiency data.
+        // Confirmed evaluations get updatedAt set a few days after the submission.
+        for (EvaluationResult ev : savedEvals) {
+            WorkSubmission sub = submissions.stream()
+                    .filter(x -> x.getId().equals(ev.getSubmissionId()))
+                    .findFirst().orElse(null);
+            if (sub == null || sub.getSubmittedAt() == null) continue;
+            LocalDateTime subDate = sub.getSubmittedAt();
+            ev.setCreatedAt(subDate.plusHours(2));
+            if (ev.getStatus() >= EvaluationResult.STATUS_TEACHER_CONFIRMED) {
+                ev.setUpdatedAt(subDate.plusDays(1 + ev.getId()).plusHours(5));
+            } else {
+                ev.setUpdatedAt(subDate.plusHours(2));
+            }
+        }
+        evaluationRepository.saveAll(savedEvals);
     }
 
     private void savePrimaryFile(WorkSubmission submission) {
