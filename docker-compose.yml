@@ -1,0 +1,30 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: teaching-system-backend:demo
+    container_name: teaching-system-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: fake
+      APP_UPLOAD_ROOT: /data/uploads
+      TEACHING_EVAL_USERNAME: teacher
+      TEACHING_EVAL_PASSWORD: "123456"
+    volumes:
+      - teaching_uploads:/data/uploads
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: teaching-system-frontend:demo
+    container_name: teaching-system-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  teaching_uploads:
