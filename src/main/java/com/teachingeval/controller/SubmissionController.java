@@ -4,7 +4,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import com.teachingeval.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -99,14 +98,29 @@ public class SubmissionController {
 
     @Operation(summary = "查询提交文件列表", description = "返回指定提交下的文件明细，当前上传接口会写入一条主文件记录。")
     @GetMapping("/submissions/{id}/files")
-    public List<SubmissionFile> listSubmissionFiles(@PathVariable Long id) {
+    public List<SubmissionFile> listSubmissionFiles(@PathVariable Long id, HttpServletRequest request) {
+        ensureCurrentTeacherCanAccessSubmission(id, request);
         return submissionService.listSubmissionFiles(id);
     }
 
     @Operation(summary = "下载作品文件", description = "根据提交ID下载对应的原始作业文件。仅允许访问本班学生的提交。")
     @GetMapping("/submissions/{id}/file")
     public FileSystemResource downloadFile(@PathVariable Long id, HttpServletRequest request) {
-        WorkSubmission submission = submissionRepository.findById(id)
+        ensureCurrentTeacherCanAccessSubmission(id, request);
+
+        SubmissionFile file = submissionService.getPrimaryFile(id);
+        if (file.getFilePath() == null || file.getFilePath().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
+        }
+        Path path = Path.of(file.getFilePath());
+        if (!Files.exists(path)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
+        }
+        return new FileSystemResource(path);
+    }
+
+    private void ensureCurrentTeacherCanAccessSubmission(Long submissionId, HttpServletRequest request) {
+        WorkSubmission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "提交记录不存在"));
         Student student = studentRepository.findById(submission.getStudentId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "无权访问此提交"));
@@ -124,15 +138,5 @@ public class SubmissionController {
         if (currentUser != null && !teacher.getUsername().equals(currentUser)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "无权访问此提交");
         }
-
-        SubmissionFile file = submissionService.getPrimaryFile(id);
-        if (file.getFilePath() == null || file.getFilePath().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
-        }
-        Path path = Path.of(file.getFilePath());
-        if (!Files.exists(path)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
-        }
-        return new FileSystemResource(path);
     }
 }

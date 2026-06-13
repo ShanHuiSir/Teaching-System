@@ -122,6 +122,28 @@ class TeachingSystemSecurityTest {
     }
 
     @Test
+    void submissionFileListSucceedsForAuthenticatedTeacherClass() throws Exception {
+        Cookie authCookie = login();
+
+        Long submissionId = submissionRepository.findAll().get(0).getId();
+        mockMvc.perform(get("/api/submissions/{id}/files", submissionId)
+                        .cookie(authCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].submissionId").value(submissionId));
+    }
+
+    @Test
+    void submissionFileListRejectsOtherTeachersClass() throws Exception {
+        Cookie tempCookie = login("temp", "123456");
+
+        Long teacherSubmissionId = submissionRepository.findAll().get(0).getId();
+        mockMvc.perform(get("/api/submissions/{id}/files", teacherSubmissionId)
+                        .cookie(tempCookie))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("无权访问此提交"));
+    }
+
+    @Test
     void aiEvaluationRequestsAreRateLimitedPerMinute() throws Exception {
         Cookie authCookie = login();
         Long submissionId = submissionRepository.findAll().get(0).getId();
@@ -143,17 +165,21 @@ class TeachingSystemSecurityTest {
     }
 
     private Cookie login() throws Exception {
+        return login("teacher", "123456");
+    }
+
+    private Cookie login(String username, String password) throws Exception {
         var result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "username": "teacher",
-                                  "password": "123456",
+                                  "username": "%s",
+                                  "password": "%s",
                                   "rememberMe": false
                                 }
-                                """))
+                                """.formatted(username, password)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("teacher"))
+                .andExpect(jsonPath("$.username").value(username))
                 .andExpect(cookie().exists("auth_token"))
                 .andReturn();
 
