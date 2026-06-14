@@ -41,7 +41,7 @@ npm run dev
 
 ### Docker 演示启动（麒麟虚拟机）
 
-最终演示环境建议使用麒麟虚拟机中的 Docker Engine 和 Docker Compose 插件，不需要安装 Docker Desktop。当前 Docker 配置默认使用 `fake` profile，适合离线演示和验收彩排。
+最终演示环境建议使用麒麟虚拟机中的 Docker Engine 和 Docker Compose 插件，不需要安装 Docker Desktop。Docker Compose 会同时启动三个服务：`frontend`、`backend`、`ai-service`。没有 DeepSeek Key 时，AI 服务仍可启动，真实评分接口会降级返回默认提示，适合离线演示和验收彩排。
 
 ```bash
 # 1. 确认基础环境
@@ -60,20 +60,24 @@ npm install
 npm run build
 cd ..
 
-# 3. 启动容器
+# 3. 可选：如需真实大模型评分，先配置 Key；没有 Key 可跳过
+export DEEPSEEK_API_KEY=你的DeepSeekKey
+
+# 4. 启动容器
 docker compose up --build -d
 
-# 4. 检查状态
+# 5. 检查状态
 docker compose ps
 curl http://localhost:8080/api/health
+curl http://localhost:8000/api/health
 ```
 
 Docker 演示访问地址：
 
-| 访问位置 | 前端页面 | 后端健康检查 |
-|---|---|---|
-| 麒麟虚拟机内部 | http://localhost:5173 | http://localhost:8080/api/health |
-| 宿主机访问虚拟机 | http://虚拟机IP:5173 | http://虚拟机IP:8080/api/health |
+| 访问位置 | 前端页面 | 后端健康检查 | AI 服务健康检查 |
+|---|---|---|---|
+| 麒麟虚拟机内部 | http://localhost:5173 | http://localhost:8080/api/health | http://localhost:8000/api/health |
+| 宿主机访问虚拟机 | http://虚拟机IP:5173 | http://虚拟机IP:8080/api/health | http://虚拟机IP:8000/api/health |
 
 麒麟虚拟机没有公网 IP 不影响演示。常见调试方式：
 
@@ -82,17 +86,18 @@ Docker 演示访问地址：
 ip addr
 
 # 确认服务端口已经监听
-ss -lntp | grep -E '(:5173|:8080)'
+ss -lntp | grep -E '(:5173|:8080|:8000)'
 
 # 虚拟机内自测
 curl http://localhost:8080/api/health
+curl http://localhost:8000/api/health
 curl -I http://localhost:5173
 ```
 
 如果虚拟机内部访问正常，但宿主机访问不通，优先检查：
 
 - 虚拟机网络模式是否为桥接、Host-Only，或 NAT 是否已配置端口转发。
-- 麒麟防火墙是否放行 `5173/tcp` 和 `8080/tcp`。
+- 麒麟防火墙是否放行 `5173/tcp`、`8080/tcp` 和 `8000/tcp`。
 - 宿主机访问地址是否使用虚拟机 IP，而不是 `localhost`。
 
 常用防火墙放行命令（如系统启用 firewalld）：
@@ -100,6 +105,7 @@ curl -I http://localhost:5173
 ```bash
 sudo firewall-cmd --add-port=5173/tcp --permanent
 sudo firewall-cmd --add-port=8080/tcp --permanent
+sudo firewall-cmd --add-port=8000/tcp --permanent
 sudo firewall-cmd --reload
 ```
 

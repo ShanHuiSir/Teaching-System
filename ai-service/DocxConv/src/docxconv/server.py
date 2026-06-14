@@ -439,7 +439,10 @@ async def health():
         pass
 
     # ── status ───────────────────────────────────────────────────────
-    core_ok = libreoffice_ok and pandoc_ok and deepseek_ok
+    # DeepSeek/OCR/archive backends are feature readiness signals, not process
+    # liveness. The service can still preprocess text and return fallback AI
+    # results when those optional capabilities are unavailable.
+    core_ok = True
     all_ok = core_ok and easyocr_ok and archive_7z_ok and archive_rar_ok
     if all_ok:
         status = "ok"

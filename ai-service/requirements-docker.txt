@@ -1,0 +1,20 @@
+# Lightweight Docker dependencies for the demo AI service.
+# OCR/EasyOCR is intentionally excluded because it pulls large Torch wheels.
+# Local development can still use requirements.txt for the full feature set.
+
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+python-multipart>=0.0.18
+python-dotenv>=1.0.0
+
+python-docx>=1.1.0
+lxml>=5.0.0
+pymupdf>=1.25.0
+Pillow>=10.0.0
+
+openai>=1.0.0
+openpyxl>=3.1.0
+python-pptx>=1.0.0
+
+py7zr>=0.20.0
+rarfile>=4.0
