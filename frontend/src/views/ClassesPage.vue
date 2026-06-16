@@ -560,7 +560,6 @@ watch(refreshTick, fetchClasses)
   }
 
   &__list {
-    align-self: flex-start;
     padding: 20px 12px 20px 20px;
     display: flex;
     flex-direction: column;
