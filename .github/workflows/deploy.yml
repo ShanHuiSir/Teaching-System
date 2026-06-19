@@ -82,7 +82,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 21987 }}
+          # The server’s default shell is fish.  Pipe the whole script into
+          # bash so that heredocs, set -e, etc. work as expected.
           script: |
+            bash << 'SCRIPTEOF'
             set -euo pipefail
             cd /usr/share/teaching-system
 
@@ -109,3 +112,4 @@ jobs:
             docker image prune -f
 
             echo "=== Deploy complete ==="
+            SCRIPTEOF
