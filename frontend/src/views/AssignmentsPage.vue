@@ -233,16 +233,7 @@
       <div class="form-card">
         <div class="form-card__bar">
           <button class="form-card__back" @click="editing = false">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
+            <AppIcon name="chevron-left" />
             <span>关闭{{ isCreate ? '创建' : '编辑' }}</span>
           </button>
           <button class="act-btn act-btn--primary" :disabled="saving" @click="onSave">
@@ -376,6 +367,7 @@ import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
+import AppIcon from '../components/AppIcon.vue'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()

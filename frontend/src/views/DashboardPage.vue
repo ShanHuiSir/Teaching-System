@@ -234,7 +234,7 @@
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
-          <p v-else class="dash__empty">暂无数据</p>
+          <EmptyState text="暂无数据" />
         </div>
 
         <!-- Score comparison -->
@@ -267,7 +267,7 @@
               >
             </div>
           </div>
-          <p v-else class="dash__empty">暂无数据</p>
+          <EmptyState text="暂无数据" />
         </div>
       </div>
     </section>
@@ -288,7 +288,7 @@
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
-          <p v-else class="dash__empty">暂无数据</p>
+          <EmptyState text="暂无数据" />
         </div>
 
         <div class="twd-card">
@@ -303,7 +303,7 @@
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
-          <p v-else class="dash__empty">暂无数据</p>
+          <EmptyState text="暂无数据" />
         </div>
       </div>
     </section>
@@ -319,6 +319,7 @@ import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
 import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
 import ListSkeleton from '../components/ListSkeleton.vue'
+import EmptyState from '../components/EmptyState.vue'
 
 const router = useRouter()
 const { notify } = useNotify()
