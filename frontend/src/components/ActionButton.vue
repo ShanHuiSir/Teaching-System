@@ -1,5 +1,5 @@
 <template>
-  <button class="act-btn" :class="`act-btn--${variant}`" :disabled="disabled" @click="$emit('click')">
+  <button type="button" class="act-btn" :class="`act-btn--${variant}`" :disabled="disabled" @click="$emit('click')">
     <slot name="icon" />
     <span><slot /></span>
   </button>
