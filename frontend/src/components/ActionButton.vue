@@ -8,7 +8,7 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'danger' | 'outline'
+    variant?: 'primary' | 'danger' | 'outline' | 'secondary'
     disabled?: boolean
   }>(),
   {
@@ -73,6 +73,14 @@ defineEmits<{
     border: 1px solid rgb(var(--md-sys-color-outline));
     &:hover:not(:disabled) {
       background: rgb(var(--md-sys-color-surface-container-highest));
+    }
+  }
+
+  &--secondary {
+    background: rgb(var(--md-sys-color-secondary-container));
+    color: rgb(var(--md-sys-color-on-secondary-container));
+    &:hover:not(:disabled) {
+      filter: brightness(0.95);
     }
   }
 }

@@ -78,22 +78,6 @@ const nameWidths = ['55%', '42%', '68%', '35%', '50%']
 /* shimmer */
 .sk-line,
 .sk-chip {
-  animation: sk-shimmer 1.8s ease-in-out infinite;
-  background: linear-gradient(
-    90deg,
-    rgb(var(--md-sys-color-on-surface) / 0.04) 25%,
-    rgb(var(--md-sys-color-on-surface) / 0.08) 40%,
-    rgb(var(--md-sys-color-on-surface) / 0.04) 55%
-  );
-  background-size: 300% 100%;
-}
-
-@keyframes sk-shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -50% 0;
-  }
+  @include shimmer;
 }
 </style>
