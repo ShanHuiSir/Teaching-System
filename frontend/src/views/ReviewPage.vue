@@ -87,89 +87,94 @@
               <span class="assign-item__badge assign-item__badge--ai">{{ wt.submittedCount }} 份</span>
             </div>
             <div class="assign-item__stats">
-              <span class="stat-chip" data-tooltip="受理班级">
-                <svg
-                  class="stat-chip__icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                <span>{{ wt.className }}</span>
-              </span>
+              <StatChip tooltip="受理班级">
+                <template #icon>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </template>
+                {{ wt.className }}
+              </StatChip>
             </div>
             <div class="assign-item__stats assign-item__stats--row">
-              <span class="stat-chip" data-tooltip="提交进度">
-                <svg
-                  class="stat-chip__icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-                <span>{{ wt.submittedCount }}/{{ wt.totalStudents }} · {{ wt.submitRate }}%</span>
-              </span>
-              <span class="stat-chip" data-tooltip="审批进度">
-                <svg
-                  class="stat-chip__icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="9 11 12 14 22 4" />
-                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                </svg>
-                <span>{{ wt.reviewProgress }}%</span>
-              </span>
-              <span class="stat-chip" data-tooltip="发布日期">
-                <svg
-                  class="stat-chip__icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                <span><!-- TODO: real createdAt from API -->{{ wt.createdAt }}</span>
-              </span>
-              <span class="stat-chip stat-chip--push" data-tooltip="截止日期">
-                <svg
-                  class="stat-chip__icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span><!-- TODO: real dueDate from API -->截止 {{ wt.dueDate }}</span>
-              </span>
+              <StatChip tooltip="提交进度">
+                <template #icon>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </template>
+                {{ wt.submittedCount }}/{{ wt.totalStudents }} · {{ wt.submitRate }}%
+              </StatChip>
+              <StatChip tooltip="审批进度">
+                <template #icon>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="9 11 12 14 22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                  </svg>
+                </template>
+                {{ wt.reviewProgress }}%
+              </StatChip>
+              <StatChip tooltip="发布日期">
+                <template #icon>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </template>
+                <!-- TODO: real createdAt from API -->{{ wt.createdAt }}
+              </StatChip>
+              <StatChip tooltip="截止日期">
+                <template #icon>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </template>
+                <!-- TODO: real dueDate from API -->截止 {{ wt.dueDate }}
+              </StatChip>
             </div>
           </div>
 
@@ -238,7 +243,56 @@
           <!-- Top action bar -->
           <div class="detail-card__actions">
             <div class="detail-card__actions-left">
-              <button class="act-btn act-btn--review" :disabled="reviewMode" @click="onReview">
+              <ActionButton variant="primary" :disabled="reviewMode" @click="onReview">
+                <template #icon>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </template>
+                批改
+              </ActionButton>
+              <div class="ai-btn-wrap">
+                <select v-model="subjectType" class="ai-btn-wrap__subject">
+                  <option value="code">代码</option>
+                  <option value="document">文档</option>
+                  <option value="design">设计</option>
+                  <option value="general">通用</option>
+                </select>
+                <ActionButton variant="secondary" :disabled="aiLoading" @click="onAiEval">
+                  <template #icon>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5"
+                      />
+                      <path
+                        d="M18 2l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z"
+                        fill="currentColor"
+                        stroke="none"
+                      />
+                    </svg>
+                  </template>
+                  {{ aiLoading ? '评价中...' : 'AI评价' }}
+                </ActionButton>
+                <span v-if="activeEval && activeEval.status >= 1" class="ai-btn-wrap__hint">重新评价？</span>
+              </div>
+            </div>
+            <ActionButton variant="danger" @click="onReject">
+              <template #icon>
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -247,55 +301,12 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 >
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-                <span>批改</span>
-              </button>
-              <div class="ai-btn-wrap">
-                <select v-model="subjectType" class="ai-btn-wrap__subject">
-                  <option value="code">代码</option>
-                  <option value="document">文档</option>
-                  <option value="design">设计</option>
-                  <option value="general">通用</option>
-                </select>
-                <button class="act-btn act-btn--ai" :disabled="aiLoading" @click="onAiEval">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5"
-                    />
-                    <path
-                      d="M18 2l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z"
-                      fill="currentColor"
-                      stroke="none"
-                    />
-                  </svg>
-                  <span>{{ aiLoading ? '评价中...' : 'AI评价' }}</span>
-                </button>
-                <span v-if="activeEval && activeEval.status >= 1" class="ai-btn-wrap__hint">重新评价？</span>
-              </div>
-            </div>
-            <button class="act-btn act-btn--reject" @click="onReject">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-              <span>打回</span>
-            </button>
+              </template>
+              打回
+            </ActionButton>
           </div>
 
           <!-- Info inner card -->
@@ -471,49 +482,53 @@
               </svg>
               <span>关闭批改</span>
             </button>
-            <button
-              class="act-btn act-btn--ai"
+            <ActionButton
+              variant="secondary"
               :disabled="aiLoading || !activeEval || activeEval.status < 1"
               @click="applyAiEval"
             >
+              <template #icon>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5"
+                  />
+                  <path
+                    d="M18 2l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                </svg>
+              </template>
+              应用AI评价
+            </ActionButton>
+          </div>
+          <ActionButton
+            ref="submitBtnRef"
+            variant="primary"
+            :disabled="submitting || !teacherComment.trim()"
+            @click="submitReview"
+          >
+            <template #icon>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path
-                  d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5"
-                />
-                <path
-                  d="M18 2l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z"
-                  fill="currentColor"
-                  stroke="none"
-                />
+                <polyline points="20 6 9 17 4 12" />
               </svg>
-              <span>应用AI评价</span>
-            </button>
-          </div>
-          <button
-            ref="submitBtnRef"
-            class="act-btn act-btn--review"
-            :disabled="submitting || !teacherComment.trim()"
-            @click="submitReview"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <span>{{ submitting ? '提交中...' : '提交批改' }}</span>
-          </button>
+            </template>
+            {{ submitting ? '提交中...' : '提交批改' }}
+          </ActionButton>
         </div>
 
         <div class="score-box">
@@ -579,17 +594,19 @@ import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 import FloatingPreview from '../components/FloatingPreview.vue'
+import ActionButton from '../components/ActionButton.vue'
+import StatChip from '../components/StatChip.vue'
 import { useFileActions } from '../composables/useFileActions'
 
 const route = useRoute()
 const { notify } = useNotify()
 
-function iconPaths(type) {
+function iconPaths(type: any) {
   const raw = FILE_ICONS[type]?.paths || FILE_ICONS.text.paths
   return raw.map(p => (typeof p === 'string' ? { d: p } : { ...p }))
 }
 
-function iconViewBox(type) {
+function iconViewBox(type: any) {
   return FILE_ICONS[type]?.viewBox || '0 0 24 24'
 }
 
@@ -633,8 +650,8 @@ const filteredSubmissions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return submissionsRaw.value
 
-  const studentMap = {}
-  studentsAll.value.forEach(s => {
+  const studentMap: Record<string, any> = {}
+  studentsAll.value.forEach((s: any) => {
     studentMap[s.id] = s
   })
 
@@ -693,10 +710,10 @@ const draft = computed(() => {
   }
 })
 
-function formatTime(iso) {
+function formatTime(iso: any) {
   if (!iso) return ''
   const d = new Date(iso)
-  const pad = n => String(n).padStart(2, '0')
+  const pad = (n: any) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
@@ -730,9 +747,9 @@ const workTypes = computed(() => {
       const classIds = normalizeAssignmentClassIds(a)
       const classNames = normalizeAssignmentClassNames(a)
       const total = classIds.length
-        ? classIds.reduce((sum, id) => sum + (classStudentCountsById[String(id)] || 0), 0)
+        ? classIds.reduce((sum: any, id: any) => sum + (classStudentCountsById[String(id)] || 0), 0)
         : classNames.length
-          ? classNames.reduce((sum, name) => sum + (classStudentCounts[name] || 0), 0)
+          ? classNames.reduce((sum: any, name: any) => sum + (classStudentCounts[name] || 0), 0)
           : studentsAll.value.length
       return {
         id: a.id,
@@ -750,7 +767,7 @@ const workTypes = computed(() => {
     .sort((a, b) => b.submittedCount - a.submittedCount)
 })
 
-function normalizeAssignmentClassNames(assignment) {
+function normalizeAssignmentClassNames(assignment: any) {
   if (!assignment) return []
   if (Array.isArray(assignment.classNames) && assignment.classNames.length) {
     return assignment.classNames.filter(Boolean)
@@ -758,15 +775,15 @@ function normalizeAssignmentClassNames(assignment) {
   return assignment.className ? assignment.className.split('、').filter(Boolean) : []
 }
 
-function normalizeAssignmentClassIds(assignment) {
+function normalizeAssignmentClassIds(assignment: any) {
   if (!assignment) return []
   if (Array.isArray(assignment.classIds) && assignment.classIds.length) {
-    return assignment.classIds.filter(id => id != null)
+    return assignment.classIds.filter((id: any) => id != null)
   }
   return assignment.classId ? [assignment.classId] : []
 }
 
-function formatAssignmentClassNames(assignment) {
+function formatAssignmentClassNames(assignment: any) {
   const names = normalizeAssignmentClassNames(assignment)
   return names.length ? names.join('、') : '全部班级'
 }
@@ -795,7 +812,7 @@ function onSelectWorkType(assignmentId: number | null) {
   rebuildSemesters()
 }
 
-function selectItem(item) {
+function selectItem(item: any) {
   activeId.value = item.id
   updateMagicTrail()
 }
@@ -859,7 +876,7 @@ function clampScore() {
   if (teacherScore.value > 100) teacherScore.value = 100
 }
 
-function adjustScore(delta) {
+function adjustScore(delta: any) {
   teacherScore.value = Math.round((teacherScore.value + delta) * 10) / 10
   clampScore()
 }
@@ -893,7 +910,7 @@ async function submitReview() {
     reviewMode.value = false
     setCookie(`draft_${active.value.id}`, '', -1)
     // Ripple as success celebration
-    const btn = submitBtnRef.value
+    const btn = (submitBtnRef.value as any)?.$el as HTMLElement | undefined
     if (btn) {
       const r = btn.getBoundingClientRect()
       triggerRipple(r.left + r.width / 2, r.top + r.height / 2)
@@ -904,8 +921,8 @@ async function submitReview() {
     dataVersion.value++
     // Background refresh
     const evals = await http.get('/evaluations')
-    const em = {}
-    ;(evals || []).forEach(e => {
+    const em: Record<string, any> = {}
+    ;(evals || []).forEach((e: any) => {
       em[e.submissionId] = e
     })
     evalMap.value = em
@@ -1058,7 +1075,7 @@ const hasActiveFilter = computed(() => {
 function rebuildSemesters() {
   const em = evalMap.value
 
-  function makeItem(s) {
+  function makeItem(s: any) {
     const ev = em[s.id]
     const hasAi = ev && ev.status >= 1
     const confirmed = ev && ev.status >= 2
@@ -1084,7 +1101,7 @@ function rebuildSemesters() {
   if (sortCompletion.value) {
     all.sort((a, b) => {
       const rank = { ai: 0, none: 1, confirmed: 2 }
-      return (rank[a.badgeType] ?? 1) - (rank[b.badgeType] ?? 1)
+      return ((rank as any)[a.badgeType] ?? 1) - ((rank as any)[b.badgeType] ?? 1)
     })
   }
 
@@ -1107,7 +1124,7 @@ function rebuildSemesters() {
   }
 
   // Find unsubmitted students — only from the selected assignment's target classes
-  const submittedIds = new Set(submissionsRaw.value.map(s => s.studentId))
+  const submittedIds = new Set(submissionsRaw.value.map((s: any) => s.studentId))
   const targetClassIds: Set<number> | null = selectedAssignmentId.value
     ? new Set(
         (assignmentsAll.value.find((a: any) => a.id === selectedAssignmentId.value)?.classIds || [])
@@ -1128,7 +1145,7 @@ function rebuildSemesters() {
       }
       return true
     })
-    .map(s => ({
+    .map((s: any) => ({
       id: `u-${s.id}`,
       studentName: s.name || '未知',
       fileType: 'text',
@@ -1145,9 +1162,9 @@ function rebuildSemesters() {
     const pending = filtered.filter(it => it.badgeType !== 'confirmed')
     const reviewed = filtered.filter(it => it.badgeType === 'confirmed')
 
-    function groupByClass(items, prefix) {
-      const map = {}
-      items.forEach(it => {
+    function groupByClass(items: any, prefix: any) {
+      const map: Record<string, any> = {}
+      items.forEach((it: any) => {
         const cls = it.className || '未分班'
         if (!map[cls]) map[cls] = []
         map[cls].push(it)
@@ -1178,7 +1195,7 @@ function buildRightButtons() {
   setCookie('sort_completion', sortCompletion.value ? '1' : '0', 30)
   setCookie('filter_status', filterStatus.value, 30)
 
-  function setFilter(val) {
+  function setFilter(val: any) {
     filterStatus.value = filterStatus.value === val ? 'all' : val
     rebuildSemesters()
     buildRightButtons()
@@ -1252,20 +1269,20 @@ async function fetchSubmissions() {
       http.get('/students'),
       http.get('/assignments'),
     ])
-    const em = {}
-    ;(evals || []).forEach(e => {
+    const em: Record<string, any> = {}
+    ;(evals || []).forEach((e: any) => {
       em[e.submissionId] = e
     })
     evalMap.value = em
     studentsAll.value = students || []
     assignmentsAll.value = assignments || []
-    const studentMap = {}
-    studentsAll.value.forEach(s => {
+    const studentMap: Record<string, any> = {}
+    studentsAll.value.forEach((s: any) => {
       studentMap[s.id] = s
     })
 
     // Store full raw data for right panel
-    submissionsRaw.value = (subs || []).map(s => {
+    submissionsRaw.value = (subs || []).map((s: any) => {
       const st = studentMap[s.studentId] || {}
       return {
         ...s,
@@ -1282,14 +1299,12 @@ async function fetchSubmissions() {
 }
 
 onMounted(() => {
+  magicBar.primary = '作业审批'
+  updateMagicTrail()
   retryFetch(
     () => fetchSubmissions(),
     (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
   )
-})
-onMounted(() => {
-  magicBar.primary = '作业审批'
-  updateMagicTrail()
 })
 onActivated(() => {
   magicBar.primary = '作业审批'
@@ -1527,49 +1542,6 @@ watch(filteredSubmissions, () => {
   }
 }
 
-/* ── Stat Chips ── */
-.stat-chip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-
-  &__icon {
-    width: 14px;
-    height: 14px;
-    color: rgb(var(--md-sys-color-on-surface-variant));
-    flex-shrink: 0;
-  }
-
-  span {
-    @include font(12px, 16px);
-    color: rgb(var(--md-sys-color-on-surface));
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &--push {
-    margin-left: auto;
-  }
-
-  &:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 3px 10px;
-    border-radius: 4px;
-    background: rgb(var(--md-sys-color-inverse-surface));
-    color: rgb(var(--md-sys-color-inverse-on-surface));
-    @include font(11px, 16px, 500);
-    white-space: nowrap;
-    z-index: 10;
-    pointer-events: none;
-  }
-}
-
 /* ════ Right: Detail Card ════ */
 .detail-card {
   background: rgb(var(--md-sys-color-surface-container-lowest));
@@ -1593,59 +1565,6 @@ watch(filteredSubmissions, () => {
   }
 }
 
-.act-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    opacity 0.15s ease;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  span {
-    @include font(13px, 20px, 500);
-  }
-
-  &--review {
-    background: rgb(var(--md-sys-color-primary));
-    color: rgb(var(--md-sys-color-on-primary));
-    &:hover {
-      filter: brightness(0.9);
-    }
-  }
-
-  &--ai {
-    background: rgb(var(--md-sys-color-secondary-container));
-    color: rgb(var(--md-sys-color-on-secondary-container));
-    &:hover {
-      filter: brightness(0.95);
-    }
-  }
-
-  &--reject {
-    background: transparent;
-    color: rgb(var(--md-sys-color-error));
-    border: 1px solid rgb(var(--md-sys-color-error));
-    &:hover {
-      background: rgb(var(--md-sys-color-error) / 0.08);
-    }
-  }
-}
-
 /* ── AI button hint ── */
 .ai-btn-wrap {
   position: relative;
@@ -1653,7 +1572,7 @@ watch(filteredSubmissions, () => {
   align-items: center;
   gap: 8px;
 
-  .act-btn--ai {
+  .act-btn--secondary {
     position: relative;
     z-index: 1;
   }

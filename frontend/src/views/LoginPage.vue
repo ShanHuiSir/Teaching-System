@@ -7,7 +7,7 @@
       >
         <!-- Layer 1: Cookie管理 -->
         <div class="login-card__layer layer-cookie">
-          <button class="layer-cookie__back" @click.stop="activeLayer = 'welcome'">
+          <button class="layer-cookie__back" aria-label="返回" @click.stop="activeLayer = 'welcome'">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -30,7 +30,7 @@
               d="M12 2C12.7139 2 13.4187 2.07494 14.1059 2.22228C14.6865 2.34679 14.899 3.06471 14.4797 3.48521C14.0148 3.95137 13.75 4.57868 13.75 5.25C13.75 6.42043 14.5612 7.42718 15.6858 7.68625C16.0559 7.7715 16.3039 8.1199 16.2632 8.49747C16.2544 8.5787 16.25 8.66307 16.25 8.75C16.25 10.1307 17.3693 11.25 18.75 11.25C19.4766 11.25 20.1513 10.9393 20.6235 10.4053C21.0526 9.92011 21.8536 10.1704 21.9301 10.8137C21.9766 11.2048 22 11.6009 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM12 3.5C7.30558 3.5 3.5 7.30558 3.5 12C3.5 16.6944 7.30558 20.5 12 20.5C16.4367 20.5 20.0795 17.1008 20.4661 12.7646L20.485 12.5085L20.492 12.351L20.2985 12.4391C19.9679 12.5779 19.6173 12.6725 19.2549 12.7183L18.9811 12.7434L18.75 12.75C16.7439 12.75 15.0828 11.2732 14.7943 9.34752L14.7694 9.14675L14.755 8.96L14.6101 8.89964C13.3259 8.32272 12.4199 7.09599 12.2715 5.66565L12.2549 5.44962L12.25 5.25C12.25 4.80313 12.3238 4.36764 12.4636 3.95777L12.5553 3.71503L12.64 3.525L12.3637 3.50763L12 3.5ZM15 16C15.5523 16 16 16.4477 16 17C16 17.5523 15.5523 18 15 18C14.4477 18 14 17.5523 14 17C14 16.4477 14.4477 16 15 16ZM8 15C8.55228 15 9 15.4477 9 16C9 16.5523 8.55228 17 8 17C7.44772 17 7 16.5523 7 16C7 15.4477 7.44772 15 8 15ZM12 11C12.5523 11 13 11.4477 13 12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12C11 11.4477 11.4477 11 12 11ZM7 8C7.55228 8 8 8.44772 8 9C8 9.55228 7.55228 10 7 10C6.44772 10 6 9.55228 6 9C6 8.44772 6.44772 8 7 8Z"
             />
           </svg>
-          <h2 class="layer-cookie__title">Cookie 政策管理</h2>
+          <h2 class="layer-cookie__title">数据存储管理</h2>
           <div class="layer-cookie__list">
             <div v-for="cat in categories" :key="cat.key" class="cookie-cat">
               <div class="cookie-cat__head">
@@ -49,7 +49,7 @@
               </div>
             </div>
           </div>
-          <button class="layer-cookie__clear-btn" @click="onClearAll">清除所有Cookie</button>
+          <button class="layer-cookie__clear-btn" @click="onClearAll">清除所有数据</button>
         </div>
 
         <!-- Layer 2: Welcome -->
@@ -73,7 +73,7 @@
                   d="M12 2C12.7139 2 13.4187 2.07494 14.1059 2.22228C14.6865 2.34679 14.899 3.06471 14.4797 3.48521C14.0148 3.95137 13.75 4.57868 13.75 5.25C13.75 6.42043 14.5612 7.42718 15.6858 7.68625C16.0559 7.7715 16.3039 8.1199 16.2632 8.49747C16.2544 8.5787 16.25 8.66307 16.25 8.75C16.25 10.1307 17.3693 11.25 18.75 11.25C19.4766 11.25 20.1513 10.9393 20.6235 10.4053C21.0526 9.92011 21.8536 10.1704 21.9301 10.8137C21.9766 11.2048 22 11.6009 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM12 3.5C7.30558 3.5 3.5 7.30558 3.5 12C3.5 16.6944 7.30558 20.5 12 20.5C16.4367 20.5 20.0795 17.1008 20.4661 12.7646L20.485 12.5085L20.492 12.351L20.2985 12.4391C19.9679 12.5779 19.6173 12.6725 19.2549 12.7183L18.9811 12.7434L18.75 12.75C16.7439 12.75 15.0828 11.2732 14.7943 9.34752L14.7694 9.14675L14.755 8.96L14.6101 8.89964C13.3259 8.32272 12.4199 7.09599 12.2715 5.66565L12.2549 5.44962L12.25 5.25C12.25 4.80313 12.3238 4.36764 12.4636 3.95777L12.5553 3.71503L12.64 3.525L12.3637 3.50763L12 3.5ZM15 16C15.5523 16 16 16.4477 16 17C16 17.5523 15.5523 18 15 18C14.4477 18 14 17.5523 14 17C14 16.4477 14.4477 16 15 16ZM8 15C8.55228 15 9 15.4477 9 16C9 16.5523 8.55228 17 8 17C7.44772 17 7 16.5523 7 16C7 15.4477 7.44772 15 8 15ZM12 11C12.5523 11 13 11.4477 13 12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12C11 11.4477 11.4477 11 12 11ZM7 8C7.55228 8 8 8.44772 8 9C8 9.55228 7.55228 10 7 10C6.44772 10 6 9.55228 6 9C6 8.44772 6.44772 8 7 8Z"
                 />
               </svg>
-              <span>管理您的Cookie政策</span>
+              <span>管理您的数据存储政策</span>
             </button>
             <button class="key-btn" @click="onKeyLogin">
               <svg
@@ -96,7 +96,7 @@
 
         <!-- Layer 3: Key Login -->
         <div class="login-card__layer layer-key">
-          <button class="layer-key__back" @click.stop="activeLayer = 'welcome'">
+          <button class="layer-key__back" aria-label="返回" @click.stop="activeLayer = 'welcome'">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -129,8 +129,10 @@
               <input
                 v-model="account"
                 class="input-group__field"
+                :class="{ 'input-group__field--error': loginError }"
+                :aria-invalid="loginError || undefined"
                 type="text"
-                placeholder="请输入账户名"
+                aria-label="账户名" placeholder="请输入账户名"
                 autocomplete="username"
               />
             </div>
@@ -138,8 +140,10 @@
               <input
                 v-model="secretKey"
                 class="input-group__field"
+                :class="{ 'input-group__field--error': loginError }"
+                :aria-invalid="loginError || undefined"
                 type="password"
-                placeholder="请输入密钥"
+                aria-label="密钥" placeholder="请输入密钥"
                 autocomplete="current-password"
               />
             </div>
@@ -177,6 +181,7 @@ const account = ref('')
 const secretKey = ref('')
 const rememberMe = ref(true)
 const loading = ref(false)
+const loginError = ref(false)
 
 onMounted(() => {
   activeLayer.value = 'welcome'
@@ -185,7 +190,7 @@ onMounted(() => {
 const categories = Object.values(CATEGORIES)
 const prefs = ref(loadPrefs())
 
-function onToggle(catKey) {
+function onToggle(catKey: string) {
   const enabled = prefs.value[catKey] !== false
   prefs.value[catKey] = !enabled
   savePrefs(prefs.value)
@@ -197,7 +202,10 @@ function onClearAll() {
     const name = c.trim().split('=')[0]
     if (name) delCookie(name)
   })
-  notify({ type: 'success', snackbar: '已清除全部Cookie' })
+  Object.keys(localStorage).forEach(k => {
+    if (/^draft_/.test(k)) localStorage.removeItem(k)
+  })
+  notify({ type: 'success', snackbar: '已清除全部数据' })
 }
 
 const greeting = computed(() => {
@@ -218,7 +226,9 @@ function onKeyLogin() {
 }
 
 async function handleLogin() {
+  loginError.value = false
   if (!account.value.trim() || !secretKey.value.trim()) {
+    loginError.value = true
     notify({ type: 'error', snackbar: '请输入账户名和密钥' })
     return
   }
@@ -235,7 +245,14 @@ async function handleLogin() {
     notify({ type: 'success', snackbar: '登录成功' })
     router.replace('/dashboard')
   } catch (e: any) {
-    notify({ type: 'error', snackbar: e?.message || '账户名或密钥错误' })
+    loginError.value = true
+    const status = e?.response?.status
+    const msg = status === 401
+      ? '账户名或密钥错误'
+      : status
+        ? '服务器错误，请稍后重试'
+        : e.message || '网络连接失败，请检查网络'
+    notify({ type: 'error', snackbar: msg })
   } finally {
     loading.value = false
   }
@@ -668,6 +685,14 @@ async function handleLogin() {
 
     &:focus {
       border-color: rgb(var(--md-sys-color-primary));
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+
+    &--error {
+      border-color: rgb(var(--md-sys-color-error));
     }
   }
 }
