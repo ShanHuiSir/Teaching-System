@@ -1299,14 +1299,12 @@ async function fetchSubmissions() {
 }
 
 onMounted(() => {
+  magicBar.primary = '作业审批'
+  updateMagicTrail()
   retryFetch(
     () => fetchSubmissions(),
     (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
   )
-})
-onMounted(() => {
-  magicBar.primary = '作业审批'
-  updateMagicTrail()
 })
 onActivated(() => {
   magicBar.primary = '作业审批'
