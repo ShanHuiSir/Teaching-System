@@ -1,6 +1,6 @@
 <template>
   <Transition name="snack">
-    <div v-if="visible" class="snackbar" :class="`snackbar--${variant}`">
+    <div v-if="visible" class="snackbar" role="alert" aria-live="assertive" :class="`snackbar--${variant}`">
       <span class="snackbar__text">{{ message }}</span>
       <button v-if="actionLabel" class="snackbar__action" @click="doAction">{{ actionLabel }}</button>
     </div>
@@ -27,7 +27,7 @@ const { message, visible, variant, actionLabel, doAction } = useSnackbar()
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  z-index: 9999;
+  z-index: 10000;
 
   &__text {
     @include font(14px, 20px, 500);

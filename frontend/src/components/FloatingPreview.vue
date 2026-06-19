@@ -18,7 +18,7 @@
             </div>
             <div class="fp-bar__actions">
               <div class="fp-tooltip-wrap">
-                <button class="fp-bar__btn" @click.stop="openInNewTab">
+                <button class="fp-bar__btn" aria-label="在新标签页中打开" @click.stop="openInNewTab">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                     <polyline points="15 3 21 3 21 9" />
@@ -28,7 +28,7 @@
                 <span class="fp-tooltip">在新标签页中打开</span>
               </div>
               <div class="fp-tooltip-wrap">
-                <button class="fp-bar__btn fp-bar__btn--close" @click.stop="closePreview(true)">
+                <button class="fp-bar__btn fp-bar__btn--close" aria-label="关闭预览" @click.stop="closePreview(true)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -197,7 +197,6 @@ onBeforeUnmount(() => {
 .fp-overlay {
   position: fixed; inset: 0; z-index: 1999;
   background: transparent;
-  pointer-events: none;
 }
 .fp-window {
   position: fixed;
@@ -222,7 +221,7 @@ onBeforeUnmount(() => {
   &__info { display: flex; align-items: center; gap: 8px; min-width: 0; }
   &__icon { width: 18px; height: 18px; color: rgb(var(--md-sys-color-on-surface-variant)); flex-shrink: 0; }
   &__name {
-    font: 500 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+    @include font(14px, 20px, 500);
     color: rgb(var(--md-sys-color-on-surface));
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
@@ -260,7 +259,7 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   background: rgb(var(--md-sys-color-inverse-surface));
   color: rgb(var(--md-sys-color-inverse-on-surface));
-  font: 400 12px/18px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  @include font(12px, 18px);
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
@@ -289,12 +288,12 @@ onBeforeUnmount(() => {
   display: flex; align-items: center; gap: 12px;
   padding: 40px; justify-content: center;
   color: rgb(var(--md-sys-color-on-surface-variant));
-  font: 400 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  @include font(14px, 20px);
 }
 .fp-error {
   padding: 40px; text-align: center;
   color: rgb(var(--md-sys-color-error));
-  font: 400 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  @include font(14px, 20px);
 }
 // ── Spinner ──
 .fp-spinner {

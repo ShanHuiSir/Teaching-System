@@ -232,22 +232,6 @@ const titleWidths = ['60%', '45%', '72%', '38%', '55%']
 .skeleton__block,
 .skeleton__line,
 .skeleton__chip {
-  animation: skeleton-shimmer 1.8s ease-in-out infinite;
-  background: linear-gradient(
-    90deg,
-    rgb(var(--md-sys-color-on-surface) / 0.04) 25%,
-    rgb(var(--md-sys-color-on-surface) / 0.08) 40%,
-    rgb(var(--md-sys-color-on-surface) / 0.04) 55%
-  );
-  background-size: 300% 100%;
-}
-
-@keyframes skeleton-shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -50% 0;
-  }
+  @include shimmer;
 }
 </style>

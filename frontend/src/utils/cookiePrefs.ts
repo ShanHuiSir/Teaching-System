@@ -23,7 +23,7 @@ export const CATEGORIES: Record<string, CookieCategory> = {
   drafts: {
     key: 'drafts',
     label: '草稿保存',
-    desc: '自动保存教师批改草稿，避免意外丢失',
+    desc: '自动保存教师批改草稿至本地存储，避免意外丢失',
     required: false,
   },
 }
@@ -84,6 +84,9 @@ export function clearCategory(catKey: string): void {
       if (DRAFT_RE.test(name)) {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
       }
+    })
+    Object.keys(localStorage).forEach(k => {
+      if (DRAFT_RE.test(k)) localStorage.removeItem(k)
     })
   }
 }

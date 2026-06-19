@@ -20,6 +20,11 @@
       @touchstart.prevent="onDown"
       @touchend="onTouchEnd"
       @touchcancel="onTouchCancel"
+      @keydown.enter.prevent="onDown"
+      @keydown.space.prevent="onDown"
+      @keyup.enter="onKeyUp"
+      @keyup.space="onKeyUp"
+      @blur="onBlur"
     >
       <span class="sv-btn__content">
         <slot />
@@ -164,6 +169,20 @@ function onTouchEnd(e: TouchEvent) {
 
 function onTouchCancel() {
   finishPress(false)
+}
+
+/* ---------- keyboard ---------- */
+
+function onKeyUp(e: KeyboardEvent) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    onUp()
+  }
+}
+
+function onBlur() {
+  if (pressing.value || shaking.value) {
+    finishPress(false)
+  }
 }
 
 function finishPress(completed: boolean) {
@@ -573,7 +592,7 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 9999;
   border: 10px solid transparent;
-  border-image: repeating-linear-gradient(-45deg, #fdd835 0px, #fdd835 12px, #212121 12px, #212121 24px) 10;
+  border-image: repeating-linear-gradient(-45deg, rgb(var(--app-color-warning-bg)) 0px, rgb(var(--app-color-warning-bg)) 12px, rgb(var(--app-color-warning-text)) 12px, rgb(var(--app-color-warning-text)) 24px) 10;
 }
 
 .sv-warning__hint {
@@ -583,11 +602,11 @@ onUnmounted(() => {
   transform: translateX(-50%);
   margin: 0;
   padding: 6px 18px;
-  color: #212121;
+  color: rgb(var(--app-color-warning-text));
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.6px;
-  background: #fdd835;
+  background: rgb(var(--app-color-warning-bg));
   border-radius: 4px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
   animation: hint-in 0.4s 0.15s ease both;
