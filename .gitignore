@@ -55,3 +55,6 @@ uploads/
 # === nodejs ===
 /frontend/node_modules
 /frontend/dist
+
+# === logs ===
+/logs
