@@ -83,7 +83,7 @@
       <!-- Content Area -->
       <main class="layout__content">
         <router-view v-slot="{ Component }">
-          <KeepAlive>
+          <KeepAlive :max="4">
             <component :is="Component" />
           </KeepAlive>
         </router-view>
