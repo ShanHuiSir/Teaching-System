@@ -7,3 +7,19 @@ $font-family:
 @mixin font($size, $height, $weight: 400) {
   font: $weight #{$size}/#{$height} $font-family;
 }
+
+@mixin shimmer {
+  animation: shimmer 1.8s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--md-sys-color-on-surface) / 0.04) 25%,
+    rgb(var(--md-sys-color-on-surface) / 0.08) 40%,
+    rgb(var(--md-sys-color-on-surface) / 0.04) 55%
+  );
+  background-size: 300% 100%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -50% 0; }
+}

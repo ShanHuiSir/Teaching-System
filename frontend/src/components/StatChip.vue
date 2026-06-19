@@ -1,17 +1,19 @@
 <template>
   <span class="stat-chip" :class="{ 'stat-chip--push': push }" :data-tooltip="tooltip || undefined">
-    <svg
-      v-if="icon"
-      class="stat-chip__icon"
-      :viewBox="iconViewBox"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path v-for="(p, i) in iconPaths" :key="i" v-bind="p" />
-    </svg>
+    <slot name="icon">
+      <svg
+        v-if="icon"
+        class="stat-chip__icon"
+        :viewBox="iconViewBox"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path v-for="(p, i) in iconPaths" :key="i" v-bind="p" />
+      </svg>
+    </slot>
     <span><slot /></span>
   </span>
 </template>
@@ -52,7 +54,8 @@ const iconPaths = computed(() => {
   align-items: center;
   gap: 4px;
 
-  &__icon {
+  &__icon,
+  :slotted(svg) {
     width: 14px;
     height: 14px;
     color: rgb(var(--md-sys-color-on-surface-variant));
