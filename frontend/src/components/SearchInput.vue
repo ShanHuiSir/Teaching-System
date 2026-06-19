@@ -85,6 +85,10 @@ defineEmits<{
       border-color: rgb(var(--md-sys-color-primary));
       background: rgb(var(--md-sys-color-surface-container-lowest));
     }
+
+    &:focus-visible {
+      outline: none;
+    }
   }
 
   &__clear {

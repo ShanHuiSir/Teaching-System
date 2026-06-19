@@ -1,8 +1,8 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="open" class="modal-overlay" @click.self="$emit('cancel')">
-        <div class="modal-card">
+      <div v-if="open" class="modal-overlay" @click.self="$emit('cancel')" @keydown.escape="$emit('cancel')">
+        <div ref="dialogRef" class="modal-card" role="alertdialog" aria-modal="true" @keydown="onKeydown">
           <svg
             class="modal-card__icon"
             viewBox="0 0 24 24"
@@ -18,8 +18,8 @@
           </svg>
           <p class="modal-card__text">{{ message }}</p>
           <div class="modal-card__btns">
-            <button class="modal-card__btn modal-card__btn--cancel" @click="$emit('cancel')">{{ cancelLabel }}</button>
-            <button class="modal-card__btn modal-card__btn--confirm" @click="$emit('confirm')">
+            <button ref="cancelBtnRef" class="modal-card__btn modal-card__btn--cancel" @click="$emit('cancel')">{{ cancelLabel }}</button>
+            <button ref="confirmBtnRef" class="modal-card__btn modal-card__btn--confirm" @click="$emit('confirm')">
               {{ confirmLabel }}
             </button>
           </div>
@@ -30,7 +30,9 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(
+import { ref, watch, nextTick } from 'vue'
+
+const props = withDefaults(
   defineProps<{
     open: boolean
     message: string
@@ -47,6 +49,40 @@ defineEmits<{
   confirm: []
   cancel: []
 }>()
+
+const dialogRef = ref<HTMLElement | null>(null)
+const cancelBtnRef = ref<HTMLElement | null>(null)
+const confirmBtnRef = ref<HTMLElement | null>(null)
+
+watch(
+  () => props.open,
+  async isOpen => {
+    if (isOpen) {
+      await nextTick()
+      cancelBtnRef.value?.focus()
+    }
+  },
+)
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Tab') {
+    const dialog = dialogRef.value
+    if (!dialog) return
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )
+    if (focusable.length < 2) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+}
 </script>
 
 <style lang="scss" scoped>
