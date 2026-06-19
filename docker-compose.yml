@@ -3,6 +3,8 @@ services:
     build:
       context: ./ai-service
       dockerfile: Dockerfile
+      args:
+        REGISTRY: ${REGISTRY:-docker.1ms.run}
     image: teaching-system-ai-service:demo
     container_name: teaching-system-ai-service
     restart: unless-stopped
@@ -33,6 +35,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        REGISTRY: ${REGISTRY:-docker.1ms.run}
     image: teaching-system-backend:demo
     container_name: teaching-system-backend
     restart: unless-stopped
@@ -65,6 +69,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        REGISTRY: ${REGISTRY:-docker.1ms.run}
     image: teaching-system-frontend:demo
     container_name: teaching-system-frontend
     restart: unless-stopped
@@ -73,6 +79,12 @@ services:
         condition: service_healthy
     ports:
       - "5173:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/health >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   teaching_uploads:
