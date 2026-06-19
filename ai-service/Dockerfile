@@ -1,4 +1,6 @@
-FROM docker.1ms.run/library/python:3.11-slim-bookworm
+ARG REGISTRY=docker.1ms.run
+
+FROM ${REGISTRY}/library/python:3.11-slim-bookworm
 
 WORKDIR /app
 
