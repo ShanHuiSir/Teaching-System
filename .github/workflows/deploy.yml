@@ -93,6 +93,13 @@ jobs:
             DEEPSEEK_THINKING=false
             ENVEOF
             chmod 600 .env
+            echo "=== Stopping old processes ==="
+            for port in 8000 8080; do
+              pids=$(lsof -ti :$port 2>/dev/null || true)
+              [ -n "$pids" ] && echo "Killing port $port: $pids" && kill -9 $pids 2>/dev/null || true
+            done
+            sleep 2
+
             echo "=== Building ==="
             docker compose build
             echo "=== Starting ==="
