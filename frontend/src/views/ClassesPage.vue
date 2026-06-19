@@ -301,7 +301,7 @@ const filteredClasses = computed(() => {
         (c.name || '').toLowerCase().includes(q) ||
         (c.grade || '').toLowerCase().includes(q) ||
         (c.description || '').toLowerCase().includes(q) ||
-        c.roster.some(s => (s.name || '').toLowerCase().includes(q) || (s.studentNo || '').toLowerCase().includes(q)),
+        c.roster.some((s: any) => (s.name || '').toLowerCase().includes(q) || (s.studentNo || '').toLowerCase().includes(q)),
     )
   }
   arr = [...arr]
@@ -333,7 +333,7 @@ function resetForm() {
   form.description = ''
 }
 
-function onSelectClass(c) {
+function onSelectClass(c: any) {
   editing.value = false
   activeId.value = c.id
 }
@@ -383,7 +383,7 @@ function startCreate() {
   nextTick(autoResize)
 }
 
-function startEdit(c) {
+function startEdit(c: any) {
   isCreate.value = false
   resetForm()
   form.id = c.id
@@ -448,7 +448,7 @@ async function onSave() {
 
 const deleteModal = reactive({ open: false, id: null, name: '' })
 
-function onDeleteClick(c) {
+function onDeleteClick(c: any) {
   deleteModal.id = c.id
   deleteModal.name = c.name
   deleteModal.open = true

@@ -185,7 +185,7 @@ onMounted(() => {
 const categories = Object.values(CATEGORIES)
 const prefs = ref(loadPrefs())
 
-function onToggle(catKey) {
+function onToggle(catKey: string) {
   const enabled = prefs.value[catKey] !== false
   prefs.value[catKey] = !enabled
   savePrefs(prefs.value)

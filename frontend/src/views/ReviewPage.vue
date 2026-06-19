@@ -601,12 +601,12 @@ import { useFileActions } from '../composables/useFileActions'
 const route = useRoute()
 const { notify } = useNotify()
 
-function iconPaths(type) {
+function iconPaths(type: any) {
   const raw = FILE_ICONS[type]?.paths || FILE_ICONS.text.paths
   return raw.map(p => (typeof p === 'string' ? { d: p } : { ...p }))
 }
 
-function iconViewBox(type) {
+function iconViewBox(type: any) {
   return FILE_ICONS[type]?.viewBox || '0 0 24 24'
 }
 
@@ -650,8 +650,8 @@ const filteredSubmissions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return submissionsRaw.value
 
-  const studentMap = {}
-  studentsAll.value.forEach(s => {
+  const studentMap: Record<string, any> = {}
+  studentsAll.value.forEach((s: any) => {
     studentMap[s.id] = s
   })
 
@@ -710,10 +710,10 @@ const draft = computed(() => {
   }
 })
 
-function formatTime(iso) {
+function formatTime(iso: any) {
   if (!iso) return ''
   const d = new Date(iso)
-  const pad = n => String(n).padStart(2, '0')
+  const pad = (n: any) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
@@ -747,9 +747,9 @@ const workTypes = computed(() => {
       const classIds = normalizeAssignmentClassIds(a)
       const classNames = normalizeAssignmentClassNames(a)
       const total = classIds.length
-        ? classIds.reduce((sum, id) => sum + (classStudentCountsById[String(id)] || 0), 0)
+        ? classIds.reduce((sum: any, id: any) => sum + (classStudentCountsById[String(id)] || 0), 0)
         : classNames.length
-          ? classNames.reduce((sum, name) => sum + (classStudentCounts[name] || 0), 0)
+          ? classNames.reduce((sum: any, name: any) => sum + (classStudentCounts[name] || 0), 0)
           : studentsAll.value.length
       return {
         id: a.id,
@@ -767,7 +767,7 @@ const workTypes = computed(() => {
     .sort((a, b) => b.submittedCount - a.submittedCount)
 })
 
-function normalizeAssignmentClassNames(assignment) {
+function normalizeAssignmentClassNames(assignment: any) {
   if (!assignment) return []
   if (Array.isArray(assignment.classNames) && assignment.classNames.length) {
     return assignment.classNames.filter(Boolean)
@@ -775,15 +775,15 @@ function normalizeAssignmentClassNames(assignment) {
   return assignment.className ? assignment.className.split('、').filter(Boolean) : []
 }
 
-function normalizeAssignmentClassIds(assignment) {
+function normalizeAssignmentClassIds(assignment: any) {
   if (!assignment) return []
   if (Array.isArray(assignment.classIds) && assignment.classIds.length) {
-    return assignment.classIds.filter(id => id != null)
+    return assignment.classIds.filter((id: any) => id != null)
   }
   return assignment.classId ? [assignment.classId] : []
 }
 
-function formatAssignmentClassNames(assignment) {
+function formatAssignmentClassNames(assignment: any) {
   const names = normalizeAssignmentClassNames(assignment)
   return names.length ? names.join('、') : '全部班级'
 }
@@ -812,7 +812,7 @@ function onSelectWorkType(assignmentId: number | null) {
   rebuildSemesters()
 }
 
-function selectItem(item) {
+function selectItem(item: any) {
   activeId.value = item.id
   updateMagicTrail()
 }
@@ -876,7 +876,7 @@ function clampScore() {
   if (teacherScore.value > 100) teacherScore.value = 100
 }
 
-function adjustScore(delta) {
+function adjustScore(delta: any) {
   teacherScore.value = Math.round((teacherScore.value + delta) * 10) / 10
   clampScore()
 }
@@ -921,8 +921,8 @@ async function submitReview() {
     dataVersion.value++
     // Background refresh
     const evals = await http.get('/evaluations')
-    const em = {}
-    ;(evals || []).forEach(e => {
+    const em: Record<string, any> = {}
+    ;(evals || []).forEach((e: any) => {
       em[e.submissionId] = e
     })
     evalMap.value = em
@@ -1075,7 +1075,7 @@ const hasActiveFilter = computed(() => {
 function rebuildSemesters() {
   const em = evalMap.value
 
-  function makeItem(s) {
+  function makeItem(s: any) {
     const ev = em[s.id]
     const hasAi = ev && ev.status >= 1
     const confirmed = ev && ev.status >= 2
@@ -1101,7 +1101,7 @@ function rebuildSemesters() {
   if (sortCompletion.value) {
     all.sort((a, b) => {
       const rank = { ai: 0, none: 1, confirmed: 2 }
-      return (rank[a.badgeType] ?? 1) - (rank[b.badgeType] ?? 1)
+      return ((rank as any)[a.badgeType] ?? 1) - ((rank as any)[b.badgeType] ?? 1)
     })
   }
 
@@ -1124,7 +1124,7 @@ function rebuildSemesters() {
   }
 
   // Find unsubmitted students — only from the selected assignment's target classes
-  const submittedIds = new Set(submissionsRaw.value.map(s => s.studentId))
+  const submittedIds = new Set(submissionsRaw.value.map((s: any) => s.studentId))
   const targetClassIds: Set<number> | null = selectedAssignmentId.value
     ? new Set(
         (assignmentsAll.value.find((a: any) => a.id === selectedAssignmentId.value)?.classIds || [])
@@ -1145,7 +1145,7 @@ function rebuildSemesters() {
       }
       return true
     })
-    .map(s => ({
+    .map((s: any) => ({
       id: `u-${s.id}`,
       studentName: s.name || '未知',
       fileType: 'text',
@@ -1162,9 +1162,9 @@ function rebuildSemesters() {
     const pending = filtered.filter(it => it.badgeType !== 'confirmed')
     const reviewed = filtered.filter(it => it.badgeType === 'confirmed')
 
-    function groupByClass(items, prefix) {
-      const map = {}
-      items.forEach(it => {
+    function groupByClass(items: any, prefix: any) {
+      const map: Record<string, any> = {}
+      items.forEach((it: any) => {
         const cls = it.className || '未分班'
         if (!map[cls]) map[cls] = []
         map[cls].push(it)
@@ -1195,7 +1195,7 @@ function buildRightButtons() {
   setCookie('sort_completion', sortCompletion.value ? '1' : '0', 30)
   setCookie('filter_status', filterStatus.value, 30)
 
-  function setFilter(val) {
+  function setFilter(val: any) {
     filterStatus.value = filterStatus.value === val ? 'all' : val
     rebuildSemesters()
     buildRightButtons()
@@ -1269,20 +1269,20 @@ async function fetchSubmissions() {
       http.get('/students'),
       http.get('/assignments'),
     ])
-    const em = {}
-    ;(evals || []).forEach(e => {
+    const em: Record<string, any> = {}
+    ;(evals || []).forEach((e: any) => {
       em[e.submissionId] = e
     })
     evalMap.value = em
     studentsAll.value = students || []
     assignmentsAll.value = assignments || []
-    const studentMap = {}
-    studentsAll.value.forEach(s => {
+    const studentMap: Record<string, any> = {}
+    studentsAll.value.forEach((s: any) => {
       studentMap[s.id] = s
     })
 
     // Store full raw data for right panel
-    submissionsRaw.value = (subs || []).map(s => {
+    submissionsRaw.value = (subs || []).map((s: any) => {
       const st = studentMap[s.studentId] || {}
       return {
         ...s,

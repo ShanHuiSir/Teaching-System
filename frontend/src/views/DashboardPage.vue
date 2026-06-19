@@ -373,7 +373,7 @@ function saveVis() {
   setCookie('dash_trend', showTrends.value ? '1' : '0', 30)
 }
 
-function toggleVis(ref) {
+function toggleVis(ref: any) {
   ref.value = !ref.value
   saveVis()
   buildRightButtons()
@@ -436,8 +436,8 @@ const effMax = computed(() => Math.max(...efficiencyData.value.map(t => t.days),
 
 const COLORS = ['#1A56DB', '#0D9488', '#F59E0B', '#DC2626', '#7C3AED']
 
-function bucketColor(label) {
-  const map = { '0-59': COLORS[3], '60-69': COLORS[2], '70-79': COLORS[4], '80-89': COLORS[1], '90-100': COLORS[0] }
+function bucketColor(label: any) {
+  const map: Record<string, string> = { '0-59': COLORS[3], '60-69': COLORS[2], '70-79': COLORS[4], '80-89': COLORS[1], '90-100': COLORS[0] }
   return map[label] || '#999'
 }
 
@@ -446,7 +446,7 @@ const pieGradient = computed(() => {
   if (total === 0) return 'rgb(var(--md-sys-color-surface-container-high))'
   let acc = 0
   const stops = scoreBuckets.value
-    .filter(b => b.count > 0)
+    .filter((b: any) => b.count > 0)
     .map(b => {
       const start = (acc / total) * 360
       acc += b.count
@@ -477,8 +477,8 @@ async function fetchAll() {
     assignmentOptions.value = assignments || []
     classOptions.value = classes || []
 
-    const studentMap = {}
-    ;(students || []).forEach(s => {
+    const studentMap: Record<string, any> = {}
+    ;(students || []).forEach((s: any) => {
       studentMap[s.id] = s
     })
 
@@ -500,8 +500,8 @@ async function fetchAll() {
     }
     magicBar.count = stats.value.aiReviewed || 0
 
-    const evalMap = {}
-    ;(evals || []).forEach(e => {
+    const evalMap: Record<string, any> = {}
+    ;(evals || []).forEach((e: any) => {
       evalMap[e.submissionId] = e
     })
 
@@ -512,7 +512,7 @@ async function fetchAll() {
       if (!classMap[cls]) classMap[cls] = { count: 0, submitted: 0, reviewed: 0, scores: [] }
       classMap[cls].count++
     })
-    ;(subs || []).forEach(s => {
+    ;(subs || []).forEach((s: any) => {
       const st = studentMap[s.studentId]
       const cls = st?.className || '未分班'
       if (!classMap[cls]) classMap[cls] = { count: 0, submitted: 0, reviewed: 0, scores: [] }
@@ -527,7 +527,7 @@ async function fetchAll() {
       name,
       submitRate: d.count ? Math.round((d.submitted / d.count) * 100) : 0,
       reviewRate: d.submitted ? Math.round((d.reviewed / d.submitted) * 100) : 0,
-      avgScore: d.scores.length ? (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(1) : '—',
+      avgScore: d.scores.length ? (d.scores.reduce((a: any, b: any) => a + b, 0) / d.scores.length).toFixed(1) : '—',
     }))
 
     // Work type stats
@@ -543,15 +543,15 @@ async function fetchAll() {
       .map(([type, d]) => ({
         type,
         count: d.count,
-        avgScore: d.scores.length ? (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(1) : '—',
+        avgScore: d.scores.length ? (d.scores.reduce((a: any, b: any) => a + b, 0) / d.scores.length).toFixed(1) : '—',
       }))
       .sort((a, b) => b.count - a.count)
 
     // Score distribution (teacherScore)
     const buckets = [0, 0, 0, 0, 0]
     const filteredSubmissionIds = new Set(subs.map((s: any) => s.id))
-    const filteredEvals = (evals || []).filter(e => filteredSubmissionIds.has(e.submissionId))
-    ;(filteredEvals || []).forEach(e => {
+    const filteredEvals = (evals || []).filter((e: any) => filteredSubmissionIds.has(e.submissionId))
+    ;(filteredEvals || []).forEach((e: any) => {
       const s = e.teacherScore
       if (s == null) return
       if (s < 60) buckets[0]++
@@ -569,8 +569,8 @@ async function fetchAll() {
     ]
 
     // AI vs Teacher deviations
-    const devs = []
-    ;(subs || []).forEach(s => {
+    const devs: any[] = []
+    ;(subs || []).forEach((s: any) => {
       const ev = evalMap[s.id]
       if (ev?.aiScore != null && ev?.teacherScore != null) {
         devs.push({
@@ -584,31 +584,31 @@ async function fetchAll() {
     deviations.value = devs.slice(0, 10)
 
     // Teacher review trend — group by date
-    const trendMap = {}
-    ;(filteredEvals || []).forEach(e => {
+    const trendMap: Record<string, any> = {}
+    ;(filteredEvals || []).forEach((e: any) => {
       if (e.status >= 2 && e.createdAt) {
         const d = e.createdAt.slice(0, 10)
         trendMap[d] = (trendMap[d] || 0) + 1
       }
     })
     const trendKeys = Object.keys(trendMap).sort()
-    trendData.value = trendKeys.slice(-14).map(d => ({ date: d.slice(5), count: trendMap[d] }))
+    trendData.value = trendKeys.slice(-14).map((d: any) => ({ date: d.slice(5), count: trendMap[d] }))
 
     // Submission volume trend
-    const subMap = {}
-    ;(subs || []).forEach(s => {
+    const subMap: Record<string, any> = {}
+    ;(subs || []).forEach((s: any) => {
       if (s.submittedAt) {
         const d = s.submittedAt.slice(0, 10)
         subMap[d] = (subMap[d] || 0) + 1
       }
     })
     const subKeys = Object.keys(subMap).sort()
-    subTrendData.value = subKeys.slice(-14).map(d => ({ date: d.slice(5), count: subMap[d] }))
+    subTrendData.value = subKeys.slice(-14).map((d: any) => ({ date: d.slice(5), count: subMap[d] }))
 
     // Teacher review efficiency — avg days from submission to teacher confirmation
-    const effMap = {}
-    const effCountMap = {}
-    ;(subs || []).forEach(s => {
+    const effMap: Record<string, any> = {}
+    const effCountMap: Record<string, any> = {}
+    ;(subs || []).forEach((s: any) => {
       const ev = evalMap[s.id]
       if (ev?.status >= 2 && s.submittedAt) {
         const subDate = new Date(s.submittedAt)
@@ -620,7 +620,7 @@ async function fetchAll() {
       }
     })
     const effKeys = Object.keys(effMap).sort()
-    efficiencyData.value = effKeys.slice(-14).map(d => ({
+    efficiencyData.value = effKeys.slice(-14).map((d: any) => ({
       date: d.slice(5),
       days: Math.round(effMap[d] / effCountMap[d]),
     }))
@@ -633,8 +633,8 @@ async function fetchAll() {
       { label: '80-89', ai: 0, teacher: 0 },
       { label: '90-100', ai: 0, teacher: 0 },
     ]
-    ;(filteredEvals || []).forEach(e => {
-      const bucket = s => (s < 60 ? 0 : s < 70 ? 1 : s < 80 ? 2 : s < 90 ? 3 : 4)
+    ;(filteredEvals || []).forEach((e: any) => {
+      const bucket = (s: any) => (s < 60 ? 0 : s < 70 ? 1 : s < 80 ? 2 : s < 90 ? 3 : 4)
       if (e.aiScore != null) cmp[bucket(e.aiScore)].ai++
       if (e.teacherScore != null) cmp[bucket(e.teacherScore)].teacher++
     })
