@@ -42,11 +42,11 @@ jobs:
 
       - name: Stage Deploy Directory
         run: |
-          mkdir -p deploy
+          mkdir -p deploy/target
           cp docker-compose.yml deploy/
           cp Dockerfile deploy/
           cp .dockerignore deploy/
-          cp target/app.jar deploy/
+          cp target/app.jar deploy/target/
           cp -r frontend deploy/
           cp -r ai-service deploy/
           # Docker builds the frontend itself (multi-stage), so remove

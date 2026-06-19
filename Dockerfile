@@ -16,7 +16,7 @@ RUN mkdir -p /data/uploads
 # Copy the fat jar (spring-boot-maven-plugin repackages into a single
 # executable jar).  The .dockerignore excludes the *.original backup so
 # the glob only matches the intended artifact.
-COPY target/Teaching-System-*.jar /app/app.jar
+COPY target/app.jar /app/app.jar
 
 EXPOSE 8080
 VOLUME ["/data/uploads"]
