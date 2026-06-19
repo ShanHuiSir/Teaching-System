@@ -5,7 +5,10 @@ $font-family:
   sans-serif;
 
 @mixin font($size, $height, $weight: 400) {
-  font: $weight #{$size}/#{$height} $font-family;
+  font-size: $size;
+  line-height: $height;
+  font-weight: $weight;
+  font-family: $font-family;
 }
 
 @mixin shimmer {
