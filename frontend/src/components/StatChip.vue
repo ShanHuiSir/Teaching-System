@@ -1,5 +1,5 @@
 <template>
-  <span class="stat-chip" :class="{ 'stat-chip--push': push }" :data-tooltip="tooltip || undefined">
+  <span class="stat-chip" :title="tooltip || undefined">
     <slot name="icon">
       <svg
         v-if="icon"
@@ -26,12 +26,10 @@ const props = withDefaults(
   defineProps<{
     icon?: string
     tooltip?: string
-    push?: boolean
   }>(),
   {
     icon: '',
     tooltip: '',
-    push: false,
   },
 )
 
@@ -70,24 +68,5 @@ const iconPaths = computed(() => {
     white-space: nowrap;
   }
 
-  &--push {
-    margin-left: auto;
-  }
-
-  &:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 3px 10px;
-    border-radius: 4px;
-    background: rgb(var(--md-sys-color-inverse-surface));
-    color: rgb(var(--md-sys-color-inverse-on-surface));
-    @include font(11px, 16px, 500);
-    white-space: nowrap;
-    z-index: 10;
-    pointer-events: none;
-  }
 }
 </style>

@@ -8,13 +8,8 @@ describe('StatChip', () => {
     expect(wrapper.text()).toContain('测试文本')
   })
 
-  it('applies push class when push prop is true', () => {
-    const wrapper = mount(StatChip, { props: { push: true } })
-    expect(wrapper.classes()).toContain('stat-chip--push')
-  })
-
-  it('shows tooltip via data attribute', () => {
+  it('shows tooltip via title attribute', () => {
     const wrapper = mount(StatChip, { props: { tooltip: '提示信息' } })
-    expect(wrapper.attributes('data-tooltip')).toBe('提示信息')
+    expect(wrapper.attributes('title')).toBe('提示信息')
   })
 })
