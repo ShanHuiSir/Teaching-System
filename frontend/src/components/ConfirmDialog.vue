@@ -3,7 +3,7 @@
     <Transition name="modal">
       <div v-if="open" class="modal-overlay" @click.self="$emit('cancel')" @keydown.escape="$emit('cancel')">
         <div ref="dialogRef" class="modal-card" role="alertdialog" aria-modal="true" @keydown="onKeydown">
-          <svg
+          <svg aria-hidden="true"
             class="modal-card__icon"
             viewBox="0 0 24 24"
             fill="none"

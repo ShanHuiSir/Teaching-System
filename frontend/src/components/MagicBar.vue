@@ -1,5 +1,5 @@
 <template>
-  <div class="magic-bar">
+  <div class="magic-bar" role="status" aria-live="polite">
     <Transition name="magic" mode="out-in">
       <div :key="magicKey" class="magic-bar__text">
         <template v-if="magicBar.status">

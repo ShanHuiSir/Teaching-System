@@ -7,7 +7,7 @@
       >
         <!-- Layer 1: Cookie管理 -->
         <div class="login-card__layer layer-cookie">
-          <button class="layer-cookie__back" @click.stop="activeLayer = 'welcome'">
+          <button class="layer-cookie__back" aria-label="返回" @click.stop="activeLayer = 'welcome'">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -96,7 +96,7 @@
 
         <!-- Layer 3: Key Login -->
         <div class="login-card__layer layer-key">
-          <button class="layer-key__back" @click.stop="activeLayer = 'welcome'">
+          <button class="layer-key__back" aria-label="返回" @click.stop="activeLayer = 'welcome'">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -132,7 +132,7 @@
                 :class="{ 'input-group__field--error': loginError }"
                 :aria-invalid="loginError || undefined"
                 type="text"
-                placeholder="请输入账户名"
+                aria-label="账户名" placeholder="请输入账户名"
                 autocomplete="username"
               />
             </div>
@@ -143,7 +143,7 @@
                 :class="{ 'input-group__field--error': loginError }"
                 :aria-invalid="loginError || undefined"
                 type="password"
-                placeholder="请输入密钥"
+                aria-label="密钥" placeholder="请输入密钥"
                 autocomplete="current-password"
               />
             </div>
