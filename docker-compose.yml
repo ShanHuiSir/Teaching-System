@@ -4,7 +4,7 @@ services:
       context: ./ai-service
       dockerfile: Dockerfile
       args:
-        REGISTRY: ${REGISTRY:-docker.1ms.run}
+        REGISTRY: ${REGISTRY:-docker.io}
     image: teaching-system-ai-service:demo
     container_name: teaching-system-ai-service
     restart: unless-stopped
@@ -36,7 +36,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        REGISTRY: ${REGISTRY:-docker.1ms.run}
+        REGISTRY: ${REGISTRY:-docker.io}
     image: teaching-system-backend:demo
     container_name: teaching-system-backend
     restart: unless-stopped
@@ -70,7 +70,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        REGISTRY: ${REGISTRY:-docker.1ms.run}
+        REGISTRY: ${REGISTRY:-docker.io}
     image: teaching-system-frontend:demo
     container_name: teaching-system-frontend
     restart: unless-stopped
