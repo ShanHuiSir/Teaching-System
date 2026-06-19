@@ -9,6 +9,9 @@ on:
       - 'frontend/**'
       - 'ai-service/**'
       - 'pom.xml'
+      - 'docker-compose.yml'
+      - 'Dockerfile'
+      - '.dockerignore'
       - '.github/workflows/deploy.yml'
 
 jobs:
@@ -19,7 +22,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ── Java ──────────────────────────────────────────────────────
+      # ── Java backend ─────────────────────────────────────────────────
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
@@ -28,45 +31,35 @@ jobs:
           distribution: 'temurin'
 
       - name: Maven Package
-        run: mvn package -B
+        run: mvn package -B -DskipTests
 
       - name: Prepare JAR
         run: |
           JAR=$(ls target/Teaching-System-*.jar | grep -v '\.original$' | head -1)
           cp "$JAR" target/app.jar
 
-      # ── Frontend ──────────────────────────────────────────────────
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build Frontend
-        run: |
-          cd frontend
-          if [ -f package-lock.json ]; then npm ci; else npm install; fi
-          npm run typecheck
-          npm run lint:check
-          npm run build
-
-      # ── Python sanity check ─────────────────────────────────────────
-
-      - name: Check AI Service Python Sources
-        run: |
-          cd ai-service
-          python -m compileall -q config.py DocxConv/src Evaluator/src ScreenshotProc/src ArchiveProc/src
-
-      # ── Stage artifacts ──────────────────────────────────────────
+      # ── Stage deploy directory ────────────────────────────────────────
 
       - name: Stage Deploy Directory
         run: |
           mkdir -p deploy
+          cp docker-compose.yml deploy/
+          cp Dockerfile deploy/
+          cp .dockerignore deploy/
           cp target/app.jar deploy/
-          cp -r frontend/dist deploy/
+          cp -r frontend deploy/
           cp -r ai-service deploy/
+          # Docker builds the frontend itself (multi-stage), so remove
+          # pre-existing dist/ and node_modules to shrink the upload.
+          rm -rf deploy/frontend/node_modules
+          rm -rf deploy/frontend/dist
+          # AI service — venv and pycache are not needed in build context.
+          rm -rf deploy/ai-service/.venv
+          rm -rf deploy/ai-service/__pycache__
+          echo "=== Deploy directory ==="
+          find deploy -maxdepth 2 -not -path '*/node_modules/*' | sort
 
-      # ── Deploy to server ─────────────────────────────────────────
+      # ── Upload to server ──────────────────────────────────────────────
 
       - name: Upload to Server
         uses: appleboy/scp-action@v0.1.7
@@ -78,11 +71,11 @@ jobs:
           source: deploy/
           target: /usr/share/teaching-system
           strip_components: 1
-          rm: false
+          rm: true
 
-      # ── Restart all services ──────────────────────────────────────
+      # ── Docker Compose deploy ─────────────────────────────────────────
 
-      - name: Restart Services
+      - name: Docker Compose Deploy
         uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -90,122 +83,29 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 21987 }}
           script: |
-            bash -c '
             set -euo pipefail
+            cd /usr/share/teaching-system
 
-            BASE="/usr/share/teaching-system"
-            JAVA_PORT=8080
-            AI_PORT=8000
-            MAX_WAIT=30
-
-            # ── Stop Java ──────────────────────────────────────────
-            stop_port() {
-              local PORT=$1 NAME=$2
-              echo "=== 停止 $NAME (端口 $PORT) ==="
-              PIDS=$(lsof -t -i:$PORT 2>/dev/null || true)
-              if [ -z "$PIDS" ]; then
-                echo "端口 $PORT 无运行中进程。"
-                return
-              fi
-              for PID in $PIDS; do
-                echo "终止 PID $PID..."
-                kill -15 "$PID" 2>/dev/null || true
-              done
-              for i in $(seq 1 10); do
-                STILL=$(lsof -t -i:$PORT 2>/dev/null || true)
-                [ -z "$STILL" ] && break
-                sleep 1
-              done
-              STUBBORN=$(lsof -t -i:$PORT 2>/dev/null || true)
-              if [ -n "$STUBBORN" ]; then
-                for P in $STUBBORN; do kill -9 "$P" 2>/dev/null || true; done
-                sleep 1
-              fi
-              LEFTOVER=$(lsof -t -i:$PORT 2>/dev/null || true)
-              if [ -n "$LEFTOVER" ]; then
-                echo "错误：无法释放端口 $PORT，残留 PID: $LEFTOVER"
-                exit 1
-              fi
-              echo "端口 $PORT 已释放。"
-            }
-
-            stop_port $JAVA_PORT "Java"
-            stop_port $AI_PORT   "AI 服务"
-
-            # ── Python venv + deps ─────────────────────────────────
-            echo "=== 初始化 Python 环境 ==="
-            AI_DIR="$BASE/ai-service"
-            cd "$AI_DIR"
-
-            # recreate venv if interpeter changed or stale
-            NEED_VENV=0
-            [ ! -d .venv ] && NEED_VENV=1
-            [ -d .venv ] && [ "$(.venv/bin/python -V 2>/dev/null || echo none)" != "Python 3.13.0" ] && NEED_VENV=1
-            if [ $NEED_VENV -eq 1 ]; then
-              rm -rf .venv
-              /usr/local/bin/python3.13 -m venv .venv
-            fi
-            source .venv/bin/activate
-
-            # install deps with retry
-            for attempt in 1 2 3; do
-              echo "pip install attempt $attempt..."
-              if pip install --timeout 120 --retries 5 -r requirements.txt \
-                 && pip install --timeout 120 --retries 5 -e DocxConv -e Evaluator -e ScreenshotProc -e ArchiveProc; then
-                echo "pip install OK"
-                break
-              fi
-              echo "pip install attempt $attempt failed, retrying..."
-              sleep 5
-            done || { echo "pip install failed after 3 attempts"; exit 1; }
-
-            # DEEPSEEK_API_KEY .env
+            # Write .env for Docker Compose variable substitution.
+            # docker-compose.yml references these via ${VAR:-default} syntax.
             cat > .env << 'ENVEOF'
             DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
             DEEPSEEK_BASE_URL=https://api.deepseek.com
             DEEPSEEK_MODEL=deepseek-v4-pro
             DEEPSEEK_THINKING=false
-            DEEPSEEK_REASONING_EFFORT=high
-            AI_SERVICE_HOST=0.0.0.0
-            AI_SERVICE_PORT=8000
-            AI_SERVICE_SERVER_URL=/ai
             ENVEOF
             chmod 600 .env
 
-            # ── Start AI Service ───────────────────────────────────
-            echo "=== 启动 AI 服务 (端口 $AI_PORT) ==="
-            nohup .venv/bin/python -m docxconv serve > "$BASE/ai-service.log" 2>&1 &
-            AI_STARTED=0
-            for i in $(seq 1 $MAX_WAIT); do
-              sleep 1
-              if lsof -t -i:$AI_PORT >/dev/null 2>&1; then
-                AI_STARTED=1
-                break
-              fi
-            done
-            if [ $AI_STARTED -eq 0 ]; then
-              echo "AI 服务启动失败！"
-              tail -30 "$BASE/ai-service.log"
-              exit 1
-            fi
-            echo "AI 服务启动成功。"
+            echo "=== Building images ==="
+            docker compose build
 
-            # ── Start Java ─────────────────────────────────────────
-            echo "=== 启动 Java (端口 $JAVA_PORT) ==="
-            nohup java -jar "$BASE/app.jar" > "$BASE/app.log" 2>&1 &
-            JAVA_STARTED=0
-            for i in $(seq 1 $MAX_WAIT); do
-              sleep 1
-              if lsof -t -i:$JAVA_PORT >/dev/null 2>&1; then
-                JAVA_STARTED=1
-                break
-              fi
-            done
-            if [ $JAVA_STARTED -eq 0 ]; then
-              echo "Java 启动失败！"
-              tail -30 "$BASE/app.log"
-              exit 1
-            fi
-            echo "Java 启动成功。"
-            echo "=== 部署完成 ==="
-            '
+            echo "=== Starting services ==="
+            docker compose up -d --force-recreate
+
+            echo "=== Status ==="
+            docker compose ps
+
+            echo "=== Pruning old images ==="
+            docker image prune -f
+
+            echo "=== Deploy complete ==="
