@@ -28,13 +28,28 @@
       <div v-else-if="error" class="preview-state preview-state--error">
         <p>{{ error }}</p>
       </div>
+      <div v-else-if="unsupported" class="preview-state">
+        <svg class="preview-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
+        <p>此文件类型不支持在线预览</p>
+        <button class="preview-download-btn" @click="triggerDownload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>下载文件</span>
+        </button>
+      </div>
       <pre v-else class="preview-code"><code>{{ content }}</code></pre>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -43,9 +58,30 @@ const content = ref('')
 const fileName = ref('')
 const loading = ref(true)
 const error = ref('')
+const unsupported = ref(false)
+const downloadUrl = ref('')
+
+function isTextType(contentType: string): boolean {
+  return /^text\//.test(contentType) ||
+    /\bapplication\/(json|xml|javascript|ld\+json|x-httpd-php|x-sh|x-perl|x-python|x-yaml|x-www-form-urlencoded)\b/.test(contentType)
+}
+
+function triggerDownload() {
+  if (!downloadUrl.value) return
+  const a = document.createElement('a')
+  a.href = downloadUrl.value
+  a.download = fileName.value
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
 
 function closeTab() {
-  window.close()
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    window.close()
+  }
 }
 
 onMounted(async () => {
@@ -63,11 +99,24 @@ onMounted(async () => {
       if (match) fileName.value = match[1]
     }
     if (!fileName.value) fileName.value = `submission-${id}`
-    content.value = await res.text()
+    const contentType = res.headers.get('content-type') || ''
+    if (isTextType(contentType)) {
+      content.value = await res.text()
+    } else {
+      const blob = await res.blob()
+      downloadUrl.value = URL.createObjectURL(blob)
+      unsupported.value = true
+    }
   } catch (e: any) {
     error.value = e.message || '文件加载失败'
   } finally {
     loading.value = false
+  }
+})
+
+onBeforeUnmount(() => {
+  if (downloadUrl.value) {
+    URL.revokeObjectURL(downloadUrl.value)
   }
 })
 </script>
@@ -152,7 +201,31 @@ onMounted(async () => {
   padding: 48px 20px;
   color: rgb(var(--md-sys-color-on-surface-variant));
   font: 400 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  flex-direction: column;
   &--error { flex-direction: column; color: rgb(var(--md-sys-color-error)); }
+  &__icon {
+    width: 48px; height: 48px;
+    color: rgb(var(--md-sys-color-on-surface-variant) / 0.5);
+    margin-bottom: 8px;
+  }
+}
+
+.preview-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 22px;
+  margin-top: 16px;
+  border: 1px solid rgb(var(--md-sys-color-outline));
+  border-radius: 20px;
+  background: rgb(var(--md-sys-color-surface-container-lowest));
+  color: rgb(var(--md-sys-color-primary));
+  cursor: pointer;
+  font: 500 14px/22px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  transition: background 0.15s ease;
+  svg { width: 16px; height: 16px; }
+  &:hover { background: rgb(var(--md-sys-color-surface-container-high)); }
 }
 
 // ── Spinner ──

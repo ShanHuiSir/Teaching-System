@@ -197,7 +197,6 @@ onBeforeUnmount(() => {
 .fp-overlay {
   position: fixed; inset: 0; z-index: 1999;
   background: transparent;
-  pointer-events: none;
 }
 .fp-window {
   position: fixed;

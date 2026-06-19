@@ -1,6 +1,8 @@
 <template>
   <div class="dash">
-    <h1 class="dash__greeting">{{ greeting }}，{{ teacherName }}老师</h1>
+    <ListSkeleton v-if="loading" />
+    <template v-else>
+      <h1 class="dash__greeting">{{ greeting }}，{{ teacherName }}老师</h1>
 
     <div class="dash-filter">
       <label class="dash-filter__field">
@@ -304,6 +306,7 @@
         </div>
       </div>
     </section>
+    </template>
   </div>
 </template>
 
@@ -314,9 +317,12 @@ import { getCookie, setCookie } from '../utils/cookie'
 import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
 import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
+import ListSkeleton from '../components/ListSkeleton.vue'
 
 const router = useRouter()
 const { notify } = useNotify()
+
+const loading = ref(true)
 
 const teacherName = computed(() => getCookie('user_name') || 'teacher')
 
@@ -454,6 +460,7 @@ const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
 const dataVersion = inject(DATA_VERSION_KEY, ref(0))
 
 async function fetchAll() {
+    loading.value = true
   try {
     const params: Record<string, string> = {}
     if (selectedAssignmentId.value) params.assignmentId = selectedAssignmentId.value
@@ -633,7 +640,7 @@ async function fetchAll() {
     })
     scoreCompare.value = cmp
   } finally {
-    // errors handled by retryFetch wrapper in onMounted
+    loading.value = false
   }
 }
 
