@@ -210,6 +210,9 @@ export const ICONS: Record<string, IconDef> = {
       E('line', { x1: '21', y1: '12', x2: '9', y2: '12' }),
     ],
   },
+  'chevron-left': {
+    elements: [P('M15 18l-6-6 6-6')],
+  },
 }
 
 // Shared icons: sort-class = classes, dash-class = dashboard

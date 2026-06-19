@@ -142,15 +142,22 @@
           <div class="roster">
             <div class="roster__head">
               <span class="roster__title">学生花名册</span>
-              <span class="roster__count">{{ active.roster.length }}人</span>
+              <span class="roster__count">{{ filteredRoster.length }}/{{ active.roster.length }}人</span>
             </div>
+            <input
+              v-if="active.roster.length"
+              v-model="rosterQuery"
+              class="roster__search"
+              placeholder="搜索姓名或学号…"
+            />
             <div v-if="!active.roster.length" class="roster__empty">暂无学生</div>
+            <div v-else-if="!filteredRoster.length" class="roster__empty">无匹配学生</div>
             <div v-else class="roster__table">
               <div class="roster__row roster__row--header">
                 <span class="roster__cell roster__cell--no">学号</span>
                 <span class="roster__cell roster__cell--name">姓名</span>
               </div>
-              <div v-for="s in active.roster" :key="s.id" class="roster__row">
+              <div v-for="s in filteredRoster" :key="s.id" class="roster__row">
                 <span class="roster__cell roster__cell--no">{{ s.studentNo || '—' }}</span>
                 <span class="roster__cell roster__cell--name">{{ s.name || '—' }}</span>
               </div>
@@ -166,16 +173,7 @@
       <div class="form-card">
         <div class="form-card__bar">
           <button class="form-card__back" @click="closeForm">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <AppIcon name="chevron-left" />
             <span>关闭{{ isCreate ? '创建' : '编辑' }}</span>
           </button>
           <button class="act-btn act-btn--primary" @click="onSave">
@@ -276,6 +274,7 @@ import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
+import AppIcon from '../components/AppIcon.vue'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()
@@ -289,6 +288,15 @@ const editorRef = ref(null)
 const sortKey = ref<string | null>(null)
 
 const active = computed(() => classes.value.find(c => c.id === activeId.value) || null)
+const rosterQuery = ref('')
+const filteredRoster = computed(() => {
+  if (!active.value) return []
+  const q = rosterQuery.value.trim().toLowerCase()
+  if (!q) return active.value.roster
+  return active.value.roster.filter((s: any) =>
+    (s.name || '').toLowerCase().includes(q) || (s.studentNo || '').toLowerCase().includes(q),
+  )
+})
 
 const searchQuery = ref('')
 
@@ -1099,6 +1107,23 @@ select.form-field__input {
   &__count {
     @include font(12px, 16px);
     color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+
+  &__search {
+    width: calc(100% - 16px);
+    margin: 0 8px 8px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 8px;
+    background: rgb(var(--md-sys-color-surface-container-lowest));
+    color: rgb(var(--md-sys-color-on-surface));
+    @include font(12px, 18px);
+    outline: none;
+    transition: border-color 0.15s ease;
+    &::placeholder { color: rgb(var(--md-sys-color-on-surface-variant) / 0.5); }
+    &:focus { border-color: rgb(var(--md-sys-color-primary)); }
+    &:focus-visible { outline: none; }
   }
 
   &__empty {
