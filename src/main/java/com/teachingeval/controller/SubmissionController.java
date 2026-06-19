@@ -1,13 +1,17 @@
 package com.teachingeval.controller;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -105,7 +109,7 @@ public class SubmissionController {
 
     @Operation(summary = "下载作品文件", description = "根据提交ID下载对应的原始作业文件。仅允许访问本班学生的提交。")
     @GetMapping("/submissions/{id}/file")
-    public FileSystemResource downloadFile(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<FileSystemResource> downloadFile(@PathVariable Long id, HttpServletRequest request) {
         ensureCurrentTeacherCanAccessSubmission(id, request);
 
         SubmissionFile file = submissionService.getPrimaryFile(id);
@@ -116,7 +120,22 @@ public class SubmissionController {
         if (!Files.exists(path)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
         }
-        return new FileSystemResource(path);
+
+        String fileName = file.getFileName() == null || file.getFileName().isBlank()
+                ? path.getFileName().toString()
+                : file.getFileName();
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        if (file.getContentType() != null && !file.getContentType().isBlank()) {
+            mediaType = MediaType.parseMediaType(file.getContentType());
+        }
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename(fileName, StandardCharsets.UTF_8)
+                        .build()
+                        .toString())
+                .body(new FileSystemResource(path));
     }
 
     private void ensureCurrentTeacherCanAccessSubmission(Long submissionId, HttpServletRequest request) {

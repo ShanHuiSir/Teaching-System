@@ -319,6 +319,14 @@ class TeachingSystemFlowTest {
                 .andExpect(jsonPath("$[0].fileName").value("sample-code.cpp"))
                 .andExpect(jsonPath("$[0].filePath").value(filePath))
                 .andExpect(jsonPath("$[0].primaryFile").value(true));
+
+        mockMvc.perform(get("/api/submissions/{submissionId}/file", submissionId))
+                .andExpect(status().isOk())
+                .andExpect(result -> assertThat(result.getResponse().getContentType())
+                        .startsWith(file.getContentType()))
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("sample-code.cpp")))
+                .andExpect(result -> assertThat(result.getResponse().getContentAsString())
+                        .contains("Binary Search Implementation"));
     }
 
     @Test

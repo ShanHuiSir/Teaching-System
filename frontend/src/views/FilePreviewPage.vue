@@ -48,6 +48,22 @@ function closeTab() {
   window.close()
 }
 
+function parseFileName(disposition: string | null) {
+  if (!disposition) return ''
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded[1])
+    } catch {
+      return encoded[1]
+    }
+  }
+  const quoted = disposition.match(/filename="([^"]+)"/i)
+  if (quoted) return quoted[1]
+  const plain = disposition.match(/filename=([^;]+)/i)
+  return plain ? plain[1].trim() : ''
+}
+
 onMounted(async () => {
   const id = route.params.submissionId
   try {
@@ -58,10 +74,7 @@ onMounted(async () => {
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const disposition = res.headers.get('content-disposition')
-    if (disposition) {
-      const match = disposition.match(/filename="?(.+?)"?$/i)
-      if (match) fileName.value = match[1]
-    }
+    fileName.value = parseFileName(disposition)
     if (!fileName.value) fileName.value = `submission-${id}`
     content.value = await res.text()
   } catch (e: any) {
