@@ -13,7 +13,7 @@
       </span>
       <MagicBar :magic-bar="magicBar" :greeting="greeting" :magic-key="magicKey" />
       <div class="top-bar__right">
-        <button class="top-bar__avatar" @click.stop="menuOpen = !menuOpen">
+        <button class="top-bar__avatar" :aria-expanded="menuOpen" aria-label="用户菜单" @click.stop="menuOpen = !menuOpen">
           {{ avatarLetter }}
         </button>
         <Transition name="menu">
@@ -54,8 +54,8 @@
 
     <div class="layout__body">
       <!-- Left Rail -->
-      <nav class="rail rail--left" :class="{ 'rail--expanded': leftExpanded }">
-        <button class="rail__toggle rail__toggle--left" @click="leftExpanded = !leftExpanded">
+      <nav class="rail rail--left" aria-label="主导航" :class="{ 'rail--expanded': leftExpanded }">
+        <button class="rail__toggle rail__toggle--left" :aria-label="leftExpanded ? '收起导航' : '展开导航'" @click="leftExpanded = !leftExpanded">
           <AppIcon :name="leftExpanded ? 'rail-left-expanded' : 'rail-left-collapsed'" />
         </button>
         <div class="rail__items">
@@ -71,7 +71,7 @@
                 'nav-item--ghost': item.variant === 'ghost',
                 'nav-item--active': route.path.startsWith(item.route),
               }"
-              @click="go(item.route)"
+              :aria-current="route.path.startsWith(item.route) ? 'page' : undefined" @click="go(item.route)"
             >
               <AppIcon :name="item.icon" class="nav-item__icon" />
               <span class="nav-item__label">{{ item.label }}</span>
@@ -90,13 +90,13 @@
       </main>
 
       <!-- Right Rail -->
-      <aside class="rail rail--right" :class="{ 'rail--expanded': rightExpanded }">
-        <button class="rail__toggle rail__toggle--right" @click="rightExpanded = !rightExpanded">
+      <aside class="rail rail--right" aria-label="工具栏" :class="{ 'rail--expanded': rightExpanded }">
+        <button class="rail__toggle rail__toggle--right" :aria-label="rightExpanded ? '收起工具栏' : '展开工具栏'" @click="rightExpanded = !rightExpanded">
           <AppIcon :name="rightExpanded ? 'rail-right-expanded' : 'rail-right-collapsed'" />
         </button>
         <div class="rail__items">
           <!-- Persistent buttons -->
-          <button class="nav-item" data-tooltip="刷新" @click="doRefresh">
+          <button class="nav-item" data-tooltip="刷新" aria-label="刷新数据" @click="doRefresh">
             <AppIcon name="refresh" class="nav-item__icon" />
             <span class="nav-item__label">刷新</span>
           </button>

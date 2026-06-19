@@ -1,6 +1,6 @@
 <template>
   <Transition name="snack">
-    <div v-if="visible" class="snackbar" :class="`snackbar--${variant}`">
+    <div v-if="visible" class="snackbar" role="alert" aria-live="assertive" :class="`snackbar--${variant}`">
       <span class="snackbar__text">{{ message }}</span>
       <button v-if="actionLabel" class="snackbar__action" @click="doAction">{{ actionLabel }}</button>
     </div>
