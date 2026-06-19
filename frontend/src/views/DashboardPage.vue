@@ -181,7 +181,7 @@
           </button>
         </div>
       </div>
-      <div v-if="chartMode === 'bar'" class="histogram">
+      <div v-if="chartMode === 'bar'" class="histogram" role="img" :aria-label="'分数分布直方图：' + scoreBuckets.map(b => b.label + ' ' + b.count + '人').join('，')">
         <div v-for="b in scoreBuckets" :key="b.label" class="histogram__bar">
           <span class="histogram__count">{{ b.count }}</span>
           <div class="histogram__fill" :style="{ height: maxBucket ? (b.count / maxBucket) * 160 + 'px' : '0' }" />
@@ -189,7 +189,7 @@
         </div>
       </div>
       <div v-else class="pie-chart">
-        <div class="pie-chart__circle" :style="{ background: pieGradient }" />
+        <div class="pie-chart__circle" :style="{ background: pieGradient }" role="img" :aria-label="'分数分布饼图：' + scoreBuckets.filter(b => b.count).map(b => b.label + ' ' + b.count + '人').join('，')" />
         <div class="pie-legend">
           <span v-for="b in scoreBuckets" :key="b.label" class="pie-legend__item">
             <i class="pie-legend__dot" :style="{ background: bucketColor(b.label) }" />{{ b.label }} {{ b.count }}
@@ -216,6 +216,7 @@
         </div>
       </div>
       <p v-else class="dash__empty">暂无已完成的评价数据</p>
+      <p v-if="deviations.length" class="dash__empty" style="margin-top:8px">仅显示最近 10 条，更多数据请使用作业/班级筛选</p>
     </section>
 
     <!-- Teacher Work Data -->

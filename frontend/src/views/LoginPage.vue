@@ -129,6 +129,8 @@
               <input
                 v-model="account"
                 class="input-group__field"
+                :class="{ 'input-group__field--error': loginError }"
+                :aria-invalid="loginError || undefined"
                 type="text"
                 placeholder="请输入账户名"
                 autocomplete="username"
@@ -138,6 +140,8 @@
               <input
                 v-model="secretKey"
                 class="input-group__field"
+                :class="{ 'input-group__field--error': loginError }"
+                :aria-invalid="loginError || undefined"
                 type="password"
                 placeholder="请输入密钥"
                 autocomplete="current-password"
@@ -177,6 +181,7 @@ const account = ref('')
 const secretKey = ref('')
 const rememberMe = ref(true)
 const loading = ref(false)
+const loginError = ref(false)
 
 onMounted(() => {
   activeLayer.value = 'welcome'
@@ -218,7 +223,9 @@ function onKeyLogin() {
 }
 
 async function handleLogin() {
+  loginError.value = false
   if (!account.value.trim() || !secretKey.value.trim()) {
+    loginError.value = true
     notify({ type: 'error', snackbar: '请输入账户名和密钥' })
     return
   }
@@ -235,7 +242,14 @@ async function handleLogin() {
     notify({ type: 'success', snackbar: '登录成功' })
     router.replace('/dashboard')
   } catch (e: any) {
-    notify({ type: 'error', snackbar: e?.message || '账户名或密钥错误' })
+    loginError.value = true
+    const status = e?.response?.status
+    const msg = status === 401
+      ? '账户名或密钥错误'
+      : status
+        ? '服务器错误，请稍后重试'
+        : e.message || '网络连接失败，请检查网络'
+    notify({ type: 'error', snackbar: msg })
   } finally {
     loading.value = false
   }
@@ -672,6 +686,10 @@ async function handleLogin() {
 
     &:focus-visible {
       outline: none;
+    }
+
+    &--error {
+      border-color: rgb(var(--md-sys-color-error));
     }
   }
 }
