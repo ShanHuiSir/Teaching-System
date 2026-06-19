@@ -669,6 +669,10 @@ async function handleLogin() {
     &:focus {
       border-color: rgb(var(--md-sys-color-primary));
     }
+
+    &:focus-visible {
+      outline: none;
+    }
   }
 }
 

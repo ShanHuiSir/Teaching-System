@@ -20,6 +20,11 @@
       @touchstart.prevent="onDown"
       @touchend="onTouchEnd"
       @touchcancel="onTouchCancel"
+      @keydown.enter.prevent="onDown"
+      @keydown.space.prevent="onDown"
+      @keyup.enter="onKeyUp"
+      @keyup.space="onKeyUp"
+      @blur="onBlur"
     >
       <span class="sv-btn__content">
         <slot />
@@ -164,6 +169,20 @@ function onTouchEnd(e: TouchEvent) {
 
 function onTouchCancel() {
   finishPress(false)
+}
+
+/* ---------- keyboard ---------- */
+
+function onKeyUp(e: KeyboardEvent) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    onUp()
+  }
+}
+
+function onBlur() {
+  if (pressing.value || shaking.value) {
+    finishPress(false)
+  }
 }
 
 function finishPress(completed: boolean) {

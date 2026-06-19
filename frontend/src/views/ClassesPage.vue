@@ -227,8 +227,8 @@
     <!-- Delete Confirmation Modal -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="deleteModal.open" class="modal-overlay" @click.self="deleteModal.open = false">
-          <div class="modal-card">
+        <div v-if="deleteModal.open" class="modal-overlay" @click.self="deleteModal.open = false" @keydown.escape="deleteModal.open = false">
+          <div ref="deleteDialogRef" class="modal-card" role="alertdialog" aria-modal="true" @keydown="onDeleteKeydown">
             <svg
               class="modal-card__icon"
               viewBox="0 0 24 24"
@@ -244,7 +244,7 @@
             </svg>
             <p class="modal-card__text">确定要删除班级「{{ deleteModal.name }}」吗？<br />已有学生或作业关联的班级不会被删除。</p>
             <div class="modal-card__btns">
-              <button class="modal-card__btn modal-card__btn--cancel" @click="deleteModal.open = false">取消</button>
+              <button ref="deleteCancelRef" class="modal-card__btn modal-card__btn--cancel" @click="deleteModal.open = false">取消</button>
               <HedgehogButton variant="primary" size="sm" @complete="confirmDelete">确认删除</HedgehogButton>
             </div>
           </div>
@@ -452,6 +452,39 @@ function onDeleteClick(c) {
   deleteModal.id = c.id
   deleteModal.name = c.name
   deleteModal.open = true
+}
+
+const deleteDialogRef = ref<HTMLElement | null>(null)
+const deleteCancelRef = ref<HTMLElement | null>(null)
+
+watch(
+  () => deleteModal.open,
+  async isOpen => {
+    if (isOpen) {
+      await nextTick()
+      deleteCancelRef.value?.focus()
+    }
+  },
+)
+
+function onDeleteKeydown(e: KeyboardEvent) {
+  if (e.key === 'Tab') {
+    const dialog = deleteDialogRef.value
+    if (!dialog) return
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )
+    if (focusable.length < 2) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
 }
 
 async function confirmDelete() {

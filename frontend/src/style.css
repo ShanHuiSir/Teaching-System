@@ -82,3 +82,9 @@ body {
   --md-sys-color-inverse-on-surface: 43 50 49;
   --md-sys-color-shadow: 0 0 0;
 }
+
+/* ── Global focus ring ── */
+:focus-visible {
+  outline: 2px solid rgb(var(--md-sys-color-primary));
+  outline-offset: 1px;
+}
