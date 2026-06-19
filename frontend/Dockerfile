@@ -1,4 +1,4 @@
-ARG REGISTRY=docker.1ms.run
+ARG REGISTRY=docker.io
 
 # Stage 1: Build the Vue/Vite frontend
 FROM ${REGISTRY}/library/node:22-alpine AS build

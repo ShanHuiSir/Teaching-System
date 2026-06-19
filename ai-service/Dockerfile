@@ -1,4 +1,4 @@
-ARG REGISTRY=docker.1ms.run
+ARG REGISTRY=docker.io
 
 FROM ${REGISTRY}/library/python:3.11-slim-bookworm
 
