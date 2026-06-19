@@ -400,9 +400,9 @@ const filteredAssignments = computed(() => {
     )
   }
   arr = [...arr]
-  if (sortKey.value === 'time') arr.sort((a, b) => (b.latestTime || '').localeCompare(a.latestTime || ''))
-  if (sortKey.value === 'submitRate') arr.sort((a, b) => b.submitRate - a.submitRate)
-  if (sortKey.value === 'reviewRate') arr.sort((a, b) => b.reviewProgress - a.reviewProgress)
+  if (sortKey.value === 'time') arr.sort((a: any, b: any) => (b.latestTime || '').localeCompare(a.latestTime || ''))
+  if (sortKey.value === 'submitRate') arr.sort((a: any, b: any) => b.submitRate - a.submitRate)
+  if (sortKey.value === 'reviewRate') arr.sort((a: any, b: any) => b.reviewProgress - a.reviewProgress)
   return arr
 })
 const editing = ref(false)
@@ -451,7 +451,7 @@ function resetForm() {
   form.dueDate = ''
 }
 
-function onSelectCard(a) {
+function onSelectCard(a: any) {
   editing.value = false
   activeId.value = a.id
 }
@@ -501,7 +501,7 @@ function startCreate() {
   editing.value = true
 }
 
-function startEdit(a) {
+function startEdit(a: any) {
   isCreate.value = false
   resetForm()
   form.id = a.id
@@ -533,7 +533,7 @@ watchEffect(() => {
   }
 })
 
-function toggleClass(cls) {
+function toggleClass(cls: any) {
   const idx = form.classes.indexOf(cls)
   if (idx === -1) {
     form.classes = [...form.classes, cls]
@@ -542,7 +542,7 @@ function toggleClass(cls) {
   }
 }
 
-function normalizeAssignmentClassNames(assignment) {
+function normalizeAssignmentClassNames(assignment: any) {
   if (!assignment) return []
   if (Array.isArray(assignment.classNames) && assignment.classNames.length) {
     return assignment.classNames.filter(Boolean)
@@ -550,34 +550,34 @@ function normalizeAssignmentClassNames(assignment) {
   return assignment.className ? assignment.className.split('、').filter(Boolean) : []
 }
 
-function normalizeAssignmentClassIds(assignment) {
+function normalizeAssignmentClassIds(assignment: any) {
   if (!assignment) return []
   if (Array.isArray(assignment.classIds) && assignment.classIds.length) {
-    return assignment.classIds.filter(id => id != null)
+    return assignment.classIds.filter((id: any) => id != null)
   }
   return assignment.classId ? [assignment.classId] : []
 }
 
-function formatClassNames(assignment) {
+function formatClassNames(assignment: any) {
   const names = normalizeAssignmentClassNames(assignment)
   return names.length ? names.join('、') : '全部班级'
 }
 
-function formatDate(iso) {
+function formatDate(iso: any) {
   if (!iso) return ''
   const d = new Date(iso)
-  const pad = n => String(n).padStart(2, '0')
+  const pad = (n: any) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function toDatetimeLocal(iso) {
+function toDatetimeLocal(iso: any) {
   if (!iso) return ''
   const d = new Date(iso)
-  const pad = n => String(n).padStart(2, '0')
+  const pad = (n: any) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function toApiDateTime(value) {
+function toApiDateTime(value: any) {
   if (!value) return null
   return value.length === 16 ? `${value}:00` : value
 }
@@ -630,7 +630,7 @@ async function onSave() {
 
 const deleteModal = reactive({ open: false, id: null, title: '' })
 
-function onDeleteClick(a) {
+function onDeleteClick(a: any) {
   deleteModal.id = a.id
   deleteModal.title = a.title
   deleteModal.open = true
@@ -669,7 +669,7 @@ function onDeleteKeydown(e: KeyboardEvent) {
   }
 }
 
-async function onExport(item) {
+async function onExport(item: any) {
   if (exporting.value) return
   exporting.value = true
   magicBar.status = '导出可能需要时间，休息一下吧'
@@ -695,7 +695,7 @@ function confirmDelete() {
   onDelete({ id: deleteModal.id, title: deleteModal.title })
 }
 
-async function onDelete(a) {
+async function onDelete(a: any) {
   try {
     await http.delete(`/assignments/${a.id}`)
     if (activeId.value === a.id) activeId.value = null
@@ -758,14 +758,14 @@ async function fetchAssignments() {
     studentsAll.value = students || []
     classesAll.value = classes || []
 
-    const evalMap = {}
-    ;(evals || []).forEach(e => {
+    const evalMap: Record<string, any> = {}
+    ;(evals || []).forEach((e: any) => {
       evalMap[e.submissionId] = e
     })
 
     const classStudentCounts: Record<string, number> = {}
     const classStudentCountsById: Record<string, number> = {}
-    ;(students || []).forEach(s => {
+    ;(students || []).forEach((s: any) => {
       const cls = s.className || '未分班'
       classStudentCounts[cls] = (classStudentCounts[cls] || 0) + 1
       if (s.classId != null) {
@@ -793,9 +793,9 @@ async function fetchAssignments() {
         const classIds = normalizeAssignmentClassIds(a)
         const classNames = normalizeAssignmentClassNames(a)
         const total = classIds.length
-          ? classIds.reduce((sum, id) => sum + (classStudentCountsById[String(id)] || 0), 0)
+          ? classIds.reduce((sum: any, id: any) => sum + (classStudentCountsById[String(id)] || 0), 0)
           : classNames.length
-            ? classNames.reduce((sum, name) => sum + (classStudentCounts[name] || 0), 0)
+            ? classNames.reduce((sum: any, name: any) => sum + (classStudentCounts[name] || 0), 0)
             : studentsAll.value.length
         return {
           ...a,
@@ -808,7 +808,7 @@ async function fetchAssignments() {
           latestTime: stat.latestTime || a.updatedAt || a.createdAt,
         }
       })
-      .sort((a, b) => (b.latestTime || '').localeCompare(a.latestTime || ''))
+      .sort((a: any, b: any) => (b.latestTime || '').localeCompare(a.latestTime || ''))
   } finally {
     loading.value = false
   }

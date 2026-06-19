@@ -31,7 +31,7 @@ export async function fetchCurrentSession(force = false): Promise<CurrentSession
       setCookie('user_name', session.username, 0.5)
       return session
     })
-    .catch(() => {
+    .catch((): null => {
       clearSessionUser()
       return null
     })

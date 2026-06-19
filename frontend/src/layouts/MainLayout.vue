@@ -249,7 +249,7 @@ async function doRefresh() {
   }
 }
 
-function go(path) {
+function go(path: string) {
   const active = route.path.startsWith(path)
   if (!active) {
     router.push(path)
