@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
   &__info { display: flex; align-items: center; gap: 8px; min-width: 0; }
   &__icon { width: 18px; height: 18px; color: rgb(var(--md-sys-color-on-surface-variant)); flex-shrink: 0; }
   &__name {
-    font: 500 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+    @include font(14px, 20px, 500);
     color: rgb(var(--md-sys-color-on-surface));
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
@@ -259,7 +259,7 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   background: rgb(var(--md-sys-color-inverse-surface));
   color: rgb(var(--md-sys-color-inverse-on-surface));
-  font: 400 12px/18px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  @include font(12px, 18px);
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
@@ -288,12 +288,12 @@ onBeforeUnmount(() => {
   display: flex; align-items: center; gap: 12px;
   padding: 40px; justify-content: center;
   color: rgb(var(--md-sys-color-on-surface-variant));
-  font: 400 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  @include font(14px, 20px);
 }
 .fp-error {
   padding: 40px; text-align: center;
   color: rgb(var(--md-sys-color-error));
-  font: 400 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  @include font(14px, 20px);
 }
 // ── Spinner ──
 .fp-spinner {

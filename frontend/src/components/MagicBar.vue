@@ -91,7 +91,7 @@ defineProps<{
     }
 
     &--reconnected {
-      color: #16a34a;
+      color: rgb(var(--app-color-success));
     }
   }
 
@@ -117,7 +117,7 @@ defineProps<{
     }
 
     &--success {
-      background: #16a34a;
+      background: rgb(var(--app-color-success));
     }
 
     &--info {

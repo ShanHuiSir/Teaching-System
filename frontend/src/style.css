@@ -45,6 +45,9 @@ body {
   --md-sys-color-inverse-surface: 43 50 49;
   --md-sys-color-inverse-on-surface: 236 242 241;
   --md-sys-color-shadow: 0 0 0;
+  --app-color-success: 22 163 74;
+  --app-color-warning-bg: 253 216 53;
+  --app-color-warning-text: 33 33 33;
 }
 
 /* MD3 Dark Theme */
@@ -81,6 +84,9 @@ body {
   --md-sys-color-inverse-surface: 221 228 227;
   --md-sys-color-inverse-on-surface: 43 50 49;
   --md-sys-color-shadow: 0 0 0;
+  --app-color-success: 74 222 128;
+  --app-color-warning-bg: 253 216 53;
+  --app-color-warning-text: 33 33 33;
 }
 
 /* ── Global focus ring ── */

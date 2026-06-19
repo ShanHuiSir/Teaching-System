@@ -27,7 +27,7 @@ const { message, visible, variant, actionLabel, doAction } = useSnackbar()
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  z-index: 9999;
+  z-index: 10000;
 
   &__text {
     @include font(14px, 20px, 500);
