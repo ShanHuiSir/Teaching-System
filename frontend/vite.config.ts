@@ -1,20 +1,23 @@
-import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
-import { defineConfig } from 'vite'
+import { resolve } from 'path'
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const root = process.cwd()
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
   resolve: {
-    alias: { '@': resolve(__dirname, 'src') },
+    alias: { '@': resolve(root, 'src') },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
   },
   css: {
     preprocessorOptions: {
       scss: {
-        loadPaths: [resolve(__dirname, 'src/styles')],
+        loadPaths: [resolve(root, 'src/styles')],
         additionalData: `@use "mixins" as *;\n`,
       },
     },
