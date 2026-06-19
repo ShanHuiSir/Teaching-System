@@ -2,6 +2,14 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { fetchCurrentSession } from '../utils/session'
 
 import LoginPage from '../views/LoginPage.vue'
+import MainLayout from '../layouts/MainLayout.vue'
+import DashboardPage from '../views/DashboardPage.vue'
+import ReviewPage from '../views/ReviewPage.vue'
+import ClassesPage from '../views/ClassesPage.vue'
+import AssignmentsPage from '../views/AssignmentsPage.vue'
+import ForbiddenPage from '../views/ForbiddenPage.vue'
+import FilePreviewPage from '../views/FilePreviewPage.vue'
+import NotFoundPage from '../views/NotFoundPage.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -11,60 +19,55 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/',
-    redirect: '/login',
+    redirect: () => (window as any).__initialSession ? '/dashboard' : '/login',
   },
   {
     path: '/dashboard',
-    component: () => import('../layouts/MainLayout.vue'),
+    component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'Dashboard', component: () => import('../views/DashboardPage.vue') },
+      { path: '', name: 'Dashboard', component: DashboardPage },
     ],
   },
   {
     path: '/review',
-    component: () => import('../layouts/MainLayout.vue'),
+    component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', component: () => import('../views/ReviewPage.vue') },
+      { path: '', component: ReviewPage },
     ],
   },
   {
     path: '/classes',
-    component: () => import('../layouts/MainLayout.vue'),
+    component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', component: () => import('../views/ClassesPage.vue') },
+      { path: '', component: ClassesPage },
     ],
   },
   {
     path: '/assignments',
-    component: () => import('../layouts/MainLayout.vue'),
+    component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', component: () => import('../views/AssignmentsPage.vue') },
+      { path: '', component: AssignmentsPage },
     ],
   },
   {
     path: '/forbidden',
     name: 'Forbidden',
-    component: () => import('../views/ForbiddenPage.vue'),
-  },
-  {
-    path: '/loading',
-    name: 'Loading',
-    component: () => import('../views/LoadingPage.vue'),
+    component: ForbiddenPage,
   },
   {
     path: '/preview/:submissionId',
     name: 'FilePreview',
-    component: () => import('../views/FilePreviewPage.vue'),
+    component: FilePreviewPage,
     meta: { requiresAuth: true },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('../views/NotFoundPage.vue'),
+    component: NotFoundPage,
   },
 ]
 
