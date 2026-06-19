@@ -159,7 +159,7 @@
                 </template>
                 <!-- TODO: real createdAt from API -->{{ wt.createdAt }}
               </StatChip>
-              <StatChip tooltip="截止日期" push>
+              <StatChip tooltip="截止日期">
                 <template #icon>
                   <svg
                     viewBox="0 0 24 24"

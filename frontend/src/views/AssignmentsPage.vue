@@ -245,7 +245,7 @@
             </svg>
             <span>关闭{{ isCreate ? '创建' : '编辑' }}</span>
           </button>
-          <button class="act-btn act-btn--primary" @click="onSave">
+          <button class="act-btn act-btn--primary" :disabled="saving" @click="onSave">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -256,7 +256,7 @@
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>{{ isCreate ? '发布' : '保存' }}</span>
+            <span>{{ saving ? '保存中...' : (isCreate ? '发布' : '保存') }}</span>
           </button>
         </div>
 
@@ -381,6 +381,7 @@ import ListSkeleton from '../components/ListSkeleton.vue'
 const { notify } = useNotify()
 
 const loading = ref(false)
+const saving = ref(false)
 const activeId = ref(null)
 const assignments = ref<any[]>([])
 const classesAll = ref<any[]>([])
@@ -599,6 +600,7 @@ async function onSave() {
     return
   }
 
+  saving.value = true
   const selectedClassItems = form.classes
     .map(name => classesAll.value.find((c: any) => c.name === name))
     .filter(Boolean)
@@ -625,6 +627,8 @@ async function onSave() {
     await fetchAssignments()
   } catch (e: any) {
     notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存作业时遇到了问题' })
+  } finally {
+    saving.value = false
   }
 }
 
