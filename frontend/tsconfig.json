@@ -3,7 +3,7 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "strict": false,
+    "types": ["vitest/globals"],
     "noImplicitAny": true,
     "jsx": "preserve",
     "resolveJsonModule": true,
