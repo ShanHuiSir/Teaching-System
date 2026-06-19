@@ -82,34 +82,28 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 21987 }}
-          # The server’s default shell is fish.  Pipe the whole script into
-          # bash so that heredocs, set -e, etc. work as expected.
+          # Server shell is fish — use fish-compatible syntax only.
+          # (no bash heredocs, no "set -e")
           script: |
-            bash << 'SCRIPTEOF'
-            set -euo pipefail
-            cd /usr/share/teaching-system
+            cd /usr/share/teaching-system; or exit 1
 
-            # Write .env for Docker Compose variable substitution.
-            # docker-compose.yml references these via ${VAR:-default} syntax.
-            cat > .env << 'ENVEOF'
-            DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
-            DEEPSEEK_BASE_URL=https://api.deepseek.com
-            DEEPSEEK_MODEL=deepseek-v4-pro
-            DEEPSEEK_THINKING=false
-            ENVEOF
+            echo "=== Writing .env ==="
+            printf ‘%s\n’ \
+              "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" \
+              "DEEPSEEK_BASE_URL=https://api.deepseek.com" \
+              "DEEPSEEK_MODEL=deepseek-v4-pro" \
+              "DEEPSEEK_THINKING=false" \
+              > .env
             chmod 600 .env
 
             echo "=== Building images ==="
-            docker compose build
+            docker compose build; or exit 1
 
             echo "=== Starting services ==="
-            docker compose up -d --force-recreate
+            docker compose up -d --force-recreate; or exit 1
 
             echo "=== Status ==="
             docker compose ps
-
-            echo "=== Pruning old images ==="
             docker image prune -f
 
             echo "=== Deploy complete ==="
-            SCRIPTEOF
