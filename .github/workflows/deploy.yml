@@ -82,28 +82,23 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 21987 }}
-          # Server shell is fish — use fish-compatible syntax only.
-          # (no bash heredocs, no "set -e")
           script: |
-            cd /usr/share/teaching-system; or exit 1
-
-            echo "=== Writing .env ==="
-            printf ‘%s\n’ \
-              "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" \
-              "DEEPSEEK_BASE_URL=https://api.deepseek.com" \
-              "DEEPSEEK_MODEL=deepseek-v4-pro" \
-              "DEEPSEEK_THINKING=false" \
-              > .env
+            bash -c '
+            set -euo pipefail
+            cd /usr/share/teaching-system
+            cat > .env << "ENVEOF"
+            DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
+            DEEPSEEK_BASE_URL=https://api.deepseek.com
+            DEEPSEEK_MODEL=deepseek-v4-pro
+            DEEPSEEK_THINKING=false
+            ENVEOF
             chmod 600 .env
-
-            echo "=== Building images ==="
-            docker compose build; or exit 1
-
-            echo "=== Starting services ==="
-            docker compose up -d --force-recreate; or exit 1
-
+            echo "=== Building ==="
+            docker compose build
+            echo "=== Starting ==="
+            docker compose up -d --force-recreate
             echo "=== Status ==="
             docker compose ps
             docker image prune -f
-
             echo "=== Deploy complete ==="
+            '
