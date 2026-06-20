@@ -2,6 +2,8 @@ package com.teachingeval.service;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -38,15 +40,29 @@ public class ExportService {
     }
 
     public void exportTo(OutputStream outputStream, Long assignmentId, Long classId) {
-        List<WorkSubmission> submissions = submissionRepository.findAll();
-        if (assignmentId != null) {
-            submissions = submissions.stream()
-                    .filter(submission -> assignmentId.equals(submission.getAssignmentId()))
-                    .toList();
+        // 1. 按作业 ID 查询提交（数据库层过滤）
+        List<WorkSubmission> submissions = (assignmentId != null)
+                ? submissionRepository.findByAssignmentId(assignmentId)
+                : submissionRepository.findAll();
+
+        if (submissions.isEmpty()) {
+            EasyExcel.write(outputStream, ExportRow.class)
+                    .sheet("成绩汇总")
+                    .doWrite(Collections.emptyList());
+            return;
         }
 
-        Map<Long, Student> studentMap = studentRepository.findAll().stream()
-                .collect(Collectors.toMap(Student::getId, Function.identity()));
+        // 2. 提取涉及的 studentId，批量查询学生
+        Collection<Long> studentIds = submissions.stream()
+                .map(WorkSubmission::getStudentId)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        Map<Long, Student> studentMap = studentIds.isEmpty()
+                ? Collections.emptyMap()
+                : studentRepository.findAllById(studentIds).stream()
+                        .collect(Collectors.toMap(Student::getId, Function.identity()));
+
+        // 3. 可选：按班级过滤
         if (classId != null) {
             submissions = submissions.stream()
                     .filter(submission -> {
@@ -56,10 +72,16 @@ public class ExportService {
                     .toList();
         }
 
-        List<EvaluationResult> evaluations = evaluationRepository.findAll();
-        Map<Long, EvaluationResult> evalMap = evaluations.stream()
-                .collect(Collectors.toMap(EvaluationResult::getSubmissionId, Function.identity(), (a, b) -> a));
+        // 4. 提取涉及的 submissionId，批量查询评价
+        Collection<Long> submissionIds = submissions.stream()
+                .map(WorkSubmission::getId)
+                .collect(Collectors.toSet());
+        Map<Long, EvaluationResult> evalMap = submissionIds.isEmpty()
+                ? Collections.emptyMap()
+                : evaluationRepository.findBySubmissionIdIn(submissionIds).stream()
+                        .collect(Collectors.toMap(EvaluationResult::getSubmissionId, Function.identity(), (a, b) -> a));
 
+        // 5. 组装导出行
         List<ExportRow> rows = new ArrayList<>();
         for (WorkSubmission submission : submissions) {
             ExportRow row = new ExportRow();

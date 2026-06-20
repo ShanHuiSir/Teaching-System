@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Pageable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -171,5 +173,9 @@ public class EvaluationService {
 
     public List<EvaluationResult> listEvaluations() {
         return evaluationRepository.findAll();
+    }
+
+    public List<EvaluationResult> listEvaluations(Pageable pageable) {
+        return evaluationRepository.findAll(pageable).getContent();
     }
 }
