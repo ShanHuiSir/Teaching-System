@@ -268,13 +268,14 @@ import {
 import http, { retryFetch } from '../utils/request'
 import { getCookie, setCookie } from '../utils/cookie'
 import { useNotify } from '../composables/useNotify'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 import AppIcon from '../components/AppIcon.vue'
+import { fetchVersion, fetchStudents, fetchClasses as storeFetchClasses, students as allStudents, classes as allClasses } from '../stores/data'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()
@@ -509,7 +510,6 @@ async function confirmDelete() {
   }
 }
 
-const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
 const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
@@ -532,10 +532,9 @@ function buildRightButtons() {
 async function fetchClasses() {
   loading.value = true
   try {
-    const [classRows, students] = await Promise.all([
-      http.get('/classes'),
-      http.get('/students'),
-    ])
+    await Promise.all([fetchStudents(), storeFetchClasses()])
+    const classRows = allClasses.value
+    const students = allStudents.value
 
     // Group students by formal classId first, then className for legacy rows.
     const classMap: Record<string, any[]> = {}
@@ -585,7 +584,7 @@ onActivated(() => {
 onDeactivated(() => {
   rightButtons.value = []
 })
-watch(refreshTick, fetchClasses)
+watch(fetchVersion, fetchClasses)
 </script>
 
 <style lang="scss" scoped>

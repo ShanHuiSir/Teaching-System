@@ -588,7 +588,7 @@ import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
 import { getCookie, setCookie } from '../utils/cookie'
 import { detectFileType, FILE_ICONS } from '../utils/fileIcons'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
@@ -597,6 +597,7 @@ import FloatingPreview from '../components/FloatingPreview.vue'
 import ActionButton from '../components/ActionButton.vue'
 import StatChip from '../components/StatChip.vue'
 import { useFileActions } from '../composables/useFileActions'
+import { fetchVersion, fetchStudents, fetchAssignments, fetchSubmissions as storeFetchSubmissions, fetchEvaluations, students as allStudents, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
 
 const route = useRoute()
 const { notify } = useNotify()
@@ -636,8 +637,8 @@ const activeId = ref(null)
 const semesters = ref<any[]>([])
 const submissionsRaw = ref<any[]>([])
 const evalMap = ref<Record<string, any>>({})
-const studentsAll = ref<any[]>([])
-const assignmentsAll = ref<any[]>([])
+const studentsAll = allStudents
+const assignmentsAll = allAssignments
 const searchQuery = ref('')
 const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
 
@@ -918,11 +919,10 @@ async function submitReview() {
       triggerRipple()
     }
     notify({ type: 'success', snackbar: '批改已提交', magicbar: '批改已提交' })
-    dataVersion.value++
-    // Background refresh
-    const evals = await http.get('/evaluations')
+    // 强制刷新 evaluations 并重建 evalMap
+    await fetchEvaluations(true)
     const em: Record<string, any> = {}
-    ;(evals || []).forEach((e: any) => {
+    ;(allEvaluations.value || []).forEach((e: any) => {
       em[e.submissionId] = e
     })
     evalMap.value = em
@@ -1057,8 +1057,7 @@ function onReject() {
   /* TODO */
 }
 
-const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
-const dataVersion = inject(DATA_VERSION_KEY, ref(0))
+// refreshTick / dataVersion replaced by shared store fetchVersion
 const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 const sortClass = ref(getCookie('sort_class') === '1')
@@ -1263,19 +1262,14 @@ function buildRightButtons() {
 
 async function fetchSubmissions() {
   try {
-    const [subs, evals, students, assignments] = await Promise.all([
-      http.get('/submissions'),
-      http.get('/evaluations'),
-      http.get('/students'),
-      http.get('/assignments'),
-    ])
+    await Promise.all([fetchStudents(), fetchAssignments(), storeFetchSubmissions(), fetchEvaluations()])
+    const subs = allSubmissions.value
+    const evals = allEvaluations.value
     const em: Record<string, any> = {}
     ;(evals || []).forEach((e: any) => {
       em[e.submissionId] = e
     })
     evalMap.value = em
-    studentsAll.value = students || []
-    assignmentsAll.value = assignments || []
     const studentMap: Record<string, any> = {}
     studentsAll.value.forEach((s: any) => {
       studentMap[s.id] = s
@@ -1314,7 +1308,7 @@ onActivated(() => {
 onDeactivated(() => {
   rightButtons.value = []
 })
-watch(refreshTick, fetchSubmissions)
+watch(fetchVersion, fetchSubmissions)
 watch(filteredSubmissions, () => {
   rebuildSemesters()
 })
