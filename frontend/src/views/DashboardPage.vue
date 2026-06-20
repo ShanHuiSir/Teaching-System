@@ -234,7 +234,7 @@
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
-          <EmptyState text="暂无数据" />
+          <EmptyState v-else text="暂无数据" />
         </div>
 
         <!-- Score comparison -->
@@ -267,7 +267,7 @@
               >
             </div>
           </div>
-          <EmptyState text="暂无数据" />
+          <EmptyState v-else text="暂无数据" />
         </div>
       </div>
     </section>
@@ -288,7 +288,7 @@
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
-          <EmptyState text="暂无数据" />
+          <EmptyState v-else text="暂无数据" />
         </div>
 
         <div class="twd-card">
@@ -303,7 +303,7 @@
               <span class="trend-bar__date">{{ t.date }}</span>
             </div>
           </div>
-          <EmptyState text="暂无数据" />
+          <EmptyState v-else text="暂无数据" />
         </div>
       </div>
     </section>
@@ -317,9 +317,10 @@ import { useRouter } from 'vue-router'
 import { getCookie, setCookie } from '../utils/cookie'
 import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
-import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
+import { MAGIC_BAR_KEY, SHOW_GREETING_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import ListSkeleton from '../components/ListSkeleton.vue'
 import EmptyState from '../components/EmptyState.vue'
+import { fetchVersion, fetchStudents, fetchClasses, fetchAssignments, fetchSubmissions, fetchEvaluations, students as allStudents, classes as allClasses, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
 
 const router = useRouter()
 const { notify } = useNotify()
@@ -458,9 +459,6 @@ const pieGradient = computed(() => {
   return `conic-gradient(${stops.join(', ')})`
 })
 
-const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
-const dataVersion = inject(DATA_VERSION_KEY, ref(0))
-
 async function fetchAll() {
     loading.value = true
   try {
@@ -468,14 +466,15 @@ async function fetchAll() {
     if (selectedAssignmentId.value) params.assignmentId = selectedAssignmentId.value
     if (selectedClassId.value) params.classId = selectedClassId.value
 
-    const [summary, subsAll, evals, students, assignments, classes] = await Promise.all([
-      http.get('/statistics/summary', { params }),
-      http.get('/submissions'),
-      http.get('/evaluations'),
-      http.get('/students'),
-      http.get('/assignments'),
-      http.get('/classes'),
-    ])
+    const summary = await http.get('/statistics/summary', { params })
+    await Promise.all([fetchStudents(), fetchClasses(), fetchAssignments(), fetchSubmissions(), fetchEvaluations()])
+
+    const students = allStudents.value
+    const classes = allClasses.value
+    const assignments = allAssignments.value
+    const subsAll = allSubmissions.value
+    const evals = allEvaluations.value
+
     assignmentOptions.value = assignments || []
     classOptions.value = classes || []
 
@@ -666,8 +665,7 @@ onActivated(() => {
 onDeactivated(() => {
   rightButtons.value = []
 })
-watch(refreshTick, fetchAll)
-watch(dataVersion, fetchAll)
+watch(fetchVersion, fetchAll)
 watch([selectedAssignmentId, selectedClassId], fetchAll)
 </script>
 

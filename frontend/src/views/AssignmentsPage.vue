@@ -361,13 +361,14 @@ import {
 import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
 import { getCookie, setCookie } from '../utils/cookie'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 import AppIcon from '../components/AppIcon.vue'
+import { fetchVersion, fetchStudents, fetchClasses, fetchAssignments as storeFetchAssignments, fetchSubmissions as storeFetchSubmissions, fetchEvaluations as storeFetchEvaluations, students as allStudents, classes as allClasses, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()
@@ -376,7 +377,7 @@ const loading = ref(false)
 const saving = ref(false)
 const activeId = ref(null)
 const assignments = ref<any[]>([])
-const classesAll = ref<any[]>([])
+const classesAll = allClasses
 const searchQuery = ref('')
 const sortKey = ref<string | null>(null)
 
@@ -400,7 +401,7 @@ const filteredAssignments = computed(() => {
 })
 const editing = ref(false)
 const isCreate = ref(false)
-const studentsAll = ref<any[]>([])
+const studentsAll = allStudents
 const exporting = ref(false)
 const editorRef = ref(null)
 
@@ -702,7 +703,6 @@ async function onDelete(a: any) {
   }
 }
 
-const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
 const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
@@ -743,16 +743,13 @@ function buildRightButtons() {
 async function fetchAssignments() {
   loading.value = true
   try {
-    const [assignmentRows, subs, evals, students, classes] = await Promise.all([
-      http.get('/assignments'),
-      http.get('/submissions'),
-      http.get('/evaluations'),
-      http.get('/students'),
-      http.get('/classes'),
-    ])
+    await Promise.all([fetchStudents(), fetchClasses(), storeFetchAssignments(), storeFetchSubmissions(), storeFetchEvaluations()])
 
-    studentsAll.value = students || []
-    classesAll.value = classes || []
+    const assignmentRows = allAssignments.value
+    const subs = allSubmissions.value
+    const evals = allEvaluations.value
+    const students = allStudents.value
+    const classes = allClasses.value
 
     const evalMap: Record<string, any> = {}
     ;(evals || []).forEach((e: any) => {
@@ -833,7 +830,7 @@ onActivated(() => {
 onDeactivated(() => {
   rightButtons.value = []
 })
-watch(refreshTick, fetchAssignments)
+watch(fetchVersion, fetchAssignments)
 </script>
 
 <style lang="scss" scoped>

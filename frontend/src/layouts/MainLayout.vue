@@ -133,6 +133,7 @@ import http from '../utils/request'
 import { clearSessionUser } from '../utils/session'
 import { useTheme } from '../composables/useTheme'
 import { useMagicBar } from '../composables/useMagicBar'
+import { refreshAll } from '../stores/data'
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, SHOW_GREETING_KEY, DATA_VERSION_KEY } from '../types'
 import MagicBar from '../components/MagicBar.vue'
 import AppIcon from '../components/AppIcon.vue'
@@ -242,7 +243,7 @@ provide(RIGHT_BUTTONS_KEY, rightButtons)
 async function doRefresh() {
   try {
     await http.get('/health')
-    refreshTick.value++
+    await refreshAll()
     notify({ type: 'success', snackbar: '数据已刷新', snackbarDuration: 2000 })
   } catch {
     notify({ type: 'error', snackbar: '刷新失败，服务器无响应', magicbar: '刷新数据时遇到了问题', snackbarDuration: 3000 })
