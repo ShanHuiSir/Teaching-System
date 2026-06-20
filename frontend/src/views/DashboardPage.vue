@@ -653,7 +653,7 @@ onMounted(() => {
   magicBar.sub = ''
   retryFetch(
     () => fetchAll(),
-    (e: any) => notify({ type: 'error', snackbar: '数据加载失败：' + (e.message || '网络异常'), magicbar: '加载仪表盘数据时遇到了问题' }),
+    (e: any) => notify({ type: 'error', snackbar: '数据加载失败：' + (e.message || '网络异常'), magicbar: '加载失败：' + (e.message || '网络异常') }),
   )
   showGreeting('仪表盘')
 })

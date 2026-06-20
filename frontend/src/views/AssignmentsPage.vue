@@ -619,7 +619,7 @@ async function onSave() {
     activeId.value = saved.id
     await fetchAssignments()
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存作业时遇到了问题' })
+    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存失败：' + (e.message || '网络异常') })
   } finally {
     saving.value = false
   }
@@ -681,7 +681,7 @@ async function onExport(item: any) {
     URL.revokeObjectURL(url)
     notify({ type: 'success', snackbar: '导出成功', magicbar: '导出完成' })
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '导出失败：' + (e.message || '网络异常'), magicbar: '导出成绩时遇到了问题' })
+    notify({ type: 'error', snackbar: '导出失败：' + (e.message || '网络异常'), magicbar: '导出失败：' + (e.message || '网络异常') })
   } finally {
     exporting.value = false
   }
@@ -699,7 +699,7 @@ async function onDelete(a: any) {
     assignments.value = assignments.value.filter(x => x.id !== a.id)
     notify({ type: 'success', snackbar: `「${a.title}」已删除` })
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除作业时遇到了问题' })
+    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除失败：' + (e.message || '网络异常') })
   }
 }
 
@@ -819,7 +819,7 @@ onMounted(() => {
   magicBar.sub = active.value?.title || ''
   retryFetch(
     () => fetchAssignments(),
-    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
+    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载失败：' + (e.message || '网络异常') }),
   )
 })
 onActivated(() => {

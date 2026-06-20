@@ -932,7 +932,7 @@ async function submitReview() {
     if (saved) {
       notify({ type: 'error', snackbar: '提交失败，评分已保存在本地草稿', magicbar: '提交失败，已保存至本地草稿' })
     } else {
-      notify({ type: 'error', snackbar: '提交批改失败：' + (e.message || '网络异常'), magicbar: '提交批改时遇到了问题' })
+      notify({ type: 'error', snackbar: '提交批改失败：' + (e.message || '网络异常'), magicbar: '提交失败：' + (e.message || '网络异常') })
     }
   } finally {
     submitting.value = false
@@ -1047,7 +1047,7 @@ async function onAiEval() {
       if (magicBar.status === 'AI 评价已完成') magicBar.status = ''
     }, 2500)
   } catch (e: any) {
-    notify({ type: 'error', snackbar: 'AI评价失败：' + (e.message || '网络异常'), magicbar: 'AI 评分时遇到了问题' })
+    notify({ type: 'error', snackbar: 'AI评价失败：' + (e.message || '网络异常'), magicbar: 'AI 评分失败：' + (e.message || '网络异常') })
   } finally {
     aiLoading.value = false
   }
@@ -1297,7 +1297,7 @@ onMounted(() => {
   updateMagicTrail()
   retryFetch(
     () => fetchSubmissions(),
-    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
+    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载失败：' + (e.message || '网络异常') }),
   )
 })
 onActivated(() => {
