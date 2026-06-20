@@ -88,6 +88,7 @@ public class RealAIService {
             JsonNode dimScores = root.path("dimensionScores");
             result.setDimensionScores(dimScores.isMissingNode() ? "[]" : dimScores.toString());
             result.setStatus(root.path("status").asInt(EvaluationResult.STATUS_AI_REVIEWED));
+            result.setAiSource(EvaluationResult.AI_SOURCE_REAL);
             return result;
         } catch (Exception exception) {
             throw new IllegalStateException("真实 AI 服务响应解析失败：" + exception.getMessage());
