@@ -451,7 +451,7 @@ async function onSave() {
     activeId.value = saved.id
     await fetchClasses()
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存班级时遇到了问题' })
+    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存失败：' + (e.message || '网络异常') })
   }
 }
 
@@ -506,7 +506,7 @@ async function confirmDelete() {
     classes.value = classes.value.filter(x => x.id !== c.id)
     notify({ type: 'success', snackbar: `「${c.name}」已删除` })
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除班级时遇到了问题' })
+    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除失败：' + (e.message || '网络异常') })
   }
 }
 
@@ -573,7 +573,7 @@ onMounted(() => {
   magicBar.sub = active.value?.name || ''
   retryFetch(
     () => fetchClasses(),
-    (e: any) => notify({ type: 'error', snackbar: '班级列表加载失败：' + (e.message || '网络异常'), magicbar: '加载班级列表时遇到了问题' }),
+    (e: any) => notify({ type: 'error', snackbar: '班级列表加载失败：' + (e.message || '网络异常'), magicbar: '加载失败：' + (e.message || '网络异常') }),
   )
 })
 onActivated(() => {
