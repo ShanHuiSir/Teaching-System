@@ -696,12 +696,12 @@ const draftStamp = ref(0)
 const draft = computed(() => {
   void draftStamp.value
   if (!activeId.value) return null
-  const raw = getCookie(`draft_${activeId.value}`)
+  const raw = localStorage.getItem(`draft_${activeId.value}`)
   if (!raw) return null
   // Clear draft if teacher already confirmed
   const ev = activeEval.value
   if (ev && ev.status >= 2) {
-    setCookie(`draft_${activeId.value}`, '', -1)
+    localStorage.removeItem(`draft_${activeId.value}`)
     return null
   }
   try {
@@ -830,7 +830,7 @@ async function onReview() {
   if (!active.value) return
   const ev = activeEval.value
   const draftKey = `draft_${active.value.id}`
-  const draft = getCookie(draftKey)
+  const draft = localStorage.getItem(draftKey)
   if (draft) {
     try {
       const d = JSON.parse(draft)
@@ -853,7 +853,7 @@ watch(reviewMode, (val, old) => {
   if (old && !val && active.value) {
     draftStamp.value++
     const key = `draft_${active.value.id}`
-    if (getCookie(key) && !(activeEval.value?.status >= 2)) {
+    if (localStorage.getItem(key) && !(activeEval.value?.status >= 2)) {
       notify({
         type: 'info',
         snackbar: `${active.value.studentName} 的 ${active.value.workType || '作业'} 批改已保存`,
@@ -869,7 +869,7 @@ watchEffect(() => {
   if (activeEval.value?.status >= 2) return
   const draftKey = `draft_${active.value.id}`
   const draft = JSON.stringify({ score: teacherScore.value, comment: teacherComment.value })
-  setCookie(draftKey, draft, 7)
+  localStorage.setItem(draftKey, draft)
 })
 
 function clampScore() {
@@ -909,7 +909,7 @@ async function submitReview() {
     })
     // Close form immediately — data refresh happens after
     reviewMode.value = false
-    setCookie(`draft_${active.value.id}`, '', -1)
+    localStorage.removeItem(`draft_${active.value.id}`)
     // Ripple as success celebration
     const btn = (submitBtnRef.value as any)?.$el as HTMLElement | undefined
     if (btn) {
@@ -928,7 +928,7 @@ async function submitReview() {
     evalMap.value = em
     rebuildSemesters()
   } catch (e) {
-    const saved = getCookie(`draft_${active.value.id}`)
+    const saved = localStorage.getItem(`draft_${active.value.id}`)
     if (saved) {
       notify({ type: 'error', snackbar: '提交失败，评分已保存在本地草稿', magicbar: '提交失败，已保存至本地草稿' })
     } else {

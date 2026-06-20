@@ -360,7 +360,7 @@ import {
 } from 'vue'
 import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
-import { getCookie, setCookie } from '../utils/cookie'
+
 import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
@@ -457,7 +457,7 @@ function draftKey() {
 }
 
 function loadDraft() {
-  const raw = getCookie(draftKey())
+  const raw = localStorage.getItem(draftKey())
   if (!raw) return false
   try {
     const d = JSON.parse(raw)
@@ -480,11 +480,11 @@ function saveDraft() {
     description: form.description,
     dueDate: form.dueDate,
   }
-  setCookie(draftKey(), JSON.stringify(data), 7)
+  localStorage.setItem(draftKey(), JSON.stringify(data))
 }
 
 function clearDraft() {
-  setCookie(draftKey(), '', -1)
+  localStorage.removeItem(draftKey())
 }
 
 function startCreate() {
@@ -514,7 +514,7 @@ function startEdit(a: any) {
 // Notify on close without save
 watch(editing, (val, old) => {
   if (old && !val) {
-    if (getCookie(draftKey())) {
+    if (localStorage.getItem(draftKey())) {
       notify({ type: 'info', snackbar: '编辑内容已保存至草稿', magicbar: '编辑内容已保存至本地' })
     }
   }
