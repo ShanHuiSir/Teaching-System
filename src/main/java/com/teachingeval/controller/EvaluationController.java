@@ -8,11 +8,13 @@ import com.teachingeval.service.EvaluationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -48,10 +50,12 @@ public class EvaluationController {
         return evaluationService.getBySubmissionId(submissionId);
     }
 
-    @Operation(summary = "查询全部评价结果", description = "返回系统中已有的评价结果，用于状态列表批量匹配作业状态。")
+    @Operation(summary = "查询全部评价结果", description = "分页返回评价结果，默认每页 200 条。")
     @GetMapping("/evaluations")
-    public List<EvaluationResult> listEvaluations() {
-        return evaluationService.listEvaluations();
+    public List<EvaluationResult> listEvaluations(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "200") int size) {
+        return evaluationService.listEvaluations(PageRequest.of(page, size));
     }
 
     @Operation(summary = "保存教师最终评价", description = "保存教师最终评分（0-100）和评语，并将评价状态改为教师已确认。")

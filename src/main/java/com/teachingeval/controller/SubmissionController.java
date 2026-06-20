@@ -68,13 +68,11 @@ public class SubmissionController {
     public List<WorkSubmission> listSubmissions(HttpServletRequest request) {
         List<Long> classIds = teachingClassService.resolveTeacherClassIds(request);
         if (classIds == null) return submissionService.listSubmissions();
-        List<Long> studentIds = studentRepository.findAll().stream()
-                .filter(s -> s.getClassId() != null && classIds.contains(s.getClassId()))
+        List<Long> studentIds = studentRepository.findByClassIdIn(classIds).stream()
                 .map(com.teachingeval.entity.Student::getId)
                 .toList();
-        return submissionService.listSubmissions().stream()
-                .filter(s -> studentIds.contains(s.getStudentId()))
-                .toList();
+        if (studentIds.isEmpty()) return List.of();
+        return submissionRepository.findByStudentIdIn(studentIds);
     }
 
     @Operation(summary = "新增作品提交", description = "录入学生作品元数据，学生ID、标题、文件名、作品类型均为必填。")

@@ -34,10 +34,7 @@ public class StudentService {
 
     public List<Student> listStudents(List<Long> teacherClassIds) {
         if (teacherClassIds == null) return listStudents();
-        return studentRepository.findAll().stream()
-                .filter(s -> s.getClassId() != null && teacherClassIds.contains(s.getClassId()))
-                .sorted((a, b) -> a.getId().compareTo(b.getId()))
-                .toList();
+        return studentRepository.findByClassIdIn(teacherClassIds);
     }
 
     public Page<Student> listStudentPage(Integer page, Integer size, String keyword) {
