@@ -22,6 +22,16 @@ public class EvaluationResult {
     public static final int STATUS_AI_REVIEWED = 1;
     public static final int STATUS_TEACHER_CONFIRMED = 2;
 
+    /** TODO: 演示结束后，生产环境仅允许 REAL 来源 */
+    public static final String AI_SOURCE_REAL = "REAL";
+    public static final String AI_SOURCE_FAKE = "FAKE";
+    /** 真实 AI 失败后降级的模拟评分 */
+    public static final String AI_SOURCE_FAKE_FALLBACK = "FAKE_FALLBACK";
+
+    @jakarta.persistence.Transient
+    @Schema(description = "AI 评分来源：REAL（真实）/ FAKE（模拟，开发）/ FAKE_FALLBACK（真实失败降级）", example = "REAL")
+    private String aiSource;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(description = "主键，数据库自增，新建对象时为 null", example = "1")
@@ -109,6 +119,9 @@ public class EvaluationResult {
 
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }
+
+    public String getAiSource() { return aiSource; }
+    public void setAiSource(String aiSource) { this.aiSource = aiSource; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
