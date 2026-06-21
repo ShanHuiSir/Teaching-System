@@ -4,9 +4,12 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.scheduling.annotation.Scheduled;
 
 import com.teachingeval.repository.TeacherRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,6 +93,18 @@ public class AuthService {
     public void logout(String token) {
         if (token != null) {
             sessions.remove(token);
+        }
+    }
+
+    /** 每 15 分钟清理过期的 session，防止内存泄漏 */
+    @Scheduled(fixedRate = 15 * 60 * 1000)
+    void purgeExpiredSessions() {
+        Instant now = Instant.now();
+        Iterator<Map.Entry<String, Session>> it = sessions.entrySet().iterator();
+        while (it.hasNext()) {
+            if (it.next().getValue().expiresAt().isBefore(now)) {
+                it.remove();
+            }
         }
     }
 
