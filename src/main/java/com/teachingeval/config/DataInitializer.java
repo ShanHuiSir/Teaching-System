@@ -241,11 +241,11 @@ public class DataInitializer implements CommandLineRunner {
                              // a5=软件工程, a6=机器学习, a7=大数据分析, a8=Web前端
 
         WorkSubmission[] subs = {
-                sub(s.get(0), a.get(0), "第二阶段实训报告", "project-report.txt", "课程论文",
+                sub(s.get(0), a.get(0), "第二阶段实训报告", "project-report.md", "课程论文",
                         "包含源码和报告"),
                 sub(s.get(1), a.get(1), "算法设计与分析", "binary-search.cpp", "代码作业",
                         "二分查找算法实现与测试"),
-                sub(s.get(2), a.get(0), "第二阶段实训报告", "project-report.txt", "课程论文",
+                sub(s.get(2), a.get(0), "第二阶段实训报告", "project-report.md", "课程论文",
                         "实训项目总结与源码"),
                 sub(s.get(3), a.get(2), "数据结构课程设计", "binary-search.cpp", "代码作业",
                         "二叉搜索树与平衡树对比实现"),
@@ -263,15 +263,15 @@ public class DataInitializer implements CommandLineRunner {
                         "学生选课管理系统 ER 图与 SQL 脚本"),
                 sub(s.get(10), a.get(4), "操作系统实验报告", "os-experiment.txt", "实验报告",
                         ""),
-                sub(s.get(11), a.get(5), "软件工程课程论文", "project-report.txt", "课程论文",
+                sub(s.get(11), a.get(5), "软件工程课程论文", "project-report.md", "课程论文",
                         "敏捷开发实践与项目管理总结"),
                 sub(s.get(12), a.get(4), "操作系统实验报告", "os-experiment.txt", "实验报告",
                         "进程调度算法对比分析"),
-                sub(s.get(13), a.get(5), "软件工程课程论文", "project-report.txt", "课程论文",
+                sub(s.get(13), a.get(5), "软件工程课程论文", "project-report.md", "课程论文",
                         "在线教学评价系统开发总结"),
                 sub(s.get(14), a.get(7), "大数据分析报告", "database-design.txt", "实验报告",
                         "社交网络用户画像分析"),
-                sub(s.get(15), a.get(7), "大数据分析报告", "project-report.txt", "实验报告",
+                sub(s.get(15), a.get(7), "大数据分析报告", "project-report.md", "实验报告",
                         "实时流数据处理管道设计"),
                 sub(s.get(16), a.get(8), "Web 前端开发实战", "binary-search.cpp", "代码作业",
                         "在线答题系统前端实现"),
@@ -397,7 +397,7 @@ public class DataInitializer implements CommandLineRunner {
     private void attachSecondaryFiles(List<WorkSubmission> submissions) {
         for (WorkSubmission s : submissions) {
             if (!"thesis-draft.docx".equals(s.getFileName())) continue;
-            String secondaryName = "project-report.txt";
+            String secondaryName = "project-report.md";
             try {
                 var resource = new ClassPathResource("sample-files/" + secondaryName);
                 if (!resource.exists()) return;
