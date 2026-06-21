@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.teachingeval.dto.ExportRow;
 import com.teachingeval.entity.EvaluationResult;
 import com.teachingeval.entity.Student;
@@ -22,6 +24,8 @@ import com.teachingeval.repository.SubmissionRepository;
 
 @Service
 public class ExportService {
+
+    private static final int WRITE_BATCH_SIZE = 100;
 
     private final EvaluationRepository evaluationRepository;
     private final SubmissionRepository submissionRepository;
@@ -36,10 +40,10 @@ public class ExportService {
     }
 
     public void exportTo(OutputStream outputStream) {
-        exportTo(outputStream, null, null);
+        exportTo(outputStream, null, null, null);
     }
 
-    public void exportTo(OutputStream outputStream, Long assignmentId, Long classId) {
+    public void exportTo(OutputStream outputStream, Long assignmentId, Long classId, String workType) {
         // 1. 按作业 ID 查询提交（数据库层过滤）
         List<WorkSubmission> submissions = (assignmentId != null)
                 ? submissionRepository.findByAssignmentId(assignmentId)
@@ -62,13 +66,18 @@ public class ExportService {
                 : studentRepository.findAllById(studentIds).stream()
                         .collect(Collectors.toMap(Student::getId, Function.identity()));
 
-        // 3. 可选：按班级过滤
+        // 3. 可选：按班级 / 作品类型过滤（内存在已 scope 的小数据集上执行）
         if (classId != null) {
             submissions = submissions.stream()
                     .filter(submission -> {
                         Student student = studentMap.get(submission.getStudentId());
                         return student != null && classId.equals(student.getClassId());
                     })
+                    .toList();
+        }
+        if (workType != null && !workType.isBlank()) {
+            submissions = submissions.stream()
+                    .filter(s -> workType.equals(s.getWorkType()))
                     .toList();
         }
 
@@ -81,43 +90,56 @@ public class ExportService {
                 : evaluationRepository.findBySubmissionIdIn(submissionIds).stream()
                         .collect(Collectors.toMap(EvaluationResult::getSubmissionId, Function.identity(), (a, b) -> a));
 
-        // 5. 组装导出行
-        List<ExportRow> rows = new ArrayList<>();
+        // 5. 流式写出：batch 组装 → ExcelWriter 分批写入，避免全量 ExportRow 驻留内存
+        ExcelWriter excelWriter = EasyExcel.write(outputStream, ExportRow.class).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet("成绩汇总").build();
+        List<ExportRow> batch = new ArrayList<>(WRITE_BATCH_SIZE);
+
         for (WorkSubmission submission : submissions) {
-            ExportRow row = new ExportRow();
-            row.setTitle(submission.getTitle());
-            row.setWorkType(submission.getWorkType());
-            row.setFileName(submission.getFileName());
-            row.setStudentName(submission.getStudentName());
-
-            Student student = studentMap.get(submission.getStudentId());
-            if (student != null) {
-                row.setStudentNo(student.getStudentNo());
-                row.setClassName(student.getClassName());
+            batch.add(buildRow(submission, studentMap, evalMap));
+            if (batch.size() >= WRITE_BATCH_SIZE) {
+                excelWriter.write(batch, writeSheet);
+                batch.clear();
             }
+        }
+        if (!batch.isEmpty()) {
+            excelWriter.write(batch, writeSheet);
+        }
+        excelWriter.finish();
+    }
 
-            EvaluationResult eval = evalMap.get(submission.getId());
-            if (eval != null) {
-                row.setAiScore(eval.getAiScore());
-                row.setAiIssues(eval.getAiIssues());
-                row.setAiComment(eval.getAiComment());
-                row.setDimensionScores(eval.getDimensionScores());
-                row.setTeacherScore(eval.getTeacherScore());
-                row.setTeacherComment(eval.getTeacherComment());
-                row.setStatusText(switch (eval.getStatus()) {
-                    case 0 -> "未评价";
-                    case 1 -> "已AI评价";
-                    default -> "教师已确认";
-                });
-            } else {
-                row.setStatusText("未评价");
-            }
+    private ExportRow buildRow(WorkSubmission submission,
+                               Map<Long, Student> studentMap,
+                               Map<Long, EvaluationResult> evalMap) {
+        ExportRow row = new ExportRow();
+        row.setTitle(submission.getTitle());
+        row.setWorkType(submission.getWorkType());
+        row.setFileName(submission.getFileName());
+        row.setStudentName(submission.getStudentName());
 
-            rows.add(row);
+        Student student = studentMap.get(submission.getStudentId());
+        if (student != null) {
+            row.setStudentNo(student.getStudentNo());
+            row.setClassName(student.getClassName());
         }
 
-        EasyExcel.write(outputStream, ExportRow.class)
-                .sheet("成绩汇总")
-                .doWrite(rows);
+        EvaluationResult eval = evalMap.get(submission.getId());
+        if (eval != null) {
+            row.setAiScore(eval.getAiScore());
+            row.setAiIssues(eval.getAiIssues());
+            row.setAiComment(eval.getAiComment());
+            row.setDimensionScores(eval.getDimensionScores());
+            row.setTeacherScore(eval.getTeacherScore());
+            row.setTeacherComment(eval.getTeacherComment());
+            row.setStatusText(switch (eval.getStatus()) {
+                case 0 -> "未评价";
+                case 1 -> "已AI评价";
+                default -> "教师已确认";
+            });
+        } else {
+            row.setStatusText("未评价");
+        }
+
+        return row;
     }
 }
