@@ -28,7 +28,15 @@
       <div v-else-if="error" class="preview-state preview-state--error">
         <p>{{ error }}</p>
       </div>
-      <div v-else-if="unsupported" class="preview-state">
+      <div v-else-if="previewMode === 'image'" class="preview-media">
+        <img :src="`/api/submissions/${submissionId}/preview`" :alt="fileName" />
+      </div>
+      <div v-else-if="previewMode === 'video'" class="preview-media">
+        <video :src="`/api/submissions/${submissionId}/preview`" controls playsinline>
+          您的浏览器不支持视频播放。
+        </video>
+      </div>
+      <div v-else-if="previewMode === 'unsupported'" class="preview-state">
         <svg class="preview-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
@@ -43,14 +51,15 @@
           <span>下载文件</span>
         </button>
       </div>
-      <pre v-else class="preview-code"><code>{{ content }}</code></pre>
+      <pre v-else-if="previewMode === 'text'" class="preview-code"><code>{{ content }}</code></pre>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { detectFileType } from '../utils/fileIcons'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,18 +67,26 @@ const content = ref('')
 const fileName = ref('')
 const loading = ref(true)
 const error = ref('')
-const unsupported = ref(false)
+const previewMode = ref<'text' | 'image' | 'video' | 'unsupported'>('unsupported')
 const downloadUrl = ref('')
+const submissionId = computed(() => route.params.submissionId as string)
+
+const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'])
+const VIDEO_EXTS = new Set(['mp4', 'webm', 'mov', 'avi'])
 
 function isTextType(contentType: string): boolean {
   return /^text\//.test(contentType) ||
     /\bapplication\/(json|xml|javascript|ld\+json|x-httpd-php|x-sh|x-perl|x-python|x-yaml|x-www-form-urlencoded)\b/.test(contentType)
 }
 
+function fileExt(fileName: string): string {
+  return (fileName || '').split('.').pop()?.toLowerCase() || ''
+}
+
 function triggerDownload() {
-  if (!downloadUrl.value) return
+  const url = downloadUrl.value || `/api/submissions/${submissionId.value}/file`
   const a = document.createElement('a')
-  a.href = downloadUrl.value
+  a.href = url
   a.download = fileName.value
   document.body.appendChild(a)
   a.click()
@@ -85,7 +102,7 @@ function closeTab() {
 }
 
 onMounted(async () => {
-  const id = route.params.submissionId
+  const id = submissionId.value
   try {
     const res = await fetch(`/api/submissions/${id}/file`, { credentials: 'include' })
     if (res.status === 401 || res.status === 403) {
@@ -95,17 +112,27 @@ onMounted(async () => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const disposition = res.headers.get('content-disposition')
     if (disposition) {
-      const match = disposition.match(/filename="?(.+?)"?$/i)
+      const match = disposition.match(/filename[^*]=?"?(.+?)"?$/i)
       if (match) fileName.value = match[1]
     }
     if (!fileName.value) fileName.value = `submission-${id}`
+
+    const ext = fileExt(fileName.value)
     const contentType = res.headers.get('content-type') || ''
-    if (isTextType(contentType)) {
+
+    if (IMAGE_EXTS.has(ext)) {
+      previewMode.value = 'image'
+      downloadUrl.value = `/api/submissions/${id}/file`
+    } else if (VIDEO_EXTS.has(ext)) {
+      previewMode.value = 'video'
+      downloadUrl.value = `/api/submissions/${id}/file`
+    } else if (isTextType(contentType)) {
+      previewMode.value = 'text'
       content.value = await res.text()
     } else {
+      previewMode.value = 'unsupported'
       const blob = await res.blob()
       downloadUrl.value = URL.createObjectURL(blob)
-      unsupported.value = true
     }
   } catch (e: any) {
     error.value = e.message || '文件加载失败'
@@ -115,7 +142,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  if (downloadUrl.value) {
+  if (downloadUrl.value && downloadUrl.value.startsWith('blob:')) {
     URL.revokeObjectURL(downloadUrl.value)
   }
 })
@@ -208,6 +235,13 @@ onBeforeUnmount(() => {
     color: rgb(var(--md-sys-color-on-surface-variant) / 0.5);
     margin-bottom: 8px;
   }
+}
+
+.preview-media {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  background: #000; overflow: auto;
+  img, video { max-width: 100%; max-height: 100%; object-fit: contain; }
+  video:focus { outline: none; }
 }
 
 .preview-download-btn {

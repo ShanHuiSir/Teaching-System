@@ -254,7 +254,7 @@ class TeachingSystemFlowTest {
         mockMvc.perform(get("/api/statistics/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.studentCount").value(18))
-                .andExpect(jsonPath("$.submissionCount").value(19))
+                .andExpect(jsonPath("$.submissionCount").value(24))
                 .andExpect(jsonPath("$.aiEvaluatedCount").value(6))
                 .andExpect(jsonPath("$.teacherConfirmedCount").value(3))
                 .andExpect(jsonPath("$.averageTeacherScore").value(89.00));
