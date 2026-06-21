@@ -33,7 +33,8 @@ public class SubmissionService {
             "doc", "docx", "pdf", "zip", "rar", "7z", "tar", "gz",
             "txt", "java", "py", "png", "jpg", "jpeg", "webp",
             "cpp", "c", "h", "hpp", "js", "ts", "html", "css",
-            "md", "json", "xml", "yaml", "yml", "sql", "sh", "csv", "log"
+            "md", "json", "xml", "yaml", "yml", "sql", "sh", "csv", "log",
+            "xlsx", "pptx", "mp4"
     );
 
     private final SubmissionRepository submissionRepository;
