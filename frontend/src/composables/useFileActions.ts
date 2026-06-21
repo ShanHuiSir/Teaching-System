@@ -41,6 +41,29 @@ export function useFileActions() {
   const currentFileId = ref<number | undefined>(undefined)
   const officeBuffer = ref<ArrayBuffer | null>(null)
 
+  // ── File content cache (session-scoped, 5 min TTL) ──
+  const CACHE_TTL = 5 * 60 * 1000
+  const contentCache = new Map<string, { data: any; ts: number }>()
+
+  function cacheKey(submissionId: number, fileId?: number): string {
+    return `${submissionId}_${fileId ?? 0}`
+  }
+
+  function cacheGet(key: string): any | undefined {
+    const entry = contentCache.get(key)
+    if (entry && Date.now() - entry.ts < CACHE_TTL) return entry.data
+    contentCache.delete(key)
+    return undefined
+  }
+
+  function cacheSet(key: string, data: any) {
+    contentCache.set(key, { data, ts: Date.now() })
+  }
+
+  function cacheClear(key: string) {
+    contentCache.delete(key)
+  }
+
   function downloadFile(submissionId: number, fileName: string, fileId?: number) {
     const a = document.createElement('a')
     const url = fileId != null
@@ -68,13 +91,21 @@ export function useFileActions() {
     // Office 文档 → 转换后悬浮窗预览
     if (isOfficeFile(fileName)) {
       const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase()
+      const key = cacheKey(submissionId, fileId)
+      const cached = cacheGet(key)
       previewMode.value = 'office'
       currentFileId.value = fileId
       previewFileName.value = fileName
-      previewLoading.value = true
       previewError.value = ''
       previewContent.value = ''
       previewVisible.value = true
+      if (cached) {
+        previewLoading.value = false
+        if (ext === '.xlsx') previewContent.value = await convertXlsx(cached)
+        else officeBuffer.value = cached
+        return
+      }
+      previewLoading.value = true
       try {
         const fetchUrl = fileId != null
           ? `/api/submissions/${submissionId}/file?fileId=${fileId}`
@@ -82,6 +113,7 @@ export function useFileActions() {
         const res = await fetch(fetchUrl, { credentials: 'include' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const buffer = await res.arrayBuffer()
+        cacheSet(key, buffer)
         if (ext === '.xlsx') {
           // XLSX → HTML string rendered in iframe
           previewContent.value = await convertXlsx(buffer)
@@ -102,12 +134,15 @@ export function useFileActions() {
 
     // Markdown → 渲染后预览
     if (isMarkdownFile(fileName)) {
+      const key = cacheKey(submissionId, fileId)
+      const cached = cacheGet(key)
       previewMode.value = 'markdown'
       currentFileId.value = fileId
       previewFileName.value = fileName
-      previewLoading.value = true
       previewError.value = ''
       previewVisible.value = true
+      if (cached) { previewLoading.value = false; previewContent.value = await getMarkdownHtml(cached); return }
+      previewLoading.value = true
       try {
         const fetchUrl = fileId != null
           ? `/api/submissions/${submissionId}/file?fileId=${fileId}`
@@ -115,6 +150,7 @@ export function useFileActions() {
         const res = await fetch(fetchUrl, { credentials: 'include' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const text = await res.text()
+        cacheSet(key, text)
         previewContent.value = await getMarkdownHtml(text)
       } catch {
         previewError.value = '文件加载失败，请尝试下载'
@@ -130,12 +166,15 @@ export function useFileActions() {
       downloadFile(submissionId, fileName, fileId)
       return
     }
+    const key = cacheKey(submissionId, fileId)
+    const cached = cacheGet(key)
     previewMode.value = 'text'
     currentFileId.value = fileId
-    previewLoading.value = true
     previewFileName.value = fileName
     previewError.value = ''
     previewVisible.value = true
+    if (cached) { previewLoading.value = false; previewContent.value = cached; return }
+    previewLoading.value = true
     try {
       const fetchUrl = fileId != null
         ? `/api/submissions/${submissionId}/file?fileId=${fileId}`
@@ -143,6 +182,7 @@ export function useFileActions() {
       const res = await fetch(fetchUrl, { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const text = await res.text()
+      cacheSet(key, text)
       previewContent.value = text
     } catch {
       previewError.value = '文件加载失败，请尝试下载'

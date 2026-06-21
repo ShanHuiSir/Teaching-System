@@ -52,9 +52,13 @@ kill_port() {
         pid=$(_find_pid_by_port "$port" || true)
     fi
 
+    # Normalize: collapse newlines to spaces (lsof may return multiple PIDs)
+    pid=$(echo "$pid" | tr '\n' ' ' | xargs)
+
     if [ -n "$pid" ]; then
         echo -e "  ${YELLOW}→ Killing PID $pid on port $port...${NC}"
-        kill "$pid" 2>/dev/null || true
+        # Unquoted $pid so each PID becomes a separate argument
+        kill $pid 2>/dev/null || true
         # Wait up to 5 s for graceful shutdown
         for i in $(seq 1 5); do
             sleep 1
@@ -65,7 +69,7 @@ kill_port() {
         done
         # Still alive — force kill
         echo -e "  ${YELLOW}→ Force-killing PID $pid...${NC}"
-        kill -9 "$pid" 2>/dev/null || true
+        kill -9 $pid 2>/dev/null || true
         sleep 1
         if ! port_alive "$port"; then
             echo -e "    ${GREEN}✓ Port $port freed${NC}"
@@ -307,19 +311,31 @@ while true; do
             echo ""
             kill_port 8000
             sleep 1
-            start_ai || true
+            if ! port_alive 8000; then
+                start_ai || true
+            else
+                echo -e "  ${RED}✗ Cannot restart: port 8000 still occupied${NC}"
+            fi
             ;;
         5)
             echo ""
             kill_port 8080
             sleep 2
-            start_boot || true
+            if ! port_alive 8080; then
+                start_boot || true
+            else
+                echo -e "  ${RED}✗ Cannot restart: port 8080 still occupied${NC}"
+            fi
             ;;
         6)
             echo ""
             kill_port 5173
             sleep 1
-            start_frontend || true
+            if ! port_alive 5173; then
+                start_frontend || true
+            else
+                echo -e "  ${RED}✗ Cannot restart: port 5173 still occupied${NC}"
+            fi
             ;;
         7)
             stop_all

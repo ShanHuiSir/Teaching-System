@@ -401,7 +401,8 @@
           </div>
 
           <!-- Attachments -->
-          <div v-if="activeFiles.length" class="attach-list">
+          <ListSkeleton v-if="filesLoading" :count="1" />
+          <div v-else-if="activeFiles.length" class="attach-list">
             <div v-for="f in activeFiles" :key="f.id" class="attach-item">
               <svg
                 class="attach-item__icon"
@@ -679,13 +680,16 @@ const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
 const { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, currentFileId, officeBuffer, downloadFile, previewFile, closePreview } = useFileActions()
 const previewFileId = ref(0)
 const activeFiles = ref<any[]>([])
+const filesLoading = ref(false)
 
 async function fetchFiles(submissionId: number) {
+  filesLoading.value = true
   try {
     const res = await fetch(`/api/submissions/${submissionId}/files`, { credentials: 'include' })
     if (res.ok) activeFiles.value = await res.json()
     else activeFiles.value = []
   } catch { activeFiles.value = [] }
+  finally { filesLoading.value = false }
 }
 
 function doPreviewFile(id: number, fileName: string, contentType?: string, fileId?: number) { previewFileId.value = id; previewFile(id, fileName, contentType, fileId) }
@@ -1354,6 +1358,7 @@ onActivated(() => {
   magicBar.primary = '作业审批'
   updateMagicTrail()
   buildRightButtons()
+  if (activeId.value) fetchFiles(activeId.value)
 })
 onDeactivated(() => {
   rightButtons.value = []
