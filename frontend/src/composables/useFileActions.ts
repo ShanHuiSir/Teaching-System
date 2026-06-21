@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { isOfficeFile, convertXlsx } from './useOfficePreview'
+import { isMarkdownFile, getMarkdownHtml } from './useMarkdownPreview'
 
 const TEXT_PREVIEW_EXTENSIONS = [
   '.txt', '.log', '.csv', '.md', '.json', '.xml', '.yaml', '.yml',
@@ -36,7 +37,7 @@ export function useFileActions() {
   const previewFileName = ref('')
   const previewLoading = ref(false)
   const previewError = ref('')
-  const previewMode = ref<'text' | 'image' | 'video' | 'office'>('text')
+  const previewMode = ref<'text' | 'image' | 'video' | 'office' | 'markdown'>('text')
   const currentFileId = ref<number | undefined>(undefined)
   const officeBuffer = ref<ArrayBuffer | null>(null)
 
@@ -93,6 +94,31 @@ export function useFileActions() {
         previewError.value = e.message || 'Office 文件转换失败，请尝试下载'
         previewContent.value = ''
         officeBuffer.value = null
+      } finally {
+        previewLoading.value = false
+      }
+      return
+    }
+
+    // Markdown → 渲染后预览
+    if (isMarkdownFile(fileName)) {
+      previewMode.value = 'markdown'
+      currentFileId.value = fileId
+      previewFileName.value = fileName
+      previewLoading.value = true
+      previewError.value = ''
+      previewVisible.value = true
+      try {
+        const fetchUrl = fileId != null
+          ? `/api/submissions/${submissionId}/file?fileId=${fileId}`
+          : `/api/submissions/${submissionId}/file`
+        const res = await fetch(fetchUrl, { credentials: 'include' })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const text = await res.text()
+        previewContent.value = await getMarkdownHtml(text)
+      } catch {
+        previewError.value = '文件加载失败，请尝试下载'
+        previewContent.value = ''
       } finally {
         previewLoading.value = false
       }

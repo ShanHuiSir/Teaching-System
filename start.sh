@@ -18,23 +18,75 @@ AI_LOG="$LOG_DIR/ai-service.log"
 BOOT_LOG="$LOG_DIR/spring-boot.log"
 FRONT_LOG="$LOG_DIR/frontend.log"
 
+# ── Helper: find PID by scanning /proc for the socket inode ─────────────────
+_find_pid_by_port() {
+    local port=$1 hex_port inode pid
+    hex_port=$(printf '%04X' "$port")
+    # Extract inode from /proc/net/tcp (field 10, state 0A = LISTEN)
+    inode=$(awk -v p="$hex_port" '$4=="0A" && $2~":"p"$" {print $10; exit}' /proc/net/tcp 2>/dev/null)
+    [ -z "$inode" ] && return 1
+    # Scan /proc/*/fd for the socket inode
+    for fd_dir in /proc/[0-9]*/fd; do
+        pid="${fd_dir%/fd}"; pid="${pid##*/}"
+        [ "$pid" = "self" ] && continue
+        if ls -l "$fd_dir" 2>/dev/null | grep -q "socket:\[$inode\]"; then
+            echo "$pid"
+            return 0
+        fi
+    done
+    return 1
+}
+
 # ── Helper: kill a process by port ──────────────────────────────────────────
 kill_port() {
-    local port=$1
-    local pid
+    local port=$1 pid
+    # Try multiple tools to find the PID (lsof → fuser → ss → /proc scan)
     pid=$(lsof -ti :"$port" 2>/dev/null || true)
+    if [ -z "$pid" ]; then
+        pid=$(fuser "$port"/tcp 2>/dev/null | grep -o '[0-9]*' | head -1 || true)
+    fi
+    if [ -z "$pid" ]; then
+        pid=$(ss -tlnp "sport = :$port" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | head -1 || true)
+    fi
+    if [ -z "$pid" ]; then
+        pid=$(_find_pid_by_port "$port" || true)
+    fi
+
     if [ -n "$pid" ]; then
         echo -e "  ${YELLOW}→ Killing PID $pid on port $port...${NC}"
         kill "$pid" 2>/dev/null || true
-        sleep 1
+        # Wait up to 5 s for graceful shutdown
+        for i in $(seq 1 5); do
+            sleep 1
+            if ! port_alive "$port"; then
+                echo -e "    ${GREEN}✓ Port $port freed${NC}"
+                return
+            fi
+        done
+        # Still alive — force kill
+        echo -e "  ${YELLOW}→ Force-killing PID $pid...${NC}"
         kill -9 "$pid" 2>/dev/null || true
+        sleep 1
+        if ! port_alive "$port"; then
+            echo -e "    ${GREEN}✓ Port $port freed${NC}"
+        else
+            echo -e "    ${RED}✗ Port $port still occupied after SIGKILL — manual intervention required${NC}"
+        fi
     fi
 }
 
 # ── Helper: check if a port is listening ────────────────────────────────────
 port_alive() {
     local port=$1
-    lsof -ti :"$port" >/dev/null 2>&1
+    lsof -ti :"$port" >/dev/null 2>&1 && return 0
+    fuser "$port"/tcp >/dev/null 2>&1 && return 0
+    # ss always exits 0 — must verify it actually found a matching line
+    [ "$(ss -tlnp "sport = :$port" 2>/dev/null | wc -l)" -gt 1 ] && return 0
+    # Last resort: /proc/net/tcp (always available, no tools needed)
+    local hex_port
+    hex_port=$(printf '%04X' "$port")
+    grep -qE ":[0-9A-F]+:${hex_port} [0-9A-F]+:0000:0000 0A" /proc/net/tcp 2>/dev/null && return 0
+    return 1
 }
 
 # ── Status indicators ───────────────────────────────────────────────────────
@@ -68,6 +120,11 @@ prepare_venv() {
 
 # ── Service launchers (background, output → log files) ──────────────────────
 start_ai() {
+    # Ensure port is free before starting
+    if port_alive 8000; then
+        echo -e "    ${RED}✗ Port 8000 is still occupied — old process may still be running${NC}"
+        return 1
+    fi
     echo -e "  ${CYAN}→ Starting AI Service (port 8000)...${NC}"
     cd "$ROOT/ai-service"
     source .venv/bin/activate
@@ -85,12 +142,17 @@ start_ai() {
 start_boot() {
     echo -e "  ${CYAN}→ Compiling Spring Boot...${NC}"
     cd "$ROOT"
-    if ! mvn compile -q >> "$BOOT_LOG" 2>&1; then
+    if ! mvn clean compile -q >> "$BOOT_LOG" 2>&1; then
         echo -e "    ${RED}✗ Compilation failed — check log: $BOOT_LOG${NC}"
         return 1
     fi
     echo -e "    ${GREEN}✓ Compilation successful${NC}"
 
+    # Ensure port is free before starting
+    if port_alive 8080; then
+        echo -e "    ${RED}✗ Port 8080 is still occupied — old process may still be running${NC}"
+        return 1
+    fi
     echo -e "  ${CYAN}→ Starting Spring Boot (port 8080)...${NC}"
     nohup mvn spring-boot:run >> "$BOOT_LOG" 2>&1 &
     disown $!
@@ -106,6 +168,11 @@ start_boot() {
 }
 
 start_frontend() {
+    # Ensure port is free before starting
+    if port_alive 5173; then
+        echo -e "    ${RED}✗ Port 5173 is still occupied — old process may still be running${NC}"
+        return 1
+    fi
     echo -e "  ${CYAN}→ Starting Frontend (port 5173)...${NC}"
     cd "$ROOT/frontend"
     nohup npm run dev >> "$FRONT_LOG" 2>&1 &
@@ -166,6 +233,23 @@ echo -e "${BOLD}[2/4]${NC} Starting services..."
 : > "$BOOT_LOG"
 : > "$FRONT_LOG"
 
+# Kill any leftover processes from a previous run
+kill_port 8000
+kill_port 8080
+kill_port 5173
+
+# Pre-flight: verify all ports are free
+for p in 8000 8080 5173; do
+    if port_alive "$p"; then
+        echo -e "  ${RED}✗ Port $p could not be freed — free it manually and retry${NC}"
+    fi
+done
+if port_alive 8000 || port_alive 8080 || port_alive 5173; then
+    echo -e "${RED}[!] Some ports are still occupied. Please run:${NC}"
+    echo -e "${YELLOW}    fuser -k 8000/tcp 8080/tcp 5173/tcp${NC}"
+    exit 1
+fi
+
 start_ai
 start_boot
 start_frontend
@@ -222,7 +306,7 @@ while true; do
             echo ""
             kill_port 8000
             sleep 1
-            start_ai
+            start_ai || true
             ;;
         5)
             echo ""
@@ -234,7 +318,7 @@ while true; do
             echo ""
             kill_port 5173
             sleep 1
-            start_frontend
+            start_frontend || true
             ;;
         7)
             stop_all

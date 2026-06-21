@@ -1,6 +1,4 @@
-declare module 'jquery' {
-  const $: any
-  export default $
-}
-
-declare module 'pptx2html'
+declare module 'docx-preview'
+declare module 'pptx-preview'
+declare module 'markdown-it'
+declare module 'highlight.js'

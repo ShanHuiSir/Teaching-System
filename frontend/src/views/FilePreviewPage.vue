@@ -116,6 +116,9 @@
           <span>下载文件</span>
         </button>
       </div>
+      <div v-else-if="previewMode === 'markdown'" class="preview-markdown">
+        <div class="fp-markdown" v-html="content" />
+      </div>
       <pre v-else-if="previewMode === 'text'" class="preview-code"><code>{{ content }}</code></pre>
     </div>
   </div>
@@ -127,6 +130,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { detectFileType } from '../utils/fileIcons'
 import { isOfficeFile, renderOffice, convertXlsx } from '../composables/useOfficePreview'
 import { isTextPreviewable } from '../composables/useFileActions'
+import { isMarkdownFile, getMarkdownHtml } from '../composables/useMarkdownPreview'
 
 const route = useRoute()
 const router = useRouter()
@@ -134,7 +138,7 @@ const content = ref('')
 const fileName = ref('')
 const loading = ref(true)
 const error = ref('')
-const previewMode = ref<'text' | 'image' | 'video' | 'office' | 'unsupported'>('unsupported')
+const previewMode = ref<'text' | 'image' | 'video' | 'office' | 'markdown' | 'unsupported'>('unsupported')
 const downloadUrl = ref('')
 const submissionId = computed(() => route.params.submissionId as string)
 const fileId = computed(() => route.query.fileId as string | undefined)
@@ -335,6 +339,10 @@ onMounted(async () => {
         }
       }
       return
+    } else if (isMarkdownFile(fileName.value)) {
+      previewMode.value = 'markdown'
+      const text = await res.text()
+      content.value = await getMarkdownHtml(text)
     } else if (isTextPreviewable(fileName.value, contentType)) {
       previewMode.value = 'text'
       content.value = await res.text()
@@ -489,6 +497,10 @@ onBeforeUnmount(() => {
   flex: 1; overflow: auto;
   background: #fff;
   padding: 0;
+}
+
+.preview-markdown {
+  flex: 1; overflow: auto;
 }
 
 .preview-download-btn {
