@@ -87,17 +87,18 @@ export function useMagicBar(teacherName: Ref<string>): MagicBarApi {
 
   // ── Rest reminder ──
   let restTimer: ReturnType<typeof setTimeout> | null = null
+  let restClearTimer: ReturnType<typeof setTimeout> | null = null
   const REST_INTERVAL = 60 * 60 * 1000
 
   function resetRestTimer(): void {
     clearTimeout(restTimer!)
+    clearTimeout(restClearTimer!)
     restTimer = setTimeout(() => {
       magicBar.status = '已经连续工作一段时间了，起来活动一下吧'
       magicBar.statusType = 'info'
-      setTimeout(() => {
-        if (magicBar.status === '已经连续工作一段时间了，起来活动一下吧') {
-          magicBar.status = ''
-        }
+      restClearTimer = setTimeout(() => {
+        magicBar.status = ''
+        restClearTimer = null
         resetRestTimer()
       }, 6000)
     }, REST_INTERVAL)
@@ -166,6 +167,7 @@ export function useMagicBar(teacherName: Ref<string>): MagicBarApi {
 
   onUnmounted(() => {
     clearTimeout(restTimer!)
+    clearTimeout(restClearTimer!)
     clearTimeout(greetTimer!)
     clearTimeout(greetDismissTimer!)
     clearTimeout(reconnectTimer!)

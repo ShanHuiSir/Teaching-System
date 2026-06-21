@@ -32,7 +32,12 @@ http.interceptors.response.use(
   },
   (err: unknown) => {
     if (err && typeof err === 'object' && 'response' in err) {
-      const axiosErr = err as { response?: { status?: number } }
+      const axiosErr = err as { response?: { status?: number; data?: { message?: string } } }
+      // 提取后端返回的错误消息，替换 Axios 默认的 "Request failed with status code XXX"
+      const backendMsg = axiosErr.response?.data?.message
+      if (backendMsg) {
+        return Promise.reject(new Error(backendMsg))
+      }
       if (!axiosErr.response || axiosErr.response.status! >= 500) {
         notifyHttpError()
       }

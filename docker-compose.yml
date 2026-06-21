@@ -16,7 +16,7 @@ services:
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
       DEEPSEEK_THINKING: ${DEEPSEEK_THINKING:-false}
-      DEEPSEEK_MAX_TOKENS: ${DEEPSEEK_MAX_TOKENS:-800}
+      DEEPSEEK_MAX_TOKENS: ${DEEPSEEK_MAX_TOKENS:-4096}
       OCR_ENABLED: ${OCR_ENABLED:-false}
       AI_RATE_LIMIT_PER_MINUTE: ${AI_RATE_LIMIT_PER_MINUTE:-10}
       EVAL_LOG_DIR: /app/logs
@@ -52,6 +52,7 @@ services:
       APP_PREPROCESS_ENDPOINT_URL: http://ai-service:8000/api/preprocess
       APP_AI_EVAL_LOG_ENABLED: "false"
       APP_AI_EVAL_LOG_URL: http://ai-service:8000/api/eval-log
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,https://redtree.miprota.cc
       TEACHING_EVAL_USERNAME: teacher
       TEACHING_EVAL_PASSWORD: "123456"
     volumes:

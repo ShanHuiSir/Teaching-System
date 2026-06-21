@@ -2,6 +2,8 @@ package com.teachingeval.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,46 +42,45 @@ public class StatisticsService {
     }
 
     public StatisticsSummaryResponse getSummary(Long assignmentId, Long classId, List<Long> teacherClassIds) {
-        List<Student> allStudents = studentRepository.findAll();
-        List<Student> scopedStudents = (teacherClassIds != null)
-                ? allStudents.stream()
-                    .filter(s -> s.getClassId() != null && teacherClassIds.contains(s.getClassId()))
-                    .toList()
-                : allStudents;
-        List<WorkSubmission> submissions = submissionRepository.findAll();
-        if (teacherClassIds != null) {
-            java.util.Set<Long> studentIds = scopedStudents.stream()
-                    .map(com.teachingeval.entity.Student::getId)
-                    .collect(java.util.stream.Collectors.toSet());
-            submissions = submissions.stream()
-                    .filter(s -> studentIds.contains(s.getStudentId()))
-                    .toList();
+        if (teacherClassIds == null) {
+            throw new IllegalArgumentException("teacherClassIds 不能为 null，必须明确指定教师管辖的班级范围");
         }
+        // 1. 学生：按教师管辖班级范围过滤（数据库层）
+        List<Student> scopedStudents = teacherClassIds.isEmpty()
+                ? Collections.emptyList()
+                : studentRepository.findByClassIdIn(teacherClassIds);
+
         if (classId != null) {
-            final List<Student> studentsRef = scopedStudents;
-            submissions = submissions.stream()
-                    .filter(submission -> {
-                        Student student = studentsRef.stream()
-                                .filter(item -> item.getId().equals(submission.getStudentId()))
-                                .findFirst()
-                                .orElse(null);
-                        return student != null && classId.equals(student.getClassId());
-                    })
-                    .toList();
-        }
-        if (assignmentId != null) {
-            submissions = submissions.stream()
-                    .filter(submission -> assignmentId.equals(submission.getAssignmentId()))
+            scopedStudents = scopedStudents.stream()
+                    .filter(s -> classId.equals(s.getClassId()))
                     .toList();
         }
 
+        // 2. 提交：按作业和/或学生范围过滤（数据库层）
+        List<WorkSubmission> submissions;
+        if (assignmentId != null) {
+            submissions = submissionRepository.findByAssignmentId(assignmentId);
+        } else {
+            submissions = submissionRepository.findAll();
+        }
+
+        // 进一步按学生范围过滤
+        Set<Long> studentIds = scopedStudents.stream()
+                .map(Student::getId)
+                .collect(Collectors.toSet());
+        submissions = submissions.stream()
+                .filter(s -> studentIds.contains(s.getStudentId()))
+                .toList();
+
+        // 3. 评价：按提交范围过滤（数据库层）
         Set<Long> submissionIds = submissions.stream()
                 .map(WorkSubmission::getId)
                 .collect(Collectors.toSet());
+        List<EvaluationResult> evaluations = submissionIds.isEmpty()
+                ? Collections.emptyList()
+                : evaluationRepository.findBySubmissionIdIn(submissionIds);
 
-        List<EvaluationResult> evaluations = evaluationRepository.findAll().stream()
-                .filter(evaluation -> submissionIds.contains(evaluation.getSubmissionId()))
-                .toList();
+        // 4. 汇总统计
         List<BigDecimal> confirmedScores = evaluations.stream()
                 .filter(EvaluationResult::isTeacherConfirmed)
                 .map(EvaluationResult::getTeacherScore)
@@ -93,11 +94,18 @@ public class StatisticsService {
             average = total.divide(BigDecimal.valueOf(confirmedScores.size()), 2, RoundingMode.HALF_UP);
         }
 
+        long aiReviewedCount = evaluations.stream()
+                .filter(e -> e.getStatus() >= EvaluationResult.STATUS_AI_REVIEWED)
+                .count();
+        long confirmedCount = evaluations.stream()
+                .filter(e -> e.getStatus() >= EvaluationResult.STATUS_TEACHER_CONFIRMED)
+                .count();
+
         return new StatisticsSummaryResponse(
-                classId == null ? scopedStudents.size() : scopedStudents.stream().filter(student -> classId.equals(student.getClassId())).count(),
+                scopedStudents.size(),
                 submissions.size(),
-                evaluations.stream().filter(evaluation -> evaluation.getStatus() >= EvaluationResult.STATUS_AI_REVIEWED).count(),
-                evaluations.stream().filter(evaluation -> evaluation.getStatus() >= EvaluationResult.STATUS_TEACHER_CONFIRMED).count(),
+                aiReviewedCount,
+                confirmedCount,
                 average,
                 assignmentId,
                 classId

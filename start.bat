@@ -80,6 +80,15 @@ goto :eof
 
 :start_frontend
 echo   Starting Frontend...
+if not exist "%ROOT%frontend\node_modules" (
+    echo     Installing frontend dependencies...
+    cd /d "%ROOT%frontend"
+    call npm install
+    if not exist "%ROOT%frontend\node_modules" (
+        echo     ERROR: Dependencies installed to wrong location - check npm config
+        goto :eof
+    )
+)
 start "Frontend" /d "%ROOT%frontend" cmd /c "title Frontend ^(5173^) && npm run dev"
 goto :eof
 

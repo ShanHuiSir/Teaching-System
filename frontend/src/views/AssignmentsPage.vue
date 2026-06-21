@@ -360,14 +360,15 @@ import {
 } from 'vue'
 import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
-import { getCookie, setCookie } from '../utils/cookie'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 import AppIcon from '../components/AppIcon.vue'
+import { fetchVersion, fetchStudents, fetchClasses, fetchAssignments as storeFetchAssignments, fetchSubmissions as storeFetchSubmissions, fetchEvaluations as storeFetchEvaluations, students as allStudents, classes as allClasses, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()
@@ -376,7 +377,7 @@ const loading = ref(false)
 const saving = ref(false)
 const activeId = ref(null)
 const assignments = ref<any[]>([])
-const classesAll = ref<any[]>([])
+const classesAll = allClasses
 const searchQuery = ref('')
 const sortKey = ref<string | null>(null)
 
@@ -400,7 +401,7 @@ const filteredAssignments = computed(() => {
 })
 const editing = ref(false)
 const isCreate = ref(false)
-const studentsAll = ref<any[]>([])
+const studentsAll = allStudents
 const exporting = ref(false)
 const editorRef = ref(null)
 
@@ -456,7 +457,7 @@ function draftKey() {
 }
 
 function loadDraft() {
-  const raw = getCookie(draftKey())
+  const raw = localStorage.getItem(draftKey())
   if (!raw) return false
   try {
     const d = JSON.parse(raw)
@@ -479,11 +480,11 @@ function saveDraft() {
     description: form.description,
     dueDate: form.dueDate,
   }
-  setCookie(draftKey(), JSON.stringify(data), 7)
+  localStorage.setItem(draftKey(), JSON.stringify(data))
 }
 
 function clearDraft() {
-  setCookie(draftKey(), '', -1)
+  localStorage.removeItem(draftKey())
 }
 
 function startCreate() {
@@ -513,7 +514,7 @@ function startEdit(a: any) {
 // Notify on close without save
 watch(editing, (val, old) => {
   if (old && !val) {
-    if (getCookie(draftKey())) {
+    if (localStorage.getItem(draftKey())) {
       notify({ type: 'info', snackbar: '编辑内容已保存至草稿', magicbar: '编辑内容已保存至本地' })
     }
   }
@@ -618,7 +619,7 @@ async function onSave() {
     activeId.value = saved.id
     await fetchAssignments()
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存作业时遇到了问题' })
+    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存失败：' + (e.message || '网络异常') })
   } finally {
     saving.value = false
   }
@@ -671,7 +672,7 @@ async function onExport(item: any) {
   magicBar.status = '导出可能需要时间，休息一下吧'
   magicBar.statusType = 'info'
   try {
-    const blob = await http.post('/export/excel', null, { responseType: 'blob' })
+    const blob = await http.post('/export/excel', null, { responseType: 'blob', params: { assignmentId: item.id } })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
@@ -680,7 +681,7 @@ async function onExport(item: any) {
     URL.revokeObjectURL(url)
     notify({ type: 'success', snackbar: '导出成功', magicbar: '导出完成' })
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '导出失败：' + (e.message || '网络异常'), magicbar: '导出成绩时遇到了问题' })
+    notify({ type: 'error', snackbar: '导出失败：' + (e.message || '网络异常'), magicbar: '导出失败：' + (e.message || '网络异常') })
   } finally {
     exporting.value = false
   }
@@ -698,11 +699,10 @@ async function onDelete(a: any) {
     assignments.value = assignments.value.filter(x => x.id !== a.id)
     notify({ type: 'success', snackbar: `「${a.title}」已删除` })
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除作业时遇到了问题' })
+    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除失败：' + (e.message || '网络异常') })
   }
 }
 
-const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
 const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
@@ -743,16 +743,13 @@ function buildRightButtons() {
 async function fetchAssignments() {
   loading.value = true
   try {
-    const [assignmentRows, subs, evals, students, classes] = await Promise.all([
-      http.get('/assignments'),
-      http.get('/submissions'),
-      http.get('/evaluations'),
-      http.get('/students'),
-      http.get('/classes'),
-    ])
+    await Promise.all([fetchStudents(), fetchClasses(), storeFetchAssignments(), storeFetchSubmissions(), storeFetchEvaluations()])
 
-    studentsAll.value = students || []
-    classesAll.value = classes || []
+    const assignmentRows = allAssignments.value
+    const subs = allSubmissions.value
+    const evals = allEvaluations.value
+    const students = allStudents.value
+    const classes = allClasses.value
 
     const evalMap: Record<string, any> = {}
     ;(evals || []).forEach((e: any) => {
@@ -822,7 +819,7 @@ onMounted(() => {
   magicBar.sub = active.value?.title || ''
   retryFetch(
     () => fetchAssignments(),
-    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
+    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载失败：' + (e.message || '网络异常') }),
   )
 })
 onActivated(() => {
@@ -833,7 +830,7 @@ onActivated(() => {
 onDeactivated(() => {
   rightButtons.value = []
 })
-watch(refreshTick, fetchAssignments)
+watch(fetchVersion, fetchAssignments)
 </script>
 
 <style lang="scss" scoped>

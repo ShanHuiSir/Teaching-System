@@ -1,7 +1,7 @@
 <template>
   <ErrorBoundary>
     <router-view v-slot="{ Component }">
-      <KeepAlive>
+      <KeepAlive :exclude="['FilePreviewPage']" :max="6">
         <component :is="Component" />
       </KeepAlive>
     </router-view>

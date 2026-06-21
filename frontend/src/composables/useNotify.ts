@@ -22,6 +22,8 @@ export function useNotify() {
   const snackbar = useSnackbar()
   const magicBar = inject<MagicBar | null>(MAGIC_BAR_KEY, null)
 
+  let clearTimer: ReturnType<typeof setTimeout> | null = null
+
   function notify(opts: NotifyOptions) {
     snackbar.show(opts.snackbar, {
       variant: VARIANT_MAP[opts.type] || 'info',
@@ -34,12 +36,11 @@ export function useNotify() {
     magicBar.status = message
     magicBar.statusType = opts.type === 'error' ? 'error' : opts.type === 'success' ? 'success' : 'info'
 
-    const duration = opts.magicbarDuration ?? 2500
-    setTimeout(() => {
-      if (magicBar.status === message) {
-        magicBar.status = ''
-      }
-    }, duration)
+    if (clearTimer) clearTimeout(clearTimer)
+    clearTimer = setTimeout(() => {
+      magicBar.status = ''
+      clearTimer = null
+    }, opts.magicbarDuration ?? 2500)
   }
 
   return { notify }

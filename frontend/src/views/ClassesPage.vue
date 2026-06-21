@@ -266,15 +266,16 @@ import {
   nextTick,
 } from 'vue'
 import http, { retryFetch } from '../utils/request'
-import { getCookie, setCookie } from '../utils/cookie'
+
 import { useNotify } from '../composables/useNotify'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import HedgehogButton from '../components/HedgehogButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 import AppIcon from '../components/AppIcon.vue'
+import { fetchVersion, fetchStudents, fetchClasses as storeFetchClasses, students as allStudents, classes as allClasses } from '../stores/data'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()
@@ -353,7 +354,7 @@ function draftKey() {
 }
 
 function loadDraft() {
-  const raw = getCookie(draftKey())
+  const raw = localStorage.getItem(draftKey())
   if (!raw) return false
   try {
     const d = JSON.parse(raw)
@@ -367,19 +368,18 @@ function loadDraft() {
 }
 
 function saveDraft() {
-  setCookie(
+  localStorage.setItem(
     draftKey(),
     JSON.stringify({
       name: form.name,
       grade: form.grade,
       description: form.description,
     }),
-    7,
   )
 }
 
 function clearDraft() {
-  setCookie(draftKey(), '', -1)
+  localStorage.removeItem(draftKey())
 }
 
 function startCreate() {
@@ -411,7 +411,7 @@ function closeForm() {
 
 watch(editing, (val, old) => {
   if (old && !val) {
-    if (getCookie(draftKey())) {
+    if (localStorage.getItem(draftKey())) {
       notify({ type: 'info', snackbar: '编辑内容已保存至草稿', magicbar: '编辑内容已保存至本地' })
     }
   }
@@ -450,7 +450,7 @@ async function onSave() {
     activeId.value = saved.id
     await fetchClasses()
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存班级时遇到了问题' })
+    notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存失败：' + (e.message || '网络异常') })
   }
 }
 
@@ -505,11 +505,10 @@ async function confirmDelete() {
     classes.value = classes.value.filter(x => x.id !== c.id)
     notify({ type: 'success', snackbar: `「${c.name}」已删除` })
   } catch (e: any) {
-    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除班级时遇到了问题' })
+    notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除失败：' + (e.message || '网络异常') })
   }
 }
 
-const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
 const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 function buildRightButtons() {
@@ -532,10 +531,9 @@ function buildRightButtons() {
 async function fetchClasses() {
   loading.value = true
   try {
-    const [classRows, students] = await Promise.all([
-      http.get('/classes'),
-      http.get('/students'),
-    ])
+    await Promise.all([fetchStudents(), storeFetchClasses()])
+    const classRows = allClasses.value
+    const students = allStudents.value
 
     // Group students by formal classId first, then className for legacy rows.
     const classMap: Record<string, any[]> = {}
@@ -574,7 +572,7 @@ onMounted(() => {
   magicBar.sub = active.value?.name || ''
   retryFetch(
     () => fetchClasses(),
-    (e: any) => notify({ type: 'error', snackbar: '班级列表加载失败：' + (e.message || '网络异常'), magicbar: '加载班级列表时遇到了问题' }),
+    (e: any) => notify({ type: 'error', snackbar: '班级列表加载失败：' + (e.message || '网络异常'), magicbar: '加载失败：' + (e.message || '网络异常') }),
   )
 })
 onActivated(() => {
@@ -585,7 +583,7 @@ onActivated(() => {
 onDeactivated(() => {
   rightButtons.value = []
 })
-watch(refreshTick, fetchClasses)
+watch(fetchVersion, fetchClasses)
 </script>
 
 <style lang="scss" scoped>

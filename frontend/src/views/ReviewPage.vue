@@ -401,7 +401,39 @@
           </div>
 
           <!-- Attachments -->
-          <div v-if="active.fileName" class="attach-list">
+          <ListSkeleton v-if="filesLoading" :count="1" />
+          <div v-else-if="activeFiles.length" class="attach-list">
+            <div v-for="f in activeFiles" :key="f.id" class="attach-item">
+              <svg
+                class="attach-item__icon"
+                :viewBox="iconViewBox(f.fileName ? (f.fileName.split('.').pop()?.toLowerCase() || 'text') : 'text')"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  v-for="(p, i) in iconPaths(f.fileName ? (f.fileName.split('.').pop()?.toLowerCase() || 'text') : 'text')"
+                  :key="i"
+                  :d="p.d"
+                  :fill="p.fill"
+                  :fill-rule="p.fillRule"
+                  :stroke="p.stroke"
+                  :stroke-dasharray="p.strokeDasharray"
+                />
+              </svg>
+              <div class="attach-item__info">
+                <span class="attach-item__name">{{ f.fileName }}</span>
+                <span class="attach-item__size">{{ formatFileSize(f.fileSize) }}</span>
+              </div>
+              <div class="attach-item__btns">
+                <button class="ghost-btn" @click="doPreviewFile(active.id, f.fileName, f.contentType, f.primaryFile ? undefined : f.id)">预览</button>
+                <button class="ghost-btn" @click="doDownloadFile(active.id, f.fileName, f.primaryFile ? undefined : f.id)">下载</button>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="active?.fileName" class="attach-list">
             <div class="attach-item">
               <svg
                 class="attach-item__icon"
@@ -565,7 +597,10 @@
       :content="previewContent"
       :loading="previewLoading"
       :error="previewError"
+      :mode="previewMode"
       :submission-id="previewFileId"
+      :file-id="currentFileId"
+      :office-buffer="officeBuffer"
       @closed="closePreview"
     />
   </div>
@@ -588,7 +623,7 @@ import http, { retryFetch } from '../utils/request'
 import { useNotify } from '../composables/useNotify'
 import { getCookie, setCookie } from '../utils/cookie'
 import { detectFileType, FILE_ICONS } from '../utils/fileIcons'
-import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, REFRESH_TICK_KEY, RIGHT_BUTTONS_KEY, DATA_VERSION_KEY } from '../types'
+import { MAGIC_BAR_KEY, TRIGGER_RIPPLE_KEY, RIGHT_BUTTONS_KEY } from '../types'
 import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
@@ -597,6 +632,7 @@ import FloatingPreview from '../components/FloatingPreview.vue'
 import ActionButton from '../components/ActionButton.vue'
 import StatChip from '../components/StatChip.vue'
 import { useFileActions } from '../composables/useFileActions'
+import { fetchVersion, fetchStudents, fetchAssignments, fetchSubmissions as storeFetchSubmissions, fetchEvaluations, students as allStudents, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
 
 const route = useRoute()
 const { notify } = useNotify()
@@ -636,15 +672,28 @@ const activeId = ref(null)
 const semesters = ref<any[]>([])
 const submissionsRaw = ref<any[]>([])
 const evalMap = ref<Record<string, any>>({})
-const studentsAll = ref<any[]>([])
-const assignmentsAll = ref<any[]>([])
+const studentsAll = allStudents
+const assignmentsAll = allAssignments
 const searchQuery = ref('')
 const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
 
-const { previewVisible, previewContent, previewFileName, previewLoading, previewError, downloadFile, previewFile, closePreview } = useFileActions()
+const { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, currentFileId, officeBuffer, downloadFile, previewFile, closePreview } = useFileActions()
 const previewFileId = ref(0)
-function doPreviewFile(id: number, fileName: string, contentType?: string) { previewFileId.value = id; previewFile(id, fileName, contentType) }
-function doDownloadFile(id: number, fileName: string) { downloadFile(id, fileName) }
+const activeFiles = ref<any[]>([])
+const filesLoading = ref(false)
+
+async function fetchFiles(submissionId: number) {
+  filesLoading.value = true
+  try {
+    const res = await fetch(`/api/submissions/${submissionId}/files`, { credentials: 'include' })
+    if (res.ok) activeFiles.value = await res.json()
+    else activeFiles.value = []
+  } catch { activeFiles.value = [] }
+  finally { filesLoading.value = false }
+}
+
+function doPreviewFile(id: number, fileName: string, contentType?: string, fileId?: number) { previewFileId.value = id; previewFile(id, fileName, contentType, fileId) }
+function doDownloadFile(id: number, fileName: string, fileId?: number) { downloadFile(id, fileName, fileId) }
 
 const filteredSubmissions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -695,12 +744,12 @@ const draftStamp = ref(0)
 const draft = computed(() => {
   void draftStamp.value
   if (!activeId.value) return null
-  const raw = getCookie(`draft_${activeId.value}`)
+  const raw = localStorage.getItem(`draft_${activeId.value}`)
   if (!raw) return null
   // Clear draft if teacher already confirmed
   const ev = activeEval.value
   if (ev && ev.status >= 2) {
-    setCookie(`draft_${activeId.value}`, '', -1)
+    localStorage.removeItem(`draft_${activeId.value}`)
     return null
   }
   try {
@@ -815,6 +864,7 @@ function onSelectWorkType(assignmentId: number | null) {
 function selectItem(item: any) {
   activeId.value = item.id
   updateMagicTrail()
+  fetchFiles(item.id)
 }
 
 const loading = ref(true)
@@ -829,7 +879,7 @@ async function onReview() {
   if (!active.value) return
   const ev = activeEval.value
   const draftKey = `draft_${active.value.id}`
-  const draft = getCookie(draftKey)
+  const draft = localStorage.getItem(draftKey)
   if (draft) {
     try {
       const d = JSON.parse(draft)
@@ -852,7 +902,7 @@ watch(reviewMode, (val, old) => {
   if (old && !val && active.value) {
     draftStamp.value++
     const key = `draft_${active.value.id}`
-    if (getCookie(key) && !(activeEval.value?.status >= 2)) {
+    if (localStorage.getItem(key) && !(activeEval.value?.status >= 2)) {
       notify({
         type: 'info',
         snackbar: `${active.value.studentName} 的 ${active.value.workType || '作业'} 批改已保存`,
@@ -868,7 +918,7 @@ watchEffect(() => {
   if (activeEval.value?.status >= 2) return
   const draftKey = `draft_${active.value.id}`
   const draft = JSON.stringify({ score: teacherScore.value, comment: teacherComment.value })
-  setCookie(draftKey, draft, 7)
+  localStorage.setItem(draftKey, draft)
 })
 
 function clampScore() {
@@ -908,7 +958,7 @@ async function submitReview() {
     })
     // Close form immediately — data refresh happens after
     reviewMode.value = false
-    setCookie(`draft_${active.value.id}`, '', -1)
+    localStorage.removeItem(`draft_${active.value.id}`)
     // Ripple as success celebration
     const btn = (submitBtnRef.value as any)?.$el as HTMLElement | undefined
     if (btn) {
@@ -918,21 +968,20 @@ async function submitReview() {
       triggerRipple()
     }
     notify({ type: 'success', snackbar: '批改已提交', magicbar: '批改已提交' })
-    dataVersion.value++
-    // Background refresh
-    const evals = await http.get('/evaluations')
+    // 强制刷新 evaluations 并重建 evalMap
+    await fetchEvaluations(true)
     const em: Record<string, any> = {}
-    ;(evals || []).forEach((e: any) => {
+    ;(allEvaluations.value || []).forEach((e: any) => {
       em[e.submissionId] = e
     })
     evalMap.value = em
     rebuildSemesters()
   } catch (e) {
-    const saved = getCookie(`draft_${active.value.id}`)
+    const saved = localStorage.getItem(`draft_${active.value.id}`)
     if (saved) {
       notify({ type: 'error', snackbar: '提交失败，评分已保存在本地草稿', magicbar: '提交失败，已保存至本地草稿' })
     } else {
-      notify({ type: 'error', snackbar: '提交批改失败：' + (e.message || '网络异常'), magicbar: '提交批改时遇到了问题' })
+      notify({ type: 'error', snackbar: '提交批改失败：' + (e.message || '网络异常'), magicbar: '提交失败：' + (e.message || '网络异常') })
     }
   } finally {
     submitting.value = false
@@ -946,6 +995,8 @@ const streamDims = ref<{ name: string; score: number }[]>([])
 async function onAiEval() {
   if (!active.value || aiLoading.value) return
   aiLoading.value = true
+  // 清除旧数据，防止 SSE 流失败后 persist 守卫被旧 evalMap 数据绕过
+  if (active.value) delete evalMap.value[active.value.id]
   streamIssues.value = ''
   streamComment.value = ''
   streamDims.value = []
@@ -1034,11 +1085,14 @@ async function onAiEval() {
     // Persist streaming result to database
     const ev = active.value ? evalMap.value[active.value.id] : null
     if (ev?.aiScore != null) {
+      // 后端期望 dimensionScores 为 JSON 字符串，但从 API 加载时可能是数组
+      const dims = ev.dimensionScores
+      const dimsStr = typeof dims === 'string' ? dims : Array.isArray(dims) ? JSON.stringify(dims) : '[]'
       http.post(`/submissions/${active.value!.id}/evaluation-result`, {
         aiScore: ev.aiScore,
         aiIssues: ev.aiIssues || '',
         aiComment: ev.aiComment || '',
-        dimensionScores: ev.dimensionScores || '[]',
+        dimensionScores: dimsStr,
       }).catch(() => { /* non-fatal */ })
     }
 
@@ -1047,7 +1101,7 @@ async function onAiEval() {
       if (magicBar.status === 'AI 评价已完成') magicBar.status = ''
     }, 2500)
   } catch (e: any) {
-    notify({ type: 'error', snackbar: 'AI评价失败：' + (e.message || '网络异常'), magicbar: 'AI 评分时遇到了问题' })
+    notify({ type: 'error', snackbar: 'AI评价失败：' + (e.message || '网络异常'), magicbar: 'AI 评分失败：' + (e.message || '网络异常') })
   } finally {
     aiLoading.value = false
   }
@@ -1057,8 +1111,7 @@ function onReject() {
   /* TODO */
 }
 
-const refreshTick = inject(REFRESH_TICK_KEY, ref(0))
-const dataVersion = inject(DATA_VERSION_KEY, ref(0))
+// refreshTick / dataVersion replaced by shared store fetchVersion
 const rightButtons = inject(RIGHT_BUTTONS_KEY, ref([]))
 
 const sortClass = ref(getCookie('sort_class') === '1')
@@ -1263,19 +1316,14 @@ function buildRightButtons() {
 
 async function fetchSubmissions() {
   try {
-    const [subs, evals, students, assignments] = await Promise.all([
-      http.get('/submissions'),
-      http.get('/evaluations'),
-      http.get('/students'),
-      http.get('/assignments'),
-    ])
+    await Promise.all([fetchStudents(), fetchAssignments(), storeFetchSubmissions(), fetchEvaluations()])
+    const subs = allSubmissions.value
+    const evals = allEvaluations.value
     const em: Record<string, any> = {}
     ;(evals || []).forEach((e: any) => {
       em[e.submissionId] = e
     })
     evalMap.value = em
-    studentsAll.value = students || []
-    assignmentsAll.value = assignments || []
     const studentMap: Record<string, any> = {}
     studentsAll.value.forEach((s: any) => {
       studentMap[s.id] = s
@@ -1303,18 +1351,19 @@ onMounted(() => {
   updateMagicTrail()
   retryFetch(
     () => fetchSubmissions(),
-    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载作业列表时遇到了问题' }),
+    (e: any) => notify({ type: 'error', snackbar: '作业列表加载失败：' + (e.message || '网络异常'), magicbar: '加载失败：' + (e.message || '网络异常') }),
   )
 })
 onActivated(() => {
   magicBar.primary = '作业审批'
   updateMagicTrail()
   buildRightButtons()
+  if (activeId.value) fetchFiles(activeId.value)
 })
 onDeactivated(() => {
   rightButtons.value = []
 })
-watch(refreshTick, fetchSubmissions)
+watch(fetchVersion, fetchSubmissions)
 watch(filteredSubmissions, () => {
   rebuildSemesters()
 })
@@ -1476,15 +1525,18 @@ watch(filteredSubmissions, () => {
     color: rgb(var(--md-sys-color-on-surface));
   }
 
+
   &__badge {
-    @include font(11px, 16px, 500);
-    padding: 2px 10px;
-    border-radius: 10px;
-    flex-shrink: 0;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
 
     &--ai {
-      background: rgb(var(--md-sys-color-secondary-container));
-      color: rgb(var(--md-sys-color-on-secondary-container));
+      background: rgb(var(--md-sys-color-tertiary-container));
+      color: rgb(var(--md-sys-color-on-tertiary-container));
     }
 
     &--none {
@@ -1814,6 +1866,7 @@ watch(filteredSubmissions, () => {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
 
   &__size {
     display: block;
