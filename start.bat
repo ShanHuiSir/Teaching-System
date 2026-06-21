@@ -80,7 +80,7 @@ goto :eof
 
 :start_frontend
 echo   Starting Frontend...
-start "Frontend" /d "%ROOT%frontend" cmd /c "title Frontend ^(5173^) && npm run dev"
+start "Frontend" /d "%ROOT%frontend" cmd /c "title Frontend ^(5173^) && npm install --silent && npm run dev"
 goto :eof
 
 REM =============================================

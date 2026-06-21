@@ -175,6 +175,7 @@ start_frontend() {
     fi
     echo -e "  ${CYAN}→ Starting Frontend (port 5173)...${NC}"
     cd "$ROOT/frontend"
+    npm install --silent >> "$FRONT_LOG" 2>&1
     nohup npm run dev >> "$FRONT_LOG" 2>&1 &
     disown $!
     sleep 3

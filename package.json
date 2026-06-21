@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "docx-preview": "^0.3.7",
-    "highlight.js": "^11.11.1",
-    "jszip": "^2.7.0",
-    "markdown-it": "^14.2.0",
-    "pptx-preview": "^1.0.7"
-  }
-}
