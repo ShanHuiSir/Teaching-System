@@ -98,6 +98,7 @@ public class DataInitializer implements CommandLineRunner {
         List<Assignment> assignments = seedAssignments(classes);
         List<WorkSubmission> submissions = seedSubmissions(students, assignments);
         copySampleFiles(submissions);
+        attachSecondaryFiles(submissions);
         seedEvaluations(submissions);
     }
 
@@ -285,7 +286,7 @@ public class DataInitializer implements CommandLineRunner {
                         "期末项目成果展示与答辩 PPT"),
                 sub(s.get(10), a.get(6), "项目演示视频", "demo-video.mp4", "视频",
                         "系统功能演示与操作录屏"),
-                sub(s.get(13), a.get(5), "毕业论文初稿", "thesis-draft.docx", "文档",
+                sub(s.get(4), a.get(5), "毕业论文初稿", "thesis-draft.docx", "文档",
                         "在线教育平台的设计与实现"),
         };
 
@@ -390,6 +391,37 @@ public class DataInitializer implements CommandLineRunner {
         file.setPrimaryFile(true);
         file.setSortOrder(0);
         submissionFileRepository.save(file);
+    }
+
+    /** 演示多文件上传：给 thesis-draft.docx 的提交追加一个次要文件 */
+    private void attachSecondaryFiles(List<WorkSubmission> submissions) {
+        for (WorkSubmission s : submissions) {
+            if (!"thesis-draft.docx".equals(s.getFileName())) continue;
+            String secondaryName = "project-report.txt";
+            try {
+                var resource = new ClassPathResource("sample-files/" + secondaryName);
+                if (!resource.exists()) return;
+                byte[] bytes = resource.getInputStream().readAllBytes();
+
+                Path submissionDir = uploadRoot.resolve("submissions").resolve(String.valueOf(s.getId()));
+                Path dest = submissionDir.resolve(secondaryName);
+                Files.write(dest, bytes);
+
+                SubmissionFile secondary = new SubmissionFile();
+                secondary.setSubmissionId(s.getId());
+                secondary.setFileName(secondaryName);
+                secondary.setFilePath(toResponsePath(dest));
+                secondary.setFileSize((long) bytes.length);
+                secondary.setContentType(resolveContentType(secondaryName));
+                secondary.setFileRole("SECONDARY");
+                secondary.setPrimaryFile(false);
+                secondary.setSortOrder(1);
+                submissionFileRepository.save(secondary);
+            } catch (IOException e) {
+                // skip
+            }
+            break;
+        }
     }
 
     private static Teacher buildTeacher(String username, String password, String displayName) {
