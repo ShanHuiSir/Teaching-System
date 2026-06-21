@@ -46,9 +46,9 @@ public class HealthController {
             emitters.remove(clientId);
         }
 
-        emitter.onCompletion(() -> emitters.remove(clientId));
-        emitter.onTimeout(() -> emitters.remove(clientId));
-        emitter.onError(e -> emitters.remove(clientId));
+        emitter.onCompletion(() -> removeEmitter(clientId));
+        emitter.onTimeout(() -> removeEmitter(clientId));
+        emitter.onError(e -> removeEmitter(clientId));
 
         return emitter;
     }
@@ -60,10 +60,13 @@ public class HealthController {
                 emitter.send(SseEmitter.event()
                         .name("heartbeat")
                         .data("alive"));
-            } catch (IOException e) {
-                emitter.complete();
-                emitters.remove(clientId);
+            } catch (IOException | IllegalStateException e) {
+                removeEmitter(clientId);
             }
         });
+    }
+
+    private void removeEmitter(String clientId) {
+        emitters.remove(clientId);
     }
 }

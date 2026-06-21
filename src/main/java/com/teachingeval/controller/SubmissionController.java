@@ -181,6 +181,9 @@ public class SubmissionController {
 
     private String resolveContentType(SubmissionFile file, Path path, String ext) {
         if (file.getContentType() != null && !file.getContentType().isBlank()) {
+            if (MediaType.APPLICATION_OCTET_STREAM_VALUE.equalsIgnoreCase(file.getContentType())) {
+                return resolveContentType(path, ext);
+            }
             return file.getContentType();
         }
         return resolveContentType(path, ext);

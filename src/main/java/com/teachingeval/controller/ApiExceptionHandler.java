@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,6 +18,8 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.io.IOException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -94,11 +97,39 @@ public class ApiExceptionHandler {
         // SSE clients may disconnect during shutdown or network changes.
     }
 
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ErrorResponse> handleIOException(IOException exception) {
+        if (isClientDisconnect(exception)) {
+            return ResponseEntity.noContent().build();
+        }
+        log.error("未预期的IO错误", exception);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("服务器内部错误"));
+    }
+
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleException(Exception exception) {
+    public ResponseEntity<ErrorResponse> handleException(Exception exception) {
+        if (isClientDisconnect(exception)) {
+            return ResponseEntity.noContent().build();
+        }
         log.error("未预期的服务器错误", exception);
-        return new ErrorResponse("服务器内部错误");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("服务器内部错误"));
+    }
+
+    private boolean isClientDisconnect(Throwable exception) {
+        Throwable current = exception;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null
+                    && (message.contains("Broken pipe")
+                    || message.contains("Connection reset by peer")
+                    || message.contains("Response not usable after response errors"))) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     @Schema(description = "接口错误响应")
