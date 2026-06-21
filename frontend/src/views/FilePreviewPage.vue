@@ -8,6 +8,7 @@
           <polyline points="14 2 14 8 20 8" />
         </svg>
         <span class="preview-bar__name">{{ fileName }}</span>
+        <span v-if="previewMode === 'office'" class="preview-bar__warn">排版可能与原文件有差异，建议下载查看</span>
       </div>
 
       <!-- Zoom controls (image mode only) -->
@@ -99,6 +100,7 @@
           您的浏览器不支持视频播放。
         </video>
       </div>
+      <div v-else-if="previewMode === 'office'" ref="officeContainer" class="preview-office" />
       <div v-else-if="previewMode === 'unsupported'" class="preview-state">
         <svg class="preview-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -120,9 +122,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { detectFileType } from '../utils/fileIcons'
+import { isOfficeFile, renderOffice, convertXlsx } from '../composables/useOfficePreview'
+import { isTextPreviewable } from '../composables/useFileActions'
 
 const route = useRoute()
 const router = useRouter()
@@ -130,7 +134,7 @@ const content = ref('')
 const fileName = ref('')
 const loading = ref(true)
 const error = ref('')
-const previewMode = ref<'text' | 'image' | 'video' | 'unsupported'>('unsupported')
+const previewMode = ref<'text' | 'image' | 'video' | 'office' | 'unsupported'>('unsupported')
 const downloadUrl = ref('')
 const submissionId = computed(() => route.params.submissionId as string)
 const fileId = computed(() => route.query.fileId as string | undefined)
@@ -158,17 +162,13 @@ const panY = ref(0)
 const isPanning = ref(false)
 const imgRef = ref<HTMLImageElement | null>(null)
 const viewportRef = ref<HTMLElement | null>(null)
+const officeContainer = ref<HTMLElement | null>(null)
 
 const zoomPct = computed(() => Math.round(zoom.value * 100) + '%')
 
 const imageStyle = computed(() => ({
   transform: `translate(${panX.value}px, ${panY.value}px) scale(${zoom.value})`,
 }))
-
-function isTextType(contentType: string): boolean {
-  return /^text\//.test(contentType) ||
-    /\bapplication\/(json|xml|javascript|ld\+json|x-httpd-php|x-sh|x-perl|x-python|x-yaml|x-www-form-urlencoded)\b/.test(contentType)
-}
 
 function fileExt(fileName: string): string {
   return (fileName || '').split('.').pop()?.toLowerCase() || ''
@@ -314,7 +314,28 @@ onMounted(async () => {
     } else if (VIDEO_EXTS.has(ext)) {
       previewMode.value = 'video'
       downloadUrl.value = fileUrl(id)
-    } else if (isTextType(contentType)) {
+    } else if (isOfficeFile(fileName.value)) {
+      previewMode.value = 'office'
+      downloadUrl.value = fileUrl(id)
+      const buffer = await res.arrayBuffer()
+      const ext = fileExt(fileName.value)
+      // Mark loading done so the office container renders into the DOM
+      loading.value = false
+      await nextTick()
+      if (ext === 'xlsx') {
+        content.value = await convertXlsx(buffer)
+        if (officeContainer.value) officeContainer.value.innerHTML = content.value
+      } else {
+        if (officeContainer.value) {
+          try {
+            await renderOffice(officeContainer.value, fileName.value, buffer)
+          } catch {
+            officeContainer.value.innerHTML = '<p style="padding:24px;color:rgb(var(--md-sys-color-error))">Office 文件渲染失败，请尝试下载</p>'
+          }
+        }
+      }
+      return
+    } else if (isTextPreviewable(fileName.value, contentType)) {
       previewMode.value = 'text'
       content.value = await res.text()
     } else {
@@ -356,6 +377,14 @@ onBeforeUnmount(() => {
     font: 500 14px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
     color: rgb(var(--md-sys-color-on-surface));
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  &__warn {
+    font: 400 12px/20px 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    opacity: 0.7;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
   &__btn {
     width: 32px; height: 32px;
@@ -454,6 +483,12 @@ onBeforeUnmount(() => {
   video:focus { outline: none; }
   &--pannable { cursor: grab; }
   &--panning { cursor: grabbing; }
+}
+
+.preview-office {
+  flex: 1; overflow: auto;
+  background: #fff;
+  padding: 0;
 }
 
 .preview-download-btn {

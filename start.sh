@@ -83,8 +83,15 @@ start_ai() {
 }
 
 start_boot() {
-    echo -e "  ${CYAN}→ Starting Spring Boot (port 8080)...${NC}"
+    echo -e "  ${CYAN}→ Compiling Spring Boot...${NC}"
     cd "$ROOT"
+    if ! mvn compile -q >> "$BOOT_LOG" 2>&1; then
+        echo -e "    ${RED}✗ Compilation failed — check log: $BOOT_LOG${NC}"
+        return 1
+    fi
+    echo -e "    ${GREEN}✓ Compilation successful${NC}"
+
+    echo -e "  ${CYAN}→ Starting Spring Boot (port 8080)...${NC}"
     nohup mvn spring-boot:run >> "$BOOT_LOG" 2>&1 &
     disown $!
     # Spring Boot takes longer; wait up to 60s
@@ -221,7 +228,7 @@ while true; do
             echo ""
             kill_port 8080
             sleep 2
-            start_boot
+            start_boot || true
             ;;
         6)
             echo ""
