@@ -946,6 +946,8 @@ const streamDims = ref<{ name: string; score: number }[]>([])
 async function onAiEval() {
   if (!active.value || aiLoading.value) return
   aiLoading.value = true
+  // 清除旧数据，防止 SSE 流失败后 persist 守卫被旧 evalMap 数据绕过
+  if (active.value) delete evalMap.value[active.value.id]
   streamIssues.value = ''
   streamComment.value = ''
   streamDims.value = []
@@ -1034,11 +1036,14 @@ async function onAiEval() {
     // Persist streaming result to database
     const ev = active.value ? evalMap.value[active.value.id] : null
     if (ev?.aiScore != null) {
+      // 后端期望 dimensionScores 为 JSON 字符串，但从 API 加载时可能是数组
+      const dims = ev.dimensionScores
+      const dimsStr = typeof dims === 'string' ? dims : Array.isArray(dims) ? JSON.stringify(dims) : '[]'
       http.post(`/submissions/${active.value!.id}/evaluation-result`, {
         aiScore: ev.aiScore,
         aiIssues: ev.aiIssues || '',
         aiComment: ev.aiComment || '',
-        dimensionScores: ev.dimensionScores || '[]',
+        dimensionScores: dimsStr,
       }).catch(() => { /* non-fatal */ })
     }
 
