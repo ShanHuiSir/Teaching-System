@@ -1,17 +1,19 @@
 <template>
-  <span class="stat-chip" :class="{ 'stat-chip--push': push }" :data-tooltip="tooltip || undefined">
-    <svg
-      v-if="icon"
-      class="stat-chip__icon"
-      :viewBox="iconViewBox"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path v-for="(p, i) in iconPaths" :key="i" v-bind="p" />
-    </svg>
+  <span class="stat-chip" :title="tooltip || undefined">
+    <slot name="icon">
+      <svg
+        v-if="icon"
+        class="stat-chip__icon"
+        :viewBox="iconViewBox"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path v-for="(p, i) in iconPaths" :key="i" v-bind="p" />
+      </svg>
+    </slot>
     <span><slot /></span>
   </span>
 </template>
@@ -24,12 +26,10 @@ const props = withDefaults(
   defineProps<{
     icon?: string
     tooltip?: string
-    push?: boolean
   }>(),
   {
     icon: '',
     tooltip: '',
-    push: false,
   },
 )
 
@@ -52,7 +52,8 @@ const iconPaths = computed(() => {
   align-items: center;
   gap: 4px;
 
-  &__icon {
+  &__icon,
+  :slotted(svg) {
     width: 14px;
     height: 14px;
     color: rgb(var(--md-sys-color-on-surface-variant));
@@ -67,24 +68,5 @@ const iconPaths = computed(() => {
     white-space: nowrap;
   }
 
-  &--push {
-    margin-left: auto;
-  }
-
-  &:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 3px 10px;
-    border-radius: 4px;
-    background: rgb(var(--md-sys-color-inverse-surface));
-    color: rgb(var(--md-sys-color-inverse-on-surface));
-    @include font(11px, 16px, 500);
-    white-space: nowrap;
-    z-index: 10;
-    pointer-events: none;
-  }
 }
 </style>

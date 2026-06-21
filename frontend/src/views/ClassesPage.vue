@@ -142,15 +142,22 @@
           <div class="roster">
             <div class="roster__head">
               <span class="roster__title">学生花名册</span>
-              <span class="roster__count">{{ active.roster.length }}人</span>
+              <span class="roster__count">{{ filteredRoster.length }}/{{ active.roster.length }}人</span>
             </div>
+            <input
+              v-if="active.roster.length"
+              v-model="rosterQuery"
+              class="roster__search"
+              placeholder="搜索姓名或学号…"
+            />
             <div v-if="!active.roster.length" class="roster__empty">暂无学生</div>
+            <div v-else-if="!filteredRoster.length" class="roster__empty">无匹配学生</div>
             <div v-else class="roster__table">
               <div class="roster__row roster__row--header">
                 <span class="roster__cell roster__cell--no">学号</span>
                 <span class="roster__cell roster__cell--name">姓名</span>
               </div>
-              <div v-for="s in active.roster" :key="s.id" class="roster__row">
+              <div v-for="s in filteredRoster" :key="s.id" class="roster__row">
                 <span class="roster__cell roster__cell--no">{{ s.studentNo || '—' }}</span>
                 <span class="roster__cell roster__cell--name">{{ s.name || '—' }}</span>
               </div>
@@ -166,16 +173,7 @@
       <div class="form-card">
         <div class="form-card__bar">
           <button class="form-card__back" @click="closeForm">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <AppIcon name="chevron-left" />
             <span>关闭{{ isCreate ? '创建' : '编辑' }}</span>
           </button>
           <button class="act-btn act-btn--primary" @click="onSave">
@@ -227,8 +225,8 @@
     <!-- Delete Confirmation Modal -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="deleteModal.open" class="modal-overlay" @click.self="deleteModal.open = false">
-          <div class="modal-card">
+        <div v-if="deleteModal.open" class="modal-overlay" @click.self="deleteModal.open = false" @keydown.escape="deleteModal.open = false">
+          <div ref="deleteDialogRef" class="modal-card" role="alertdialog" aria-modal="true" @keydown="onDeleteKeydown">
             <svg
               class="modal-card__icon"
               viewBox="0 0 24 24"
@@ -244,7 +242,7 @@
             </svg>
             <p class="modal-card__text">确定要删除班级「{{ deleteModal.name }}」吗？<br />已有学生或作业关联的班级不会被删除。</p>
             <div class="modal-card__btns">
-              <button class="modal-card__btn modal-card__btn--cancel" @click="deleteModal.open = false">取消</button>
+              <button ref="deleteCancelRef" class="modal-card__btn modal-card__btn--cancel" @click="deleteModal.open = false">取消</button>
               <HedgehogButton variant="primary" size="sm" @complete="confirmDelete">确认删除</HedgehogButton>
             </div>
           </div>
@@ -276,6 +274,7 @@ import EmptyState from '../components/EmptyState.vue'
 import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
+import AppIcon from '../components/AppIcon.vue'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()
@@ -289,6 +288,15 @@ const editorRef = ref(null)
 const sortKey = ref<string | null>(null)
 
 const active = computed(() => classes.value.find(c => c.id === activeId.value) || null)
+const rosterQuery = ref('')
+const filteredRoster = computed(() => {
+  if (!active.value) return []
+  const q = rosterQuery.value.trim().toLowerCase()
+  if (!q) return active.value.roster
+  return active.value.roster.filter((s: any) =>
+    (s.name || '').toLowerCase().includes(q) || (s.studentNo || '').toLowerCase().includes(q),
+  )
+})
 
 const searchQuery = ref('')
 
@@ -301,7 +309,7 @@ const filteredClasses = computed(() => {
         (c.name || '').toLowerCase().includes(q) ||
         (c.grade || '').toLowerCase().includes(q) ||
         (c.description || '').toLowerCase().includes(q) ||
-        c.roster.some(s => (s.name || '').toLowerCase().includes(q) || (s.studentNo || '').toLowerCase().includes(q)),
+        c.roster.some((s: any) => (s.name || '').toLowerCase().includes(q) || (s.studentNo || '').toLowerCase().includes(q)),
     )
   }
   arr = [...arr]
@@ -333,7 +341,7 @@ function resetForm() {
   form.description = ''
 }
 
-function onSelectClass(c) {
+function onSelectClass(c: any) {
   editing.value = false
   activeId.value = c.id
 }
@@ -383,7 +391,7 @@ function startCreate() {
   nextTick(autoResize)
 }
 
-function startEdit(c) {
+function startEdit(c: any) {
   isCreate.value = false
   resetForm()
   form.id = c.id
@@ -448,10 +456,43 @@ async function onSave() {
 
 const deleteModal = reactive({ open: false, id: null, name: '' })
 
-function onDeleteClick(c) {
+function onDeleteClick(c: any) {
   deleteModal.id = c.id
   deleteModal.name = c.name
   deleteModal.open = true
+}
+
+const deleteDialogRef = ref<HTMLElement | null>(null)
+const deleteCancelRef = ref<HTMLElement | null>(null)
+
+watch(
+  () => deleteModal.open,
+  async isOpen => {
+    if (isOpen) {
+      await nextTick()
+      deleteCancelRef.value?.focus()
+    }
+  },
+)
+
+function onDeleteKeydown(e: KeyboardEvent) {
+  if (e.key === 'Tab') {
+    const dialog = deleteDialogRef.value
+    if (!dialog) return
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )
+    if (focusable.length < 2) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
 }
 
 async function confirmDelete() {
@@ -1066,6 +1107,23 @@ select.form-field__input {
   &__count {
     @include font(12px, 16px);
     color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+
+  &__search {
+    width: calc(100% - 16px);
+    margin: 0 8px 8px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 8px;
+    background: rgb(var(--md-sys-color-surface-container-lowest));
+    color: rgb(var(--md-sys-color-on-surface));
+    @include font(12px, 18px);
+    outline: none;
+    transition: border-color 0.15s ease;
+    &::placeholder { color: rgb(var(--md-sys-color-on-surface-variant) / 0.5); }
+    &:focus { border-color: rgb(var(--md-sys-color-primary)); }
+    &:focus-visible { outline: none; }
   }
 
   &__empty {

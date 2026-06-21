@@ -1,5 +1,5 @@
 <template>
-  <div class="magic-bar">
+  <div class="magic-bar" role="status" aria-live="polite">
     <Transition name="magic" mode="out-in">
       <div :key="magicKey" class="magic-bar__text">
         <template v-if="magicBar.status">
@@ -91,7 +91,7 @@ defineProps<{
     }
 
     &--reconnected {
-      color: #16a34a;
+      color: rgb(var(--app-color-success));
     }
   }
 
@@ -117,7 +117,7 @@ defineProps<{
     }
 
     &--success {
-      background: #16a34a;
+      background: rgb(var(--app-color-success));
     }
 
     &--info {

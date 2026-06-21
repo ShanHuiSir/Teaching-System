@@ -1,5 +1,5 @@
 <template>
-  <div class="search-input">
+  <div class="search-input" role="search">
     <svg
       class="search-input__icon"
       viewBox="0 0 24 24"
@@ -17,9 +17,9 @@
       class="search-input__input"
       type="text"
       :placeholder="placeholder"
-      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      aria-label="搜索" @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
-    <button v-if="modelValue" class="search-input__clear" @click="$emit('update:modelValue', '')">
+    <button v-if="modelValue" class="search-input__clear" aria-label="清除搜索" @click="$emit('update:modelValue', '')">
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -84,6 +84,10 @@ defineEmits<{
     &:focus {
       border-color: rgb(var(--md-sys-color-primary));
       background: rgb(var(--md-sys-color-surface-container-lowest));
+    }
+
+    &:focus-visible {
+      outline: none;
     }
   }
 
