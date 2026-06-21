@@ -28,15 +28,16 @@ public class ExportController {
         this.exportService = exportService;
     }
 
-    @Operation(summary = "导出成绩 Excel", description = "导出学生成绩汇总 Excel 文件，包含学号、姓名、班级、作品信息、AI评分、教师评分和评价状态。")
+    @Operation(summary = "导出成绩 Excel", description = "按作业、班级、作品类型过滤导出成绩汇总 Excel 文件。")
     @PostMapping("/export/excel")
     public void exportExcel(@RequestParam(required = false) Long assignmentId,
                             @RequestParam(required = false) Long classId,
+                            @RequestParam(required = false) String workType,
                             HttpServletResponse response) throws IOException {
         String filename = "成绩汇总_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx";
         String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encoded);
-        exportService.exportTo(response.getOutputStream(), assignmentId, classId);
+        exportService.exportTo(response.getOutputStream(), assignmentId, classId, workType);
     }
 }
