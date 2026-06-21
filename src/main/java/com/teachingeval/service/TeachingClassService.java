@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -24,17 +25,20 @@ public class TeachingClassService {
     private final AssignmentRepository assignmentRepository;
     private final AssignmentClassRepository assignmentClassRepository;
     private final TeacherRepository teacherRepository;
+    private final boolean authEnabled;
 
     public TeachingClassService(TeachingClassRepository teachingClassRepository,
                                 StudentRepository studentRepository,
                                 AssignmentRepository assignmentRepository,
                                 AssignmentClassRepository assignmentClassRepository,
-                                TeacherRepository teacherRepository) {
+                                TeacherRepository teacherRepository,
+                                @Value("${app.auth.enabled:true}") boolean authEnabled) {
         this.teachingClassRepository = teachingClassRepository;
         this.studentRepository = studentRepository;
         this.assignmentRepository = assignmentRepository;
         this.assignmentClassRepository = assignmentClassRepository;
         this.teacherRepository = teacherRepository;
+        this.authEnabled = authEnabled;
     }
 
     public List<TeachingClass> listClasses() {
@@ -51,7 +55,13 @@ public class TeachingClassService {
 
     public List<Long> resolveTeacherClassIds(HttpServletRequest request) {
         String username = (String) request.getAttribute(AuthService.AUTH_USER_ATTRIBUTE);
-        if (username == null) return null;
+        if (username == null) {
+            // 认证禁用时（测试 / 演示环境）返回全部班级 ID，保持与其他端点一致的行为
+            if (!authEnabled) {
+                return teachingClassRepository.findAll().stream().map(TeachingClass::getId).toList();
+            }
+            return null;
+        }
         Teacher teacher = teacherRepository.findByUsername(username).orElse(null);
         if (teacher == null) return List.of();
         List<TeachingClass> classes = teachingClassRepository.findByTeacherId(teacher.getId());
