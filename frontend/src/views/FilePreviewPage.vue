@@ -87,7 +87,7 @@
       >
         <img
           ref="imgRef"
-          :src="`/api/submissions/${submissionId}/preview`"
+          :src="previewUrl(submissionId)"
           :alt="fileName"
           :style="imageStyle"
           draggable="false"
@@ -95,7 +95,7 @@
         />
       </div>
       <div v-else-if="previewMode === 'video'" class="preview-media">
-        <video :src="`/api/submissions/${submissionId}/preview`" controls playsinline>
+        <video :src="previewUrl(submissionId)" controls playsinline>
           您的浏览器不支持视频播放。
         </video>
       </div>
@@ -133,6 +133,17 @@ const error = ref('')
 const previewMode = ref<'text' | 'image' | 'video' | 'unsupported'>('unsupported')
 const downloadUrl = ref('')
 const submissionId = computed(() => route.params.submissionId as string)
+const fileId = computed(() => route.query.fileId as string | undefined)
+
+function previewUrl(id: string): string {
+  const base = `/api/submissions/${id}/preview`
+  return fileId.value ? `${base}?fileId=${fileId.value}` : base
+}
+
+function fileUrl(id: string): string {
+  const base = `/api/submissions/${id}/file`
+  return fileId.value ? `${base}?fileId=${fileId.value}` : base
+}
 
 const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'])
 const VIDEO_EXTS = new Set(['mp4', 'webm', 'mov', 'avi'])
@@ -164,7 +175,7 @@ function fileExt(fileName: string): string {
 }
 
 function triggerDownload() {
-  const url = downloadUrl.value || `/api/submissions/${submissionId.value}/file`
+  const url = downloadUrl.value || fileUrl(submissionId.value)
   const a = document.createElement('a')
   a.href = url
   a.download = fileName.value
@@ -281,7 +292,7 @@ function onImageDblClick() {
 onMounted(async () => {
   const id = submissionId.value
   try {
-    const res = await fetch(`/api/submissions/${id}/file`, { credentials: 'include' })
+    const res = await fetch(fileUrl(id), { credentials: 'include' })
     if (res.status === 401 || res.status === 403) {
       router.replace('/forbidden')
       return
@@ -299,10 +310,10 @@ onMounted(async () => {
 
     if (IMAGE_EXTS.has(ext)) {
       previewMode.value = 'image'
-      downloadUrl.value = `/api/submissions/${id}/file`
+      downloadUrl.value = fileUrl(id)
     } else if (VIDEO_EXTS.has(ext)) {
       previewMode.value = 'video'
-      downloadUrl.value = `/api/submissions/${id}/file`
+      downloadUrl.value = fileUrl(id)
     } else if (isTextType(contentType)) {
       previewMode.value = 'text'
       content.value = await res.text()

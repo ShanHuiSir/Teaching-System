@@ -401,7 +401,38 @@
           </div>
 
           <!-- Attachments -->
-          <div v-if="active.fileName" class="attach-list">
+          <div v-if="activeFiles.length" class="attach-list">
+            <div v-for="f in activeFiles" :key="f.id" class="attach-item">
+              <svg
+                class="attach-item__icon"
+                :viewBox="iconViewBox(f.fileName ? (f.fileName.split('.').pop()?.toLowerCase() || 'text') : 'text')"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  v-for="(p, i) in iconPaths(f.fileName ? (f.fileName.split('.').pop()?.toLowerCase() || 'text') : 'text')"
+                  :key="i"
+                  :d="p.d"
+                  :fill="p.fill"
+                  :fill-rule="p.fillRule"
+                  :stroke="p.stroke"
+                  :stroke-dasharray="p.strokeDasharray"
+                />
+              </svg>
+              <div class="attach-item__info">
+                <span class="attach-item__name">{{ f.fileName }}</span>
+                <span class="attach-item__size">{{ formatFileSize(f.fileSize) }}</span>
+              </div>
+              <div class="attach-item__btns">
+                <button class="ghost-btn" @click="doPreviewFile(active.id, f.fileName, f.contentType, f.primaryFile ? undefined : f.id)">预览</button>
+                <button class="ghost-btn" @click="doDownloadFile(active.id, f.fileName, f.primaryFile ? undefined : f.id)">下载</button>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="active?.fileName" class="attach-list">
             <div class="attach-item">
               <svg
                 class="attach-item__icon"
@@ -567,6 +598,7 @@
       :error="previewError"
       :mode="previewMode"
       :submission-id="previewFileId"
+      :file-id="currentFileId"
       @closed="closePreview"
     />
   </div>
@@ -643,10 +675,20 @@ const assignmentsAll = allAssignments
 const searchQuery = ref('')
 const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
 
-const { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, downloadFile, previewFile, closePreview } = useFileActions()
+const { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, currentFileId, downloadFile, previewFile, closePreview } = useFileActions()
 const previewFileId = ref(0)
-function doPreviewFile(id: number, fileName: string, contentType?: string) { previewFileId.value = id; previewFile(id, fileName, contentType) }
-function doDownloadFile(id: number, fileName: string) { downloadFile(id, fileName) }
+const activeFiles = ref<any[]>([])
+
+async function fetchFiles(submissionId: number) {
+  try {
+    const res = await fetch(`/api/submissions/${submissionId}/files`, { credentials: 'include' })
+    if (res.ok) activeFiles.value = await res.json()
+    else activeFiles.value = []
+  } catch { activeFiles.value = [] }
+}
+
+function doPreviewFile(id: number, fileName: string, contentType?: string, fileId?: number) { previewFileId.value = id; previewFile(id, fileName, contentType, fileId) }
+function doDownloadFile(id: number, fileName: string, fileId?: number) { downloadFile(id, fileName, fileId) }
 
 const filteredSubmissions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -817,6 +859,7 @@ function onSelectWorkType(assignmentId: number | null) {
 function selectItem(item: any) {
   activeId.value = item.id
   updateMagicTrail()
+  fetchFiles(item.id)
 }
 
 const loading = ref(true)
@@ -1476,15 +1519,18 @@ watch(filteredSubmissions, () => {
     color: rgb(var(--md-sys-color-on-surface));
   }
 
+
   &__badge {
-    @include font(11px, 16px, 500);
-    padding: 2px 10px;
-    border-radius: 10px;
-    flex-shrink: 0;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
 
     &--ai {
-      background: rgb(var(--md-sys-color-secondary-container));
-      color: rgb(var(--md-sys-color-on-secondary-container));
+      background: rgb(var(--md-sys-color-tertiary-container));
+      color: rgb(var(--md-sys-color-on-tertiary-container));
     }
 
     &--none {
@@ -1814,6 +1860,7 @@ watch(filteredSubmissions, () => {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
 
   &__size {
     display: block;
