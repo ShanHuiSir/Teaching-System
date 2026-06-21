@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 
 import com.teachingeval.dto.AIEvalRequest;
 import com.teachingeval.entity.EvaluationResult;
@@ -51,7 +52,7 @@ public class DelegatingAIService implements AIService {
             EvaluationResult result = realAIService.evaluate(submission, request);
             result.setAiSource(EvaluationResult.AI_SOURCE_REAL);
             return result;
-        } catch (RuntimeException exception) {
+        } catch (RestClientException | IllegalStateException | IllegalArgumentException exception) {
             // TODO: 演示结束后移除此 try-catch 回退，让真实 AI 异常直接向上传播
             log.warn("真实 AI 评价失败，已降级为模拟评价，submissionId={}", submission.getId(), exception);
             EvaluationResult result = fakeAIService.evaluate(request);
