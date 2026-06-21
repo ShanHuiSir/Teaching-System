@@ -124,6 +124,10 @@
             </div>
             <!-- Office preview -->
             <div v-else-if="previewMode === 'office'" ref="officeContainer" class="fp-scroll fp-office" />
+            <!-- Markdown preview -->
+            <div v-else-if="previewMode === 'markdown'" class="fp-scroll">
+              <div class="fp-markdown" v-html="content" />
+            </div>
             <!-- Text preview -->
             <div v-else class="fp-scroll">
               <pre class="fp-code"><code>{{ content }}</code></pre>
@@ -160,7 +164,7 @@ const props = defineProps<{
   loading: boolean
   error: string
   submissionId?: number
-  mode?: 'text' | 'image' | 'video' | 'office'
+  mode?: 'text' | 'image' | 'video' | 'office' | 'markdown'
   fileId?: number
   officeBuffer?: ArrayBuffer | null
 }>()
@@ -583,6 +587,10 @@ onBeforeUnmount(() => {
 .fp-office {
   background: #fff;
   padding: 0;
+}
+.fp-markdown {
+  background: rgb(var(--md-sys-color-surface-container-lowest));
+  user-select: text;
 }
 .fp-loading {
   display: flex; align-items: center; gap: 12px;
