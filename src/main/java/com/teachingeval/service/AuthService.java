@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.teachingeval.repository.TeacherRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -25,6 +26,7 @@ public class AuthService {
     private final SecureRandom secureRandom = new SecureRandom();
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
     private final TeacherRepository teacherRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public AuthService(@Value("${app.auth.username:teacher}") String username,
                        @Value("${app.auth.password:123456}") String password,
@@ -32,13 +34,13 @@ public class AuthService {
                        @Value("${app.auth.session-ttl-hours:12}") long sessionTtlHours,
                        @Value("${app.auth.remember-ttl-days:7}") long rememberTtlDays,
                        TeacherRepository teacherRepository) {
-        this.credentials.put(username, password);
+        this.credentials.put(username, ensureHashed(password));
         for (String account : additionalAccounts.split(",")) {
             String trimmed = account.trim();
             if (trimmed.isEmpty()) continue;
             String[] parts = trimmed.split(":", 2);
             if (parts.length == 2) {
-                credentials.put(parts[0], parts[1]);
+                credentials.put(parts[0], ensureHashed(parts[1]));
             }
         }
         this.sessionTtl = Duration.ofHours(sessionTtlHours);
@@ -52,8 +54,8 @@ public class AuthService {
     }
 
     public LoginSession login(String username, String password, boolean rememberMe) {
-        String expectedPassword = credentials.get(username);
-        if (expectedPassword == null || !expectedPassword.equals(password)) {
+        String expectedHash = credentials.get(username);
+        if (expectedHash == null || !passwordEncoder.matches(password, expectedHash)) {
             throw new IllegalArgumentException("账户名或密钥错误");
         }
 
@@ -95,6 +97,14 @@ public class AuthService {
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    /** 如果传入值是明文则自动 BCrypt 哈希；已是 BCrypt 则原样返回 */
+    private String ensureHashed(String raw) {
+        if (raw.startsWith("$2a$") || raw.startsWith("$2b$") || raw.startsWith("$2y$")) {
+            return raw;
+        }
+        return passwordEncoder.encode(raw);
     }
 
     private record Session(String username, Instant expiresAt) {
