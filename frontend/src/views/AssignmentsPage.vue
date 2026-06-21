@@ -672,7 +672,7 @@ async function onExport(item: any) {
   magicBar.status = '导出可能需要时间，休息一下吧'
   magicBar.statusType = 'info'
   try {
-    const blob = await http.post('/export/excel', null, { responseType: 'blob' })
+    const blob = await http.post('/export/excel', null, { responseType: 'blob', params: { assignmentId: item.id } })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
