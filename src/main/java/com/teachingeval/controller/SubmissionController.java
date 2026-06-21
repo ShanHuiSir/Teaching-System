@@ -37,6 +37,7 @@ import com.teachingeval.entity.WorkSubmission;
 import com.teachingeval.repository.StudentRepository;
 import com.teachingeval.repository.SubmissionRepository;
 import com.teachingeval.repository.TeacherRepository;
+import com.teachingeval.repository.SubmissionFileRepository;
 import com.teachingeval.repository.TeachingClassRepository;
 import com.teachingeval.service.AuthService;
 import com.teachingeval.service.SubmissionService;
@@ -57,19 +58,22 @@ public class SubmissionController {
     private final TeachingClassRepository teachingClassRepository;
     private final TeacherRepository teacherRepository;
     private final TeachingClassService teachingClassService;
+    private final SubmissionFileRepository submissionFileRepository;
 
     public SubmissionController(SubmissionService submissionService,
                                 SubmissionRepository submissionRepository,
                                 StudentRepository studentRepository,
                                 TeachingClassRepository teachingClassRepository,
                                 TeacherRepository teacherRepository,
-                                TeachingClassService teachingClassService) {
+                                TeachingClassService teachingClassService,
+                                SubmissionFileRepository submissionFileRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.studentRepository = studentRepository;
         this.teachingClassRepository = teachingClassRepository;
         this.teacherRepository = teacherRepository;
         this.teachingClassService = teachingClassService;
+        this.submissionFileRepository = submissionFileRepository;
     }
 
     @Operation(summary = "查询作品提交列表", description = "返回当前教师管辖班级学生的作品提交记录。")
@@ -113,12 +117,23 @@ public class SubmissionController {
         return submissionService.listSubmissionFiles(id);
     }
 
-    @Operation(summary = "下载作品文件", description = "根据提交ID下载对应的原始作业文件。仅允许访问本班学生的提交。")
+    private SubmissionFile resolveFile(Long submissionId, Long fileId) {
+        if (fileId != null) {
+            return submissionFileRepository.findById(fileId)
+                    .filter(f -> f.getSubmissionId().equals(submissionId))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在"));
+        }
+        return submissionService.getPrimaryFile(submissionId);
+    }
+
+    @Operation(summary = "下载作品文件", description = "根据提交ID及可选文件ID下载对应的原始作业文件。不传 fileId 时返回主文件。")
     @GetMapping("/submissions/{id}/file")
-    public ResponseEntity<Resource> downloadFile(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<Resource> downloadFile(@PathVariable Long id,
+                                                  @RequestParam(required = false) Long fileId,
+                                                  HttpServletRequest request) {
         ensureCurrentTeacherCanAccessSubmission(id, request);
 
-        SubmissionFile file = submissionService.getPrimaryFile(id);
+        SubmissionFile file = resolveFile(id, fileId);
         if (file.getFilePath() == null || file.getFilePath().isBlank()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
         }
@@ -157,14 +172,15 @@ public class SubmissionController {
         return EXT_TO_MIME.getOrDefault(ext, "application/octet-stream");
     }
 
-    @Operation(summary = "预览作品文件", description = "支持图片/视频在线预览，视频支持 Range 拖动进度条。Office 文档暂不支持。")
+    @Operation(summary = "预览作品文件", description = "支持图片/视频在线预览。不传 fileId 时预览主文件。")
     @GetMapping("/submissions/{id}/preview")
     public void previewFile(@PathVariable Long id,
+                            @RequestParam(required = false) Long fileId,
                             HttpServletRequest request,
                             HttpServletResponse response) throws IOException {
         ensureCurrentTeacherCanAccessSubmission(id, request);
 
-        SubmissionFile file = submissionService.getPrimaryFile(id);
+        SubmissionFile file = resolveFile(id, fileId);
         if (file.getFilePath() == null || file.getFilePath().isBlank()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "文件不存在");
         }

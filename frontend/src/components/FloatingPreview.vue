@@ -157,12 +157,15 @@ const props = defineProps<{
   error: string
   submissionId?: number
   mode?: 'text' | 'image' | 'video'
+  fileId?: number
 }>()
 
 const previewMode = computed(() => props.mode || 'text')
-const mediaUrl = computed(() =>
-  props.submissionId != null ? `/api/submissions/${props.submissionId}/preview` : ''
-)
+const mediaUrl = computed(() => {
+  if (props.submissionId == null) return ''
+  const base = `/api/submissions/${props.submissionId}/preview`
+  return props.fileId != null ? `${base}?fileId=${props.fileId}` : base
+})
 
 // ── Image zoom/pan state ──
 const ZOOM_STEP = 0.25
@@ -228,7 +231,10 @@ function onFocus() {
 
 function openInNewTab() {
   if (props.submissionId != null) {
-    window.open(`/preview/${props.submissionId}`, '_blank')
+    const url = props.fileId != null
+      ? `/preview/${props.submissionId}?fileId=${props.fileId}`
+      : `/preview/${props.submissionId}`
+    window.open(url, '_blank')
   }
 }
 
