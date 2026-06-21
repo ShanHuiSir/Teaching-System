@@ -179,7 +179,14 @@ start_frontend() {
     fi
     echo -e "  ${CYAN}→ Starting Frontend (port 5173)...${NC}"
     cd "$ROOT/frontend"
-    npm install --silent >> "$FRONT_LOG" 2>&1
+    if [ ! -d node_modules ]; then
+        echo -e "    → Installing frontend dependencies..."
+        npm install >> "$FRONT_LOG" 2>&1 || true
+        if [ ! -d "$ROOT/frontend/node_modules" ]; then
+            echo -e "    ${RED}✗ Dependencies installed to wrong location — check npm config${NC}"
+            return 1
+        fi
+    fi
     nohup npm run dev >> "$FRONT_LOG" 2>&1 &
     disown $!
     sleep 3
