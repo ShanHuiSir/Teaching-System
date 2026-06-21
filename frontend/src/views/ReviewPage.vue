@@ -599,6 +599,7 @@
       :mode="previewMode"
       :submission-id="previewFileId"
       :file-id="currentFileId"
+      :office-buffer="officeBuffer"
       @closed="closePreview"
     />
   </div>
@@ -675,7 +676,7 @@ const assignmentsAll = allAssignments
 const searchQuery = ref('')
 const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
 
-const { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, currentFileId, downloadFile, previewFile, closePreview } = useFileActions()
+const { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, currentFileId, officeBuffer, downloadFile, previewFile, closePreview } = useFileActions()
 const previewFileId = ref(0)
 const activeFiles = ref<any[]>([])
 

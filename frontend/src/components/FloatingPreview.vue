@@ -16,6 +16,7 @@
                 <polyline points="14 2 14 8 20 8" />
               </svg>
               <span class="fp-bar__name">{{ fileName }}</span>
+              <span v-if="previewMode === 'office'" class="fp-bar__warn">排版可能与原文件有差异，建议下载查看</span>
             </div>
 
             <!-- Zoom controls (image mode only) -->
@@ -121,6 +122,8 @@
                 您的浏览器不支持视频播放。
               </video>
             </div>
+            <!-- Office preview -->
+            <div v-else-if="previewMode === 'office'" ref="officeContainer" class="fp-scroll fp-office" />
             <!-- Text preview -->
             <div v-else class="fp-scroll">
               <pre class="fp-code"><code>{{ content }}</code></pre>
@@ -142,7 +145,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
+import { renderOffice } from '../composables/useOfficePreview'
 
 const emit = defineEmits<{
   'update:modelValue': [v: boolean]
@@ -156,8 +160,9 @@ const props = defineProps<{
   loading: boolean
   error: string
   submissionId?: number
-  mode?: 'text' | 'image' | 'video'
+  mode?: 'text' | 'image' | 'video' | 'office'
   fileId?: number
+  officeBuffer?: ArrayBuffer | null
 }>()
 
 const previewMode = computed(() => props.mode || 'text')
@@ -177,6 +182,7 @@ const panY = ref(0)
 const isPanning = ref(false)
 const imgRef = ref<HTMLImageElement | null>(null)
 const viewportRef = ref<HTMLElement | null>(null)
+const officeContainer = ref<HTMLElement | null>(null)
 
 const zoomPct = computed(() => Math.round(zoom.value * 100) + '%')
 
@@ -219,6 +225,27 @@ watch(() => props.modelValue, (visible) => {
   zoom.value = 1
   panX.value = 0
   panY.value = 0
+})
+
+// Render Office content to DOM container
+watch([() => props.modelValue, () => props.mode, officeContainer, () => props.officeBuffer, () => props.content], async ([visible, mode, container, buffer, html]) => {
+  if (!visible || mode !== 'office' || !container) return
+  if (buffer) {
+    // DOCX / PPTX — render via library
+    try {
+      await renderOffice(container, props.fileName, buffer)
+      const barH = 44
+      const maxH = window.innerHeight - 48
+      const isPptx = /\.pptx$/i.test(props.fileName)
+      h.value = Math.min(isPptx ? 600 : 700, maxH)
+      y.value = Math.round((window.innerHeight - h.value) / 2)
+    } catch {
+      container.innerHTML = '<p style="padding:24px;color:rgb(var(--md-sys-color-error))">Office 文件渲染失败，请尝试下载</p>'
+    }
+  } else if (html) {
+    // XLSX — render HTML string
+    container.innerHTML = html
+  }
 })
 
 const windowStyle = computed(() => ({
@@ -453,6 +480,14 @@ onBeforeUnmount(() => {
     color: rgb(var(--md-sys-color-on-surface));
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  &__warn {
+    @include font(12px, 20px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    opacity: 0.7;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+  }
   &__actions { display: flex; gap: 4px; flex-shrink: 0; }
   &__btn {
     width: 32px; height: 32px;
@@ -544,6 +579,10 @@ onBeforeUnmount(() => {
   color: rgb(var(--md-sys-color-on-surface));
   white-space: pre-wrap; word-break: break-all;
   user-select: text;
+}
+.fp-office {
+  background: #fff;
+  padding: 0;
 }
 .fp-loading {
   display: flex; align-items: center; gap: 12px;
