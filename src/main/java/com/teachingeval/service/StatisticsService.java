@@ -42,10 +42,13 @@ public class StatisticsService {
     }
 
     public StatisticsSummaryResponse getSummary(Long assignmentId, Long classId, List<Long> teacherClassIds) {
+        if (teacherClassIds == null) {
+            throw new IllegalArgumentException("teacherClassIds 不能为 null，必须明确指定教师管辖的班级范围");
+        }
         // 1. 学生：按教师管辖班级范围过滤（数据库层）
-        List<Student> scopedStudents = (teacherClassIds != null)
-                ? studentRepository.findByClassIdIn(teacherClassIds)
-                : studentRepository.findAll();
+        List<Student> scopedStudents = teacherClassIds.isEmpty()
+                ? Collections.emptyList()
+                : studentRepository.findByClassIdIn(teacherClassIds);
 
         if (classId != null) {
             scopedStudents = scopedStudents.stream()
@@ -62,14 +65,12 @@ public class StatisticsService {
         }
 
         // 进一步按学生范围过滤
-        if (teacherClassIds != null || classId != null) {
-            Set<Long> studentIds = scopedStudents.stream()
-                    .map(Student::getId)
-                    .collect(Collectors.toSet());
-            submissions = submissions.stream()
-                    .filter(s -> studentIds.contains(s.getStudentId()))
-                    .toList();
-        }
+        Set<Long> studentIds = scopedStudents.stream()
+                .map(Student::getId)
+                .collect(Collectors.toSet());
+        submissions = submissions.stream()
+                .filter(s -> studentIds.contains(s.getStudentId()))
+                .toList();
 
         // 3. 评价：按提交范围过滤（数据库层）
         Set<Long> submissionIds = submissions.stream()

@@ -67,7 +67,10 @@ public class SubmissionController {
     @GetMapping("/submissions")
     public List<WorkSubmission> listSubmissions(HttpServletRequest request) {
         List<Long> classIds = teachingClassService.resolveTeacherClassIds(request);
-        if (classIds == null) return submissionService.listSubmissions();
+        if (classIds == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "无法获取教师班级范围");
+        }
+        if (classIds.isEmpty()) return List.of();
         List<Long> studentIds = studentRepository.findByClassIdIn(classIds).stream()
                 .map(com.teachingeval.entity.Student::getId)
                 .toList();
