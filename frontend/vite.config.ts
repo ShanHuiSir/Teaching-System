@@ -55,6 +55,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    headers: {
+      'Cache-Control': 'no-store',
+    },
     proxy: {
       '/ai': {
         target: 'http://localhost:8000',
