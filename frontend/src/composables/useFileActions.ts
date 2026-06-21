@@ -36,20 +36,25 @@ export function useFileActions() {
   const previewLoading = ref(false)
   const previewError = ref('')
   const previewMode = ref<'text' | 'image' | 'video'>('text')
+  const currentFileId = ref<number | undefined>(undefined)
 
-  function downloadFile(submissionId: number, fileName: string) {
+  function downloadFile(submissionId: number, fileName: string, fileId?: number) {
     const a = document.createElement('a')
-    a.href = `/api/submissions/${submissionId}/file`
+    const url = fileId != null
+      ? `/api/submissions/${submissionId}/file?fileId=${fileId}`
+      : `/api/submissions/${submissionId}/file`
+    a.href = url
     a.download = fileName
     a.click()
   }
 
-  async function previewFile(submissionId: number, fileName: string, contentType?: string) {
+  async function previewFile(submissionId: number, fileName: string, contentType?: string, fileId?: number) {
     // 图片/视频 → 悬浮窗预览
     if (isMediaPreviewable(fileName)) {
       const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase()
       const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']
       previewMode.value = IMAGE_EXTS.includes(ext) ? 'image' : 'video'
+      currentFileId.value = fileId
       previewFileName.value = fileName
       previewContent.value = ''
       previewLoading.value = false
@@ -59,16 +64,20 @@ export function useFileActions() {
     }
     // 文本/代码 → 悬浮窗内联预览
     if (!isTextPreviewable(fileName, contentType)) {
-      downloadFile(submissionId, fileName)
+      downloadFile(submissionId, fileName, fileId)
       return
     }
     previewMode.value = 'text'
+    currentFileId.value = fileId
     previewLoading.value = true
     previewFileName.value = fileName
     previewError.value = ''
     previewVisible.value = true
     try {
-      const res = await fetch(`/api/submissions/${submissionId}/file`, { credentials: 'include' })
+      const fetchUrl = fileId != null
+        ? `/api/submissions/${submissionId}/file?fileId=${fileId}`
+        : `/api/submissions/${submissionId}/file`
+      const res = await fetch(fetchUrl, { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const text = await res.text()
       previewContent.value = text
@@ -86,7 +95,8 @@ export function useFileActions() {
     previewFileName.value = ''
     previewError.value = ''
     previewMode.value = 'text'
+    currentFileId.value = undefined
   }
 
-  return { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, downloadFile, previewFile, closePreview }
+  return { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, currentFileId, downloadFile, previewFile, closePreview }
 }
