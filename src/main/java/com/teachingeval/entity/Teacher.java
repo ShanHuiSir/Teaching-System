@@ -22,8 +22,9 @@ public class Teacher {
     @Schema(description = "登录用户名", example = "teacher")
     private String username;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(name = "password", nullable = false, length = 128)
-    @Schema(description = "登录密码", example = "123456")
+    @Schema(description = "登录密码（BCrypt 哈希）", example = "$2a$10$...")
     private String password;
 
     @Column(name = "display_name", nullable = false, length = 64)

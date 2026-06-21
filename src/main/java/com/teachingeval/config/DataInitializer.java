@@ -1,5 +1,7 @@
 package com.teachingeval.config;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import com.teachingeval.entity.Assignment;
 import com.teachingeval.entity.AssignmentClass;
 import com.teachingeval.entity.EvaluationResult;
@@ -147,10 +149,12 @@ public class DataInitializer implements CommandLineRunner {
         };
     }
 
+    private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
+
     private List<Teacher> seedTeachers() {
         return teacherRepository.saveAll(List.of(
-                buildTeacher("teacher", "123456", "张老师"),
-                buildTeacher("temp", "123456", "李老师")
+                buildTeacher("teacher", PASSWORD_ENCODER.encode("123456"), "张老师"),
+                buildTeacher("temp", PASSWORD_ENCODER.encode("123456"), "李老师")
         ));
     }
 
