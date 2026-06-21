@@ -565,6 +565,7 @@
       :content="previewContent"
       :loading="previewLoading"
       :error="previewError"
+      :mode="previewMode"
       :submission-id="previewFileId"
       @closed="closePreview"
     />
@@ -642,7 +643,7 @@ const assignmentsAll = allAssignments
 const searchQuery = ref('')
 const subjectType = ref<'code' | 'document' | 'design' | 'general'>('general')
 
-const { previewVisible, previewContent, previewFileName, previewLoading, previewError, downloadFile, previewFile, closePreview } = useFileActions()
+const { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, downloadFile, previewFile, closePreview } = useFileActions()
 const previewFileId = ref(0)
 function doPreviewFile(id: number, fileName: string, contentType?: string) { previewFileId.value = id; previewFile(id, fileName, contentType) }
 function doDownloadFile(id: number, fileName: string) { downloadFile(id, fileName) }

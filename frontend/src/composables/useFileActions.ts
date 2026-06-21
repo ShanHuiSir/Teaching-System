@@ -35,6 +35,7 @@ export function useFileActions() {
   const previewFileName = ref('')
   const previewLoading = ref(false)
   const previewError = ref('')
+  const previewMode = ref<'text' | 'image' | 'video'>('text')
 
   function downloadFile(submissionId: number, fileName: string) {
     const a = document.createElement('a')
@@ -44,16 +45,24 @@ export function useFileActions() {
   }
 
   async function previewFile(submissionId: number, fileName: string, contentType?: string) {
-    // 图片/视频 → 跳转到全屏预览页（支持 <img>/<video> 标签渲染）
+    // 图片/视频 → 悬浮窗预览
     if (isMediaPreviewable(fileName)) {
-      window.open(`/preview/${submissionId}`, '_blank')
+      const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase()
+      const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']
+      previewMode.value = IMAGE_EXTS.includes(ext) ? 'image' : 'video'
+      previewFileName.value = fileName
+      previewContent.value = ''
+      previewLoading.value = false
+      previewError.value = ''
+      previewVisible.value = true
       return
     }
-    // 文本/代码 → 侧栏内联预览
+    // 文本/代码 → 悬浮窗内联预览
     if (!isTextPreviewable(fileName, contentType)) {
       downloadFile(submissionId, fileName)
       return
     }
+    previewMode.value = 'text'
     previewLoading.value = true
     previewFileName.value = fileName
     previewError.value = ''
@@ -76,7 +85,8 @@ export function useFileActions() {
     previewContent.value = ''
     previewFileName.value = ''
     previewError.value = ''
+    previewMode.value = 'text'
   }
 
-  return { previewVisible, previewContent, previewFileName, previewLoading, previewError, downloadFile, previewFile, closePreview }
+  return { previewVisible, previewContent, previewFileName, previewLoading, previewError, previewMode, downloadFile, previewFile, closePreview }
 }
