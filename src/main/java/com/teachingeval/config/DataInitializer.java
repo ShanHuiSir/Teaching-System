@@ -276,6 +276,17 @@ public class DataInitializer implements CommandLineRunner {
                         "在线答题系统前端实现"),
                 sub(s.get(17), a.get(6), "机器学习项目", "database-design.txt", "代码作业",
                         "图像分类迁移学习实验"),
+                // ── 多样文件类型演示数据 ──
+                sub(s.get(0), a.get(3), "销售数据分析报告", "sales-report.xlsx", "电子表格",
+                        "Q1 季度销售数据汇总与分析"),
+                sub(s.get(5), a.get(8), "App 界面设计稿", "ui-mockup.png", "设计图",
+                        "移动端主页面高保真原型"),
+                sub(s.get(8), a.get(5), "项目答辩演示文稿", "project-defense.pptx", "演示文稿",
+                        "期末项目成果展示与答辩 PPT"),
+                sub(s.get(10), a.get(6), "项目演示视频", "demo-video.mp4", "视频",
+                        "系统功能演示与操作录屏"),
+                sub(s.get(13), a.get(5), "毕业论文初稿", "thesis-draft.docx", "文档",
+                        "在线教育平台的设计与实现"),
         };
 
         List<WorkSubmission> saved = submissionRepository.saveAll(List.of(subs));

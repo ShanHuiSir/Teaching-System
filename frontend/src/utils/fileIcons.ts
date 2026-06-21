@@ -65,6 +65,13 @@ export const FILE_ICONS: Record<string, FileIconDef> = {
     paths: [F('M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-1.5v2H13V7h1.5c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM10 8.5h1v-1h-1v1zm3.5 0h1v3h-1v-3z')],
   },
 
+  mp4: {
+    viewBox: '0 0 24 24',
+    paths: [
+      S('M23 7l-8 5 8 5V7z'), S('M14 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z'),
+    ],
+  },
+
   code: {
     viewBox: '0 0 24 24',
     paths: [S('M16 18l6-6-6-6'), S('M8 6l-6 6 6 6')],
@@ -160,6 +167,7 @@ const extMap: Record<string, string> = {
   xls: 'xlsx',
   pptx: 'pptx',
   ppt: 'pptx',
+  mp4: 'mp4',
   pdf: 'pdf',
   py: 'python',
   java: 'java',
