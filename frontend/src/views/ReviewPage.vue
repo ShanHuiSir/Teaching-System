@@ -1181,8 +1181,11 @@ function rebuildSemesters() {
     filtered = filtered.filter(it => it.assignmentId === selectedAssignmentId.value)
   }
 
-  // Find unsubmitted students — only from the selected assignment's target classes
-  const submittedIds = new Set(submissionsRaw.value.map((s: any) => s.studentId))
+  // Find unsubmitted students — only count submissions for the currently selected assignment
+  const relevantSubs = selectedAssignmentId.value
+    ? submissionsRaw.value.filter((s: any) => s.assignmentId === selectedAssignmentId.value)
+    : submissionsRaw.value
+  const submittedIds = new Set(relevantSubs.map((s: any) => s.studentId))
   const targetClassIds: Set<number> | null = selectedAssignmentId.value
     ? new Set(
         (assignmentsAll.value.find((a: any) => a.id === selectedAssignmentId.value)?.classIds || [])

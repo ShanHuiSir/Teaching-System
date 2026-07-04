@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人主页 — 张三</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'PingFang SC', sans-serif; background: #f0f2f5; color: #333; }
+    header { background: linear-gradient(135deg, #006a6a, #009688); color: white; padding: 48px 24px; text-align: center; }
+    header h1 { font-size: 2em; margin-bottom: 8px; }
+    header p { opacity: 0.85; }
+    main { max-width: 800px; margin: 24px auto; padding: 0 16px; }
+    .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .card h2 { font-size: 1.2em; margin-bottom: 12px; color: #006a6a; }
+    .skills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .skill { background: #e0f2f1; color: #006a6a; padding: 4px 12px; border-radius: 16px; font-size: 0.9em; }
+    footer { text-align: center; padding: 24px; color: #999; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>张三</h1>
+    <p>软件工程专业 · 2026 级</p>
+  </header>
+  <main>
+    <div class="card">
+      <h2>个人简介</h2>
+      <p>热爱编程，熟悉 Java 和 Vue 开发。目前正在学习 Spring Boot 后端开发，希望将来成为一名全栈工程师。</p>
+    </div>
+    <div class="card">
+      <h2>技能</h2>
+      <div class="skills">
+        <span class="skill">Java</span>
+        <span class="skill">Vue 3</span>
+        <span class="skill">TypeScript</span>
+        <span class="skill">Spring Boot</span>
+        <span class="skill">MySQL</span>
+        <span class="skill">Git</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>项目经历</h2>
+      <p>参与"在线教学评价系统"开发，负责前端 MagicBar 组件和 FloatingPreview 悬浮窗实现。</p>
+    </div>
+  </main>
+  <footer>
+    <p>© 2026 张三 · 个人主页作业</p>
+  </footer>
+</body>
+</html>
