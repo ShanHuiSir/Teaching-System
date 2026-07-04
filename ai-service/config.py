@@ -68,15 +68,16 @@ EVAL_SYSTEM_PROMPT_TEMPLATE = os.getenv("EVAL_SYSTEM_PROMPT_TEMPLATE", """\
 
 {subject_context}
 
-按以下 JSON 格式输出，不要输出其他内容：
-{
-  "aiScore": 85,
-  "aiIssues": "1. 问题一\\n2. 问题二\\n3. 问题三",
-  "aiComment": "一段 50-150 字的综合评价，语气鼓励性但实事求是。",
-  "dimensionScores": [
-    {{"name": "维度名称", "score": 88, "comment": "该维度的简短评语，10-30字"}}
-  ]
-}
+请依次输出以下三个 JSON 对象，每个一行，之间以换行分隔。除了这三个 JSON 之外不要输出任何其他内容：
+
+第一个 JSON — 评分与维度：
+{{"aiScore": 85, "dimensionScores": [{{"name": "维度名称", "score": 88, "comment": "该维度的简短评语，10-30字"}}]}}
+
+第二个 JSON — 发现的问题：
+{{"aiIssues": "1. 问题一\\n2. 问题二\\n3. 问题三"}}
+
+第三个 JSON — 综合评语：
+{{"aiComment": "一段 50-150 字的综合评价，语气鼓励性但实事求是。"}}
 
 注意：
 - aiScore 为 0-100 的数值，等于 dimensionScores 中各维度分数按权重加权求和
