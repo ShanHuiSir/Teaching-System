@@ -53,6 +53,19 @@ public class TeachingClassService {
                 .toList();
     }
 
+    public Long resolveCurrentTeacherId(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String username = (String) request.getAttribute(AuthService.AUTH_USER_ATTRIBUTE);
+        if (username == null) {
+            return null;
+        }
+        return teacherRepository.findByUsername(username)
+                .map(Teacher::getId)
+                .orElse(null);
+    }
+
     public List<Long> resolveTeacherClassIds(HttpServletRequest request) {
         String username = (String) request.getAttribute(AuthService.AUTH_USER_ATTRIBUTE);
         if (username == null) {
@@ -72,7 +85,7 @@ public class TeachingClassService {
         return ids;
     }
 
-    public TeachingClass createClass(TeachingClassRequest request) {
+    public TeachingClass createClass(TeachingClassRequest request, HttpServletRequest httpRequest) {
         String name = request.getName().trim();
         if (teachingClassRepository.existsByName(name)) {
             throw new IllegalArgumentException("班级已存在");
@@ -82,6 +95,7 @@ public class TeachingClassService {
         teachingClass.setName(name);
         teachingClass.setGrade(normalizeNullable(request.getGrade()));
         teachingClass.setDescription(normalizeNullable(request.getDescription()));
+        teachingClass.setTeacherId(resolveCurrentTeacherId(httpRequest));
         return teachingClassRepository.save(teachingClass);
     }
 

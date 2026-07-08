@@ -616,7 +616,7 @@ import FloatingPreview from '../components/FloatingPreview.vue'
 import ActionButton from '../components/ActionButton.vue'
 import StatChip from '../components/StatChip.vue'
 import { useFileActions } from '../composables/useFileActions'
-import { fetchVersion, fetchStudents, fetchAssignments, fetchSubmissions as storeFetchSubmissions, fetchEvaluations, students as allStudents, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
+import { refreshAll, fetchVersion, fetchStudents, fetchAssignments, fetchSubmissions as storeFetchSubmissions, fetchEvaluations, students as allStudents, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
 
 const route = useRoute()
 const { notify } = useNotify()
@@ -952,14 +952,8 @@ async function submitReview() {
       triggerRipple()
     }
     notify({ type: 'success', snackbar: '批改已提交', magicbar: '批改已提交' })
-    // 强制刷新 evaluations 并重建 evalMap
-    await fetchEvaluations(true)
-    const em: Record<string, any> = {}
-    ;(allEvaluations.value || []).forEach((e: any) => {
-      em[e.submissionId] = e
-    })
-    evalMap.value = em
-    rebuildSemesters()
+    await refreshAll()
+    await fetchSubmissions()
   } catch (e) {
     const saved = localStorage.getItem(`draft_${active.value.id}`)
     if (saved) {
@@ -1007,6 +1001,7 @@ async function evaluateWithBackendFallback() {
     fileName: active.value.fileName,
     subjectType: inferSubjectType(),
   })
+  await refreshAll()
   const entry = toEvalMapEntry(result, active.value.id)
   evalMap.value = {
     ...evalMap.value,
@@ -1105,19 +1100,29 @@ async function onAiEval() {
     }
     // Persist streaming result to database
     const ev = active.value ? evalMap.value[active.value.id] : null
+    let hasPersistedEval = false
     if (ev?.aiScore != null) {
       // 后端期望 dimensionScores 为 JSON 字符串，但从 API 加载时可能是数组
       const dims = ev.dimensionScores
       const dimsStr = typeof dims === 'string' ? dims : Array.isArray(dims) ? JSON.stringify(dims) : '[]'
-      http.post(`/submissions/${active.value!.id}/evaluation-result`, {
-        aiScore: ev.aiScore,
-        aiIssues: ev.aiIssues || '',
-        aiComment: ev.aiComment || '',
-        dimensionScores: dimsStr,
-      }).catch(() => { /* non-fatal */ })
+      try {
+        await http.post(`/submissions/${active.value!.id}/evaluation-result`, {
+          aiScore: ev.aiScore,
+          aiIssues: ev.aiIssues || '',
+          aiComment: ev.aiComment || '',
+          dimensionScores: dimsStr,
+        })
+        hasPersistedEval = true
+        await refreshAll()
+        await fetchSubmissions()
+      } catch {
+        /* non-fatal */
+      }
     }
 
-    rebuildSemesters()
+    if (!hasPersistedEval) {
+      rebuildSemesters()
+    }
     setTimeout(() => {
       if (magicBar.status === 'AI 评价已完成') magicBar.status = ''
     }, 2500)

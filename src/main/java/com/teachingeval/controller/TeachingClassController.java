@@ -42,8 +42,9 @@ public class TeachingClassController {
     @Operation(summary = "新增班级", description = "录入班级名称、年级和说明。班级名称不能重复。")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TeachingClass createClass(@Valid @RequestBody TeachingClassRequest request) {
-        return teachingClassService.createClass(request);
+    public TeachingClass createClass(@Valid @RequestBody TeachingClassRequest request,
+                                     HttpServletRequest httpRequest) {
+        return teachingClassService.createClass(request, httpRequest);
     }
 
     @Operation(summary = "更新班级", description = "更新班级名称、年级和说明。")

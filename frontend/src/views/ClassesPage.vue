@@ -325,7 +325,7 @@ import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 import AppIcon from '../components/AppIcon.vue'
-import { fetchVersion, fetchStudents, fetchClasses as storeFetchClasses, students as allStudents, classes as allClasses } from '../stores/data'
+import { refreshAll, fetchVersion, fetchStudents, fetchClasses as storeFetchClasses, students as allStudents, classes as allClasses } from '../stores/data'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()
@@ -427,7 +427,7 @@ async function onRosterFileChange(event: Event) {
   try {
     const result = await http.post(`/classes/${active.value.id}/students/import`, formData)
     rosterImportResult.value = result
-    await fetchStudents(true)
+    await refreshAll()
     await fetchClasses()
     notify({
       type: 'success',
@@ -553,6 +553,7 @@ async function onSave() {
     notify({ type: 'success', snackbar: isCreate.value ? '班级已创建' : '班级已更新', magicbar: '班级信息已保存' })
     editing.value = false
     activeId.value = saved.id
+    await refreshAll()
     await fetchClasses()
   } catch (e: any) {
     notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存失败：' + (e.message || '网络异常') })
@@ -607,7 +608,8 @@ async function confirmDelete() {
   try {
     await http.delete(`/classes/${c.id}`)
     if (activeId.value === c.id) activeId.value = null
-    classes.value = classes.value.filter(x => x.id !== c.id)
+    await refreshAll()
+    await fetchClasses()
     notify({ type: 'success', snackbar: `「${c.name}」已删除` })
   } catch (e: any) {
     notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除失败：' + (e.message || '网络异常') })
@@ -633,10 +635,10 @@ function buildRightButtons() {
 
 // ── Status badge helpers ──
 // ── Data fetching ──
-async function fetchClasses() {
+async function fetchClasses(force = false) {
   loading.value = true
   try {
-    await Promise.all([fetchStudents(), storeFetchClasses()])
+    await Promise.all([fetchStudents(force), storeFetchClasses(force)])
     const classRows = allClasses.value
     const students = allStudents.value
 
@@ -688,7 +690,9 @@ onActivated(() => {
 onDeactivated(() => {
   rightButtons.value = []
 })
-watch(fetchVersion, fetchClasses)
+watch(fetchVersion, () => {
+  void fetchClasses(true)
+})
 </script>
 
 <style lang="scss" scoped>

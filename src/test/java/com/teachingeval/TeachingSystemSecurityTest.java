@@ -164,6 +164,34 @@ class TeachingSystemSecurityTest {
                 .andExpect(jsonPath("$.message").value("AI接口调用过于频繁，请稍后再试"));
     }
 
+    @Test
+    void createdClassIsVisibleToCurrentTeacher() throws Exception {
+        Cookie authCookie = login();
+
+        String response = mockMvc.perform(post("/api/classes")
+                        .cookie(authCookie)
+                        .header(REQUESTED_WITH, "XMLHttpRequest")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "自动化新增班级",
+                                  "grade": "大一",
+                                  "description": "验证创建后归属当前教师"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("自动化新增班级"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Integer classId = com.jayway.jsonpath.JsonPath.read(response, "$.id");
+        mockMvc.perform(get("/api/classes")
+                        .cookie(authCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == %d)]".formatted(classId)).isNotEmpty());
+    }
+
     private Cookie login() throws Exception {
         return login("teacher", "123456");
     }

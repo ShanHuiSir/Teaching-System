@@ -368,7 +368,7 @@ import SearchInput from '../components/SearchInput.vue'
 import PreviewPlaceholder from '../components/PreviewPlaceholder.vue'
 import ListSkeleton from '../components/ListSkeleton.vue'
 import AppIcon from '../components/AppIcon.vue'
-import { fetchVersion, fetchStudents, fetchClasses, fetchAssignments as storeFetchAssignments, fetchSubmissions as storeFetchSubmissions, fetchEvaluations as storeFetchEvaluations, students as allStudents, classes as allClasses, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
+import { refreshAll, fetchVersion, fetchStudents, fetchClasses, fetchAssignments as storeFetchAssignments, fetchSubmissions as storeFetchSubmissions, fetchEvaluations as storeFetchEvaluations, students as allStudents, classes as allClasses, assignments as allAssignments, submissions as allSubmissions, evaluations as allEvaluations } from '../stores/data'
 // ConfirmDialog reserved for delete modal
 
 const { notify } = useNotify()
@@ -617,6 +617,7 @@ async function onSave() {
     notify({ type: 'success', snackbar: isCreate.value ? '作业已发布' : '作业已更新', magicbar: '作业信息已保存' })
     editing.value = false
     activeId.value = saved.id
+    await refreshAll()
     await fetchAssignments()
   } catch (e: any) {
     notify({ type: 'error', snackbar: '保存失败：' + (e.message || '网络异常'), magicbar: '保存失败：' + (e.message || '网络异常') })
@@ -696,7 +697,8 @@ async function onDelete(a: any) {
   try {
     await http.delete(`/assignments/${a.id}`)
     if (activeId.value === a.id) activeId.value = null
-    assignments.value = assignments.value.filter(x => x.id !== a.id)
+    await refreshAll()
+    await fetchAssignments()
     notify({ type: 'success', snackbar: `「${a.title}」已删除` })
   } catch (e: any) {
     notify({ type: 'error', snackbar: '删除失败：' + (e.message || '网络异常'), magicbar: '删除失败：' + (e.message || '网络异常') })
