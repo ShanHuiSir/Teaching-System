@@ -141,8 +141,58 @@
           <!-- Student Roster -->
           <div class="roster">
             <div class="roster__head">
-              <span class="roster__title">学生花名册</span>
-              <span class="roster__count">{{ filteredRoster.length }}/{{ active.roster.length }}人</span>
+              <div class="roster__heading">
+                <span class="roster__title">学生花名册</span>
+                <span class="roster__count">{{ filteredRoster.length }}/{{ active.roster.length }}人</span>
+              </div>
+              <div class="roster__actions">
+                <button class="roster__tool" type="button" :disabled="importingRoster" @click="downloadRosterTemplate">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>模板</span>
+                </button>
+                <button class="roster__tool roster__tool--primary" type="button" :disabled="importingRoster" @click="chooseRosterFile">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span>{{ importingRoster ? '导入中' : '导入' }}</span>
+                </button>
+              </div>
+            </div>
+            <input
+              ref="rosterFileInput"
+              class="roster__file"
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              @change="onRosterFileChange"
+            />
+            <div v-if="rosterImportResult" class="roster__result">
+              <span>新增 {{ rosterImportResult.created }} 人，更新 {{ rosterImportResult.updated }} 人，跳过 {{ rosterImportResult.skipped }} 行</span>
+              <button v-if="rosterImportResult.messages?.length" type="button" @click="showImportMessages = !showImportMessages">
+                {{ showImportMessages ? '收起' : '查看' }}
+              </button>
+            </div>
+            <div v-if="showImportMessages && rosterImportResult?.messages?.length" class="roster__messages">
+              <div v-for="msg in rosterImportResult.messages" :key="msg" class="roster__message">{{ msg }}</div>
             </div>
             <input
               v-if="active.roster.length"
@@ -290,6 +340,16 @@ const sortKey = ref<string | null>(null)
 
 const active = computed(() => classes.value.find(c => c.id === activeId.value) || null)
 const rosterQuery = ref('')
+const rosterFileInput = ref<HTMLInputElement | null>(null)
+const importingRoster = ref(false)
+const showImportMessages = ref(false)
+const rosterImportResult = ref<{
+  total: number
+  created: number
+  updated: number
+  skipped: number
+  messages: string[]
+} | null>(null)
 const filteredRoster = computed(() => {
   if (!active.value) return []
   const q = rosterQuery.value.trim().toLowerCase()
@@ -345,6 +405,51 @@ function resetForm() {
 function onSelectClass(c: any) {
   editing.value = false
   activeId.value = c.id
+  rosterImportResult.value = null
+  showImportMessages.value = false
+}
+
+function chooseRosterFile() {
+  rosterFileInput.value?.click()
+}
+
+async function onRosterFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || !active.value) return
+
+  const formData = new FormData()
+  formData.append('file', file)
+  importingRoster.value = true
+  rosterImportResult.value = null
+  showImportMessages.value = false
+  try {
+    const result = await http.post(`/classes/${active.value.id}/students/import`, formData)
+    rosterImportResult.value = result
+    await fetchStudents(true)
+    await fetchClasses()
+    notify({
+      type: 'success',
+      snackbar: `花名册已导入：新增 ${result.created} 人，更新 ${result.updated} 人`,
+      magicbar: `花名册已导入 ${result.total} 人`,
+    })
+  } catch (e: any) {
+    notify({ type: 'error', snackbar: '导入失败：' + (e.message || '网络异常'), magicbar: '导入失败：' + (e.message || '网络异常') })
+  } finally {
+    importingRoster.value = false
+  }
+}
+
+function downloadRosterTemplate() {
+  const csv = '\uFEFF学号,姓名\n2026001,张三\n2026002,李四\n'
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${active.value?.name || '班级'}-花名册模板.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 const DRAFT_PREFIX = 'cp_draft'
@@ -1094,7 +1199,15 @@ select.form-field__input {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     padding: 14px 16px;
+  }
+
+  &__heading {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
   }
 
   &__title {
@@ -1104,6 +1217,97 @@ select.form-field__input {
 
   &__count {
     @include font(12px, 16px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+  }
+
+  &__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  &__tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 8px;
+    background: rgb(var(--md-sys-color-surface-container-lowest));
+    color: rgb(var(--md-sys-color-on-surface));
+    cursor: pointer;
+    @include font(12px, 16px, 500);
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+
+    svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: rgb(var(--md-sys-color-primary));
+      background: rgb(var(--md-sys-color-surface-container-high));
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    &--primary {
+      border-color: transparent;
+      background: rgb(var(--md-sys-color-primary));
+      color: rgb(var(--md-sys-color-on-primary));
+    }
+  }
+
+  &__file {
+    display: none;
+  }
+
+  &__result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 8px 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgb(var(--md-sys-color-secondary-container));
+    color: rgb(var(--md-sys-color-on-secondary-container));
+
+    span {
+      @include font(12px, 18px);
+    }
+
+    button {
+      border: none;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      @include font(12px, 18px, 500);
+      flex-shrink: 0;
+    }
+  }
+
+  &__messages {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 8px 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgb(var(--md-sys-color-surface-container-high));
+  }
+
+  &__message {
+    @include font(12px, 18px);
     color: rgb(var(--md-sys-color-on-surface-variant));
   }
 

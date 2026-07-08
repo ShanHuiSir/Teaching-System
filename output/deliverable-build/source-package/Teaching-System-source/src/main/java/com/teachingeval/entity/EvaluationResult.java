@@ -1,0 +1,150 @@
+package com.teachingeval.entity;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "evaluation")
+@Schema(description = "AI 评价结果实体，承载 AI 对一份学生作品的自动评价数据")
+public class EvaluationResult {
+
+    public static final int STATUS_PENDING = 0;
+    public static final int STATUS_AI_REVIEWED = 1;
+    public static final int STATUS_TEACHER_CONFIRMED = 2;
+
+    /** TODO: 演示结束后，生产环境仅允许 REAL 来源 */
+    public static final String AI_SOURCE_REAL = "REAL";
+    public static final String AI_SOURCE_FAKE = "FAKE";
+    /** 真实 AI 失败后降级的模拟评分 */
+    public static final String AI_SOURCE_FAKE_FALLBACK = "FAKE_FALLBACK";
+
+    @jakarta.persistence.Transient
+    @Schema(description = "AI 评分来源：REAL（真实）/ FAKE（模拟，开发）/ FAKE_FALLBACK（真实失败降级）", example = "REAL")
+    private String aiSource;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "主键，数据库自增，新建对象时为 null", example = "1")
+    private Long id;
+
+    @Column(name = "submission_id")
+    @Schema(description = "关联的作品提交 ID，用于追溯评价对应的提交记录", example = "1001")
+    private Long submissionId;
+
+    @Column(name = "ai_score", precision = 5, scale = 2)
+    @Schema(description = "AI 建议分数，取值范围 0.00 ~ 100.00", example = "82.50")
+    private BigDecimal aiScore;
+
+    @Column(name = "ai_issues", columnDefinition = "TEXT")
+    @Schema(description = "AI 发现的问题，多条问题以换行符分隔",
+            example = "1. 结构不够清晰，建议优化段落层次\n2. 缺少核心论点支撑材料")
+    private String aiIssues;
+
+    @Column(name = "ai_comment", columnDefinition = "TEXT")
+    @Schema(description = "AI 综合评语", example = "整体完成度较好，但在结构组织上还有提升空间")
+    private String aiComment;
+
+    @Column(name = "dimension_scores", columnDefinition = "TEXT")
+    @Schema(description = "AI 分维度评分详情，JSON 数组", example = "[{\"name\":\"代码质量\",\"score\":88,\"comment\":\"命名规范\"}]")
+    private String dimensionScores;
+
+    @Column(name = "teacher_score", precision = 5, scale = 2)
+    @Schema(description = "教师最终评分，取值范围 0.00 ~ 100.00", example = "88.00")
+    private BigDecimal teacherScore;
+
+    @Column(name = "teacher_comment", columnDefinition = "TEXT")
+    @Schema(description = "教师最终评语", example = "整体完成较好，建议继续完善代码注释。")
+    private String teacherComment;
+
+    @Column(name = "status")
+    @Schema(description = "评价状态：0 表示未评价，1 表示 AI 已评价，2 表示教师已确认", example = "1")
+    private int status;
+
+    @Column(name = "created_at", nullable = false)
+    @Schema(description = "创建时间")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    @Schema(description = "更新时间")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) createdAt = now;
+        if (updatedAt == null) updatedAt = now;
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public EvaluationResult() {}
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getSubmissionId() { return submissionId; }
+    public void setSubmissionId(Long submissionId) { this.submissionId = submissionId; }
+
+    public BigDecimal getAiScore() { return aiScore; }
+    public void setAiScore(BigDecimal aiScore) { this.aiScore = aiScore; }
+
+    public String getAiIssues() { return aiIssues; }
+    public void setAiIssues(String aiIssues) { this.aiIssues = aiIssues; }
+
+    public String getAiComment() { return aiComment; }
+    public void setAiComment(String aiComment) { this.aiComment = aiComment; }
+
+    @com.fasterxml.jackson.annotation.JsonRawValue
+    public String getDimensionScores() { return dimensionScores; }
+    public void setDimensionScores(String dimensionScores) { this.dimensionScores = dimensionScores; }
+
+    public BigDecimal getTeacherScore() { return teacherScore; }
+    public void setTeacherScore(BigDecimal teacherScore) { this.teacherScore = teacherScore; }
+
+    public String getTeacherComment() { return teacherComment; }
+    public void setTeacherComment(String teacherComment) { this.teacherComment = teacherComment; }
+
+    public int getStatus() { return status; }
+    public void setStatus(int status) { this.status = status; }
+
+    public String getAiSource() { return aiSource; }
+    public void setAiSource(String aiSource) { this.aiSource = aiSource; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public boolean isAiEvaluated() { return status >= STATUS_AI_REVIEWED; }
+
+    public boolean isTeacherConfirmed() { return status >= STATUS_TEACHER_CONFIRMED; }
+
+    @Override
+    public String toString() {
+        return "EvaluationResult{" +
+                "id=" + id +
+                ", submissionId=" + submissionId +
+                ", aiScore=" + aiScore +
+                ", aiIssues='" + aiIssues + '\'' +
+                ", aiComment='" + aiComment + '\'' +
+                ", dimensionScores='" + dimensionScores + '\'' +
+                ", teacherScore=" + teacherScore +
+                ", teacherComment='" + teacherComment + '\'' +
+                ", status=" + status +
+                '}';
+    }
+}

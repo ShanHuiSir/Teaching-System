@@ -1,0 +1,33 @@
+# AI Evaluation Service — unified dependencies for DocxConv + ScreenshotProc + ArchiveProc
+#
+# Install: pip install -r requirements.txt
+# Run:     python -m docxconv serve
+#          or: cd ai-service && uvicorn docxconv.server:app --host 0.0.0.0 --port 8000
+
+# HTTP server
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+python-multipart>=0.0.18
+python-dotenv>=1.0.0
+
+# DOCX processing
+python-docx>=1.1.0
+lxml>=5.0.0
+pymupdf>=1.25.0
+
+# DeepSeek / LLM (Evaluator)
+openai>=1.0.0
+
+# Spreadsheet & Presentation extraction
+openpyxl>=3.1.0
+python-pptx>=1.0.0
+
+# Image (OCR support)
+Pillow>=10.0.0
+
+# OCR (ScreenshotProc)
+easyocr>=1.7.0
+
+# Archive processing
+py7zr>=0.20.0
+rarfile>=4.0

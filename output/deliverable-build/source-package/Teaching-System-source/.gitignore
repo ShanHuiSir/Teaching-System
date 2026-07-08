@@ -1,0 +1,61 @@
+# === IDE ===
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code
+.vscode/
+
+# Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+.springBeans
+
+# NetBeans
+nbproject/
+nb-configuration.xml
+nbactions.xml
+
+# Editor backup
+*.swp
+*.swo
+*~
+*.bak
+
+# === Maven ===
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.log
+dependency-reduced-pom.xml
+
+# === Java build output ===
+out/
+*.class
+*.jar
+*.war
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Environment ===
+.env
+.env.local
+# === Runtime uploads ===
+uploads/
+
+# === DeepSeek docs (large HTML, not tracked) ===
+/docs/开发期文档/DeepSeek接入指南/
+
+# === nodejs ===
+/frontend/node_modules
+/frontend/dist
+
+# === logs ===
+/logs
+/node_modules/

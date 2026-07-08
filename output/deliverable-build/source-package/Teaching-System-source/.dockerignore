@@ -1,0 +1,17 @@
+.git
+.idea
+.vscode
+.DS_Store
+
+target/*
+!target/app.jar
+uploads
+logs
+*.log
+
+frontend
+ai-service
+docs
+
+node_modules
+dist

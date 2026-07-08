@@ -1,0 +1,23 @@
+[project]
+name = "archiveproc"
+version = "0.1.0"
+description = "Extract archives (ZIP/RAR/7z/TAR) and return a classified file tree with inline text content"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.115.0",
+    "py7zr",
+    "python-multipart>=0.0.18",
+    "rarfile",
+    "uvicorn[standard]>=0.34.0",
+]
+
+[project.scripts]
+archiveproc = "archiveproc.__main__:main"
+archiveproc-serve = "archiveproc.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true

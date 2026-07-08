@@ -291,22 +291,6 @@
                 <span v-if="activeEval && activeEval.status >= 1" class="ai-btn-wrap__hint">重新评价？</span>
               </div>
             </div>
-            <ActionButton variant="danger" @click="onReject">
-              <template #icon>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </template>
-              打回
-            </ActionButton>
           </div>
 
           <!-- Info inner card -->
@@ -992,6 +976,45 @@ const streamIssues = ref('')
 const streamComment = ref('')
 const streamDims = ref<{ name: string; score: number }[]>([])
 
+function inferSubjectType(): 'code' | 'document' | 'design' | 'general' {
+  const workType = (active.value?.workType || '').toLowerCase()
+  return subjectType.value !== 'general'
+    ? subjectType.value
+    : workType.includes('代码') || workType.includes('编程') || workType.includes('程序') ? 'code'
+    : workType.includes('文档') || workType.includes('报告') || workType.includes('实验') ? 'document'
+    : workType.includes('设计') || workType.includes('原型') ? 'design'
+    : 'general'
+}
+
+function toEvalMapEntry(result: any, submissionId: number) {
+  const dims = result?.dimensionScores || result?.dimensions || []
+  return {
+    submissionId,
+    aiScore: result?.aiScore ?? result?.score ?? result?.totalScore ?? 0,
+    aiIssues: result?.aiIssues || result?.issues || '',
+    aiComment: result?.aiComment || result?.comment || '',
+    dimensionScores: typeof dims === 'string' ? dims : JSON.stringify(dims),
+    status: result?.status ?? 1,
+  }
+}
+
+async function evaluateWithBackendFallback() {
+  if (!active.value) return null
+  magicBar.status = 'AI 流式服务不可用，正在使用演示评分…'
+  magicBar.statusType = 'loading'
+  const result = await http.post(`/submissions/${active.value.id}/evaluate`, {
+    studentName: active.value.studentName,
+    fileName: active.value.fileName,
+    subjectType: inferSubjectType(),
+  })
+  const entry = toEvalMapEntry(result, active.value.id)
+  evalMap.value = {
+    ...evalMap.value,
+    [active.value.id]: entry,
+  }
+  return entry
+}
+
 async function onAiEval() {
   if (!active.value || aiLoading.value) return
   aiLoading.value = true
@@ -1004,14 +1027,7 @@ async function onAiEval() {
   magicBar.statusType = 'loading'
 
   try {
-    const workType = (active.value.workType || '').toLowerCase()
-    const st =
-      subjectType.value !== 'general'
-        ? subjectType.value
-        : workType.includes('代码') || workType.includes('编程') || workType.includes('程序') ? 'code'
-        : workType.includes('文档') || workType.includes('报告') || workType.includes('实验') ? 'document'
-        : workType.includes('设计') || workType.includes('原型') ? 'design'
-        : 'general'
+    const st = inferSubjectType()
 
     // Fetch file blob from Java
     const fileRes = await fetch(`/api/submissions/${active.value.id}/file`, { credentials: 'include' })
@@ -1101,7 +1117,24 @@ async function onAiEval() {
       if (magicBar.status === 'AI 评价已完成') magicBar.status = ''
     }, 2500)
   } catch (e: any) {
-    notify({ type: 'error', snackbar: 'AI评价失败：' + (e.message || '网络异常'), magicbar: 'AI 评分失败：' + (e.message || '网络异常') })
+    try {
+      const ev = await evaluateWithBackendFallback()
+      if (!ev) throw new Error('后端评价无返回')
+      rebuildSemesters()
+      magicBar.status = 'AI 评价已完成'
+      magicBar.statusType = 'success'
+      notify({
+        type: 'success',
+        snackbar: 'AI评价已完成（演示模式）',
+        magicbar: 'AI 评分已使用演示模式完成',
+      })
+      setTimeout(() => {
+        if (magicBar.status === 'AI 评价已完成') magicBar.status = ''
+      }, 2500)
+    } catch (fallbackError: any) {
+      const message = fallbackError?.message || e?.message || '网络异常'
+      notify({ type: 'error', snackbar: 'AI评价失败：' + message, magicbar: 'AI 评分失败：' + message })
+    }
   } finally {
     aiLoading.value = false
   }

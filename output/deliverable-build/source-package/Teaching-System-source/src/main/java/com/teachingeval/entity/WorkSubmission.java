@@ -1,0 +1,240 @@
+package com.teachingeval.entity;
+
+import java.time.LocalDateTime;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "submission")
+@Schema(description = "作品提交记录，保存学生作品的基础元数据")
+public class WorkSubmission {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "主键，数据库自增", example = "1")
+    private Long id;
+
+    @Column(name = "student_id", nullable = false)
+    @Schema(description = "学生 ID", example = "1")
+    private Long studentId;
+
+    @Column(name = "student_name", nullable = false, length = 64)
+    @Schema(description = "学生姓名快照", example = "张三")
+    private String studentName;
+
+    @Column(name = "assignment_id")
+    @Schema(description = "关联作业 ID，正式模型字段；为空表示历史或临时提交", example = "1")
+    private Long assignmentId;
+
+    @Column(name = "assignment_title", length = 128)
+    @Schema(description = "关联作业标题快照", example = "第二阶段实训报告")
+    private String assignmentTitle;
+
+    @Column(name = "title", nullable = false, length = 128)
+    @Schema(description = "作品标题", example = "第二阶段实训报告")
+    private String title;
+
+    @Column(name = "file_name", nullable = false, length = 512)
+    @Schema(description = "作品文件名", example = "student-work.zip")
+    private String fileName;
+
+    @Column(name = "file_path", length = 1024)
+    @Schema(description = "服务器保存路径", example = "uploads/submissions/1/report.docx")
+    private String filePath;
+
+    @Column(name = "file_size")
+    @Schema(description = "文件大小，单位字节", example = "20480")
+    private Long fileSize;
+
+    @Column(name = "content_type", length = 128)
+    @Schema(description = "文件 MIME 类型", example = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    private String contentType;
+
+    @Column(name = "preprocess_status", length = 32)
+    @Schema(description = "Py 预处理状态", example = "SUCCESS")
+    private String preprocessStatus;
+
+    @Column(name = "preprocess_message", length = 512)
+    @Schema(description = "Py 预处理状态说明", example = "Py预处理完成")
+    private String preprocessMessage;
+
+    @Lob
+    @Column(name = "preprocess_result")
+    @Schema(description = "Py 预处理原始响应 JSON")
+    private String preprocessResult;
+
+    @Column(name = "work_type", nullable = false, length = 32)
+    @Schema(description = "作品类型", example = "实验报告")
+    private String workType;
+
+    @Column(name = "remark", columnDefinition = "TEXT")
+    @Schema(description = "备注说明", example = "包含源码和报告")
+    private String remark;
+
+    @Column(name = "submitted_at", nullable = false)
+    @Schema(description = "提交时间")
+    private LocalDateTime submittedAt;
+
+    @Column(name = "updated_at", nullable = false)
+    @Schema(description = "提交记录更新时间")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    void prePersist() {
+        if (submittedAt == null) {
+            submittedAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = submittedAt;
+        }
+    }
+
+    @jakarta.persistence.PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(Long studentId) {
+        this.studentId = studentId;
+    }
+
+    public String getStudentName() {
+        return studentName;
+    }
+
+    public void setStudentName(String studentName) {
+        this.studentName = studentName;
+    }
+
+    public Long getAssignmentId() {
+        return assignmentId;
+    }
+
+    public void setAssignmentId(Long assignmentId) {
+        this.assignmentId = assignmentId;
+    }
+
+    public String getAssignmentTitle() {
+        return assignmentTitle;
+    }
+
+    public void setAssignmentTitle(String assignmentTitle) {
+        this.assignmentTitle = assignmentTitle;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public String getPreprocessStatus() {
+        return preprocessStatus;
+    }
+
+    public void setPreprocessStatus(String preprocessStatus) {
+        this.preprocessStatus = preprocessStatus;
+    }
+
+    public String getPreprocessMessage() {
+        return preprocessMessage;
+    }
+
+    public void setPreprocessMessage(String preprocessMessage) {
+        this.preprocessMessage = preprocessMessage;
+    }
+
+    public String getPreprocessResult() {
+        return preprocessResult;
+    }
+
+    public void setPreprocessResult(String preprocessResult) {
+        this.preprocessResult = preprocessResult;
+    }
+
+    public String getWorkType() {
+        return workType;
+    }
+
+    public void setWorkType(String workType) {
+        this.workType = workType;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+    public LocalDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public void setSubmittedAt(LocalDateTime submittedAt) {
+        this.submittedAt = submittedAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+}

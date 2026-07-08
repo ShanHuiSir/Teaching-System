@@ -1,0 +1,112 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'frontend/**'
+      - 'ai-service/**'
+      - 'pom.xml'
+      - 'docker-compose.yml'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ── Java backend ─────────────────────────────────────────────────
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Maven Package
+        run: mvn package -B -DskipTests
+
+      - name: Prepare JAR
+        run: |
+          JAR=$(ls target/Teaching-System-*.jar | grep -v '\.original$' | head -1)
+          cp "$JAR" target/app.jar
+
+      # ── Stage deploy directory ────────────────────────────────────────
+
+      - name: Stage Deploy Directory
+        run: |
+          mkdir -p deploy/target
+          cp docker-compose.yml deploy/
+          cp Dockerfile deploy/
+          cp .dockerignore deploy/
+          cp target/app.jar deploy/target/
+          cp -r frontend deploy/
+          cp -r ai-service deploy/
+          # Docker builds the frontend itself (multi-stage), so remove
+          # pre-existing dist/ and node_modules to shrink the upload.
+          rm -rf deploy/frontend/node_modules
+          rm -rf deploy/frontend/dist
+          # AI service — venv and pycache are not needed in build context.
+          rm -rf deploy/ai-service/.venv
+          rm -rf deploy/ai-service/__pycache__
+          echo "=== Deploy directory ==="
+          find deploy -maxdepth 2 -not -path '*/node_modules/*' | sort
+
+      # ── Upload to server ──────────────────────────────────────────────
+
+      - name: Upload to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 21987 }}
+          source: deploy/
+          target: /usr/share/teaching-system
+          strip_components: 1
+          rm: true
+
+      # ── Docker Compose deploy ─────────────────────────────────────────
+
+      - name: Docker Compose Deploy
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 21987 }}
+          script: |
+            bash -c '
+            set -euo pipefail
+            cd /usr/share/teaching-system
+            cat > .env << "ENVEOF"
+            DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
+            DEEPSEEK_BASE_URL=https://api.deepseek.com
+            DEEPSEEK_MODEL=deepseek-v4-pro
+            DEEPSEEK_THINKING=false
+            DEEPSEEK_MAX_TOKENS=4096
+            ENVEOF
+            chmod 600 .env
+            echo "=== Stopping old processes ==="
+            for port in 8000 8080; do
+              pids=$(lsof -ti :$port 2>/dev/null || true)
+              [ -n "$pids" ] && echo "Killing port $port: $pids" && kill -9 $pids 2>/dev/null || true
+            done
+            sleep 2
+
+            echo "=== Building ==="
+            docker compose build
+            echo "=== Starting ==="
+            docker compose up -d --force-recreate
+            echo "=== Status ==="
+            docker compose ps
+            docker image prune -f
+            echo "=== Deploy complete ==="
+            '

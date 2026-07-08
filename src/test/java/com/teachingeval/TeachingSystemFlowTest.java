@@ -99,7 +99,7 @@ class TeachingSystemFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(6)))
                 .andExpect(jsonPath("$[0].name").value("软件 1 班"))
-                .andExpect(jsonPath("$[0].grade").value("2026"));
+                .andExpect(jsonPath("$[0].grade").value("大一"));
 
         String assignmentResponse = mockMvc.perform(get("/api/assignments"))
                 .andExpect(status().isOk())

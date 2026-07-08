@@ -2,6 +2,7 @@ package com.teachingeval.controller;
 
 import com.teachingeval.dto.StudentPageResponse;
 import com.teachingeval.dto.StudentRequest;
+import com.teachingeval.dto.StudentRosterImportResponse;
 import com.teachingeval.entity.Student;
 import com.teachingeval.service.StudentService;
 import com.teachingeval.service.TeachingClassService;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -57,6 +60,14 @@ public class StudentController {
     @ResponseStatus(HttpStatus.CREATED)
     public Student createStudent(@Valid @RequestBody StudentRequest request) {
         return studentService.createStudent(request);
+    }
+
+    @Operation(summary = "导入班级学生花名册", description = "上传 .xlsx、.xls 或 .csv 文件，按前两列读取学号和姓名并导入到指定班级。")
+    @PostMapping(value = "/classes/{classId}/students/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public StudentRosterImportResponse importRoster(@PathVariable Long classId,
+                                                    @RequestParam MultipartFile file,
+                                                    HttpServletRequest request) {
+        return studentService.importRoster(classId, file, teachingClassService.resolveTeacherClassIds(request));
     }
 
     @Operation(summary = "删除学生", description = "根据学生主键 ID 删除指定学生。")

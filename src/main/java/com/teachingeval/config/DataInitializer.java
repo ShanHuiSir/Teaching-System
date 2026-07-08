@@ -163,12 +163,12 @@ public class DataInitializer implements CommandLineRunner {
         Teacher t1 = teachers.get(0);
         Teacher t2 = teachers.get(1);
         return teachingClassRepository.saveAll(List.of(
-                buildClass("软件 1 班", "2026", "软件工程实训演示班级", t1.getId()),
-                buildClass("软件 2 班", "2026", "软件工程实训演示班级", t1.getId()),
-                buildClass("计算机科学 1 班", "2026", "计算机科学实训演示班级", t1.getId()),
-                buildClass("计算机科学 2 班", "2026", "计算机科学实训演示班级", t1.getId()),
-                buildClass("软件 3 班", "2026", "软件工程实训演示班级", t2.getId()),
-                buildClass("大数据 1 班", "2026", "大数据技术实训演示班级", t2.getId())
+                buildClass("软件 1 班", "大一", "软件工程实训演示班级", t1.getId()),
+                buildClass("软件 2 班", "大一", "软件工程实训演示班级", t1.getId()),
+                buildClass("计算机科学 1 班", "大二", "计算机科学实训演示班级", t1.getId()),
+                buildClass("计算机科学 2 班", "大二", "计算机科学实训演示班级", t1.getId()),
+                buildClass("软件 3 班", "大三", "软件工程实训演示班级", t2.getId()),
+                buildClass("大数据 1 班", "大三", "大数据技术实训演示班级", t2.getId())
         ));
     }
 
