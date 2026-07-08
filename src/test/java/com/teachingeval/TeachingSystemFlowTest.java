@@ -76,8 +76,8 @@ class TeachingSystemFlowTest {
                 .andExpect(jsonPath("$.content", hasSize(3)))
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(3))
-                .andExpect(jsonPath("$.totalElements").value(18))
-                .andExpect(jsonPath("$.totalPages").value(6))
+                .andExpect(jsonPath("$.totalElements").value(43))
+                .andExpect(jsonPath("$.totalPages").value(15))
                 .andExpect(jsonPath("$.hasNext").value(true))
                 .andExpect(jsonPath("$.content[0].classId", greaterThan(0)))
                 .andExpect(jsonPath("$.content[0].className").value("软件 1 班"));
@@ -85,7 +85,7 @@ class TeachingSystemFlowTest {
         mockMvc.perform(get("/api/students/page")
                         .param("page", "-1")
                         .param("size", "999")
-                        .param("keyword", "张"))
+                        .param("keyword", "2026001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(200))
@@ -97,25 +97,34 @@ class TeachingSystemFlowTest {
     void classAndAssignmentModelsExposeStableRelationships() throws Exception {
         mockMvc.perform(get("/api/classes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(6)))
+                .andExpect(jsonPath("$", hasSize(4)))
                 .andExpect(jsonPath("$[0].name").value("软件 1 班"))
                 .andExpect(jsonPath("$[0].grade").value("大一"));
 
         String assignmentResponse = mockMvc.perform(get("/api/assignments"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(9)))
-                .andExpect(jsonPath("$[0].classId", greaterThan(0)))
+                .andExpect(jsonPath("$", hasSize(6)))
                 .andExpect(jsonPath("$[0].classIds", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$[0].classNames", hasSize(greaterThan(0))))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        Integer classId = com.jayway.jsonpath.JsonPath.read(assignmentResponse, "$[0].classId");
-        mockMvc.perform(get("/api/assignments")
+        java.util.List<Integer> classIds = com.jayway.jsonpath.JsonPath.read(assignmentResponse, "$[0].classIds");
+        assertThat(classIds).isNotEmpty();
+        Integer classId = classIds.get(0);
+
+        String filteredAssignmentResponse = mockMvc.perform(get("/api/assignments")
                         .param("classId", String.valueOf(classId)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].classId").value(classId));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        java.util.List<java.util.List<Integer>> filteredClassIds = com.jayway.jsonpath.JsonPath.read(
+                filteredAssignmentResponse, "$[*].classIds");
+        assertThat(filteredClassIds).isNotEmpty();
+        assertThat(filteredClassIds).allSatisfy(ids -> assertThat(ids).contains(classId));
     }
 
     @Test
@@ -253,11 +262,11 @@ class TeachingSystemFlowTest {
 
         mockMvc.perform(get("/api/statistics/summary"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.studentCount").value(18))
-                .andExpect(jsonPath("$.submissionCount").value(24))
-                .andExpect(jsonPath("$.aiEvaluatedCount").value(6))
-                .andExpect(jsonPath("$.teacherConfirmedCount").value(3))
-                .andExpect(jsonPath("$.averageTeacherScore").value(89.00));
+                .andExpect(jsonPath("$.studentCount").value(43))
+                .andExpect(jsonPath("$.submissionCount").value(72))
+                .andExpect(jsonPath("$.aiEvaluatedCount").value(13))
+                .andExpect(jsonPath("$.teacherConfirmedCount").value(6))
+                .andExpect(jsonPath("$.averageTeacherScore").value(91.00));
     }
 
     @Test

@@ -1063,38 +1063,43 @@ async function onAiEval() {
         if (et === 'reasoning') {
           magicBar.status = 'AI 正在分析作业…'
         } else if (et === 'content') {
-          streamComment.value += d
+          // Raw text delta — used as background progress indicator only
+          magicBar.status = 'AI 正在评价…'
+        } else if (et === 'scores') {
+          // Phase 1: dimension scores arrive immediately
+          try {
+            const r = JSON.parse(d)
+            if (r.dimensionScores) streamDims.value = r.dimensionScores
+            magicBar.status = `AI 评分: ${r.aiScore || '—'} 分`
+          } catch { /* ignore */ }
         } else if (et === 'issues') {
-          streamIssues.value += d
+          // Phase 2: issues list
+          streamIssues.value = d
+          magicBar.status = 'AI 已列出问题'
         } else if (et === 'comment') {
-          streamComment.value += d
-        } else if (et?.startsWith('dimension_')) {
-          const name = et.slice('dimension_'.length)
-          const idx = streamDims.value.findIndex(dm => dm.name === name)
-          if (idx >= 0) streamDims.value[idx] = { name, score: Number(d) || 0 }
-          else streamDims.value.push({ name, score: Number(d) || 0 })
-          magicBar.status = `AI 正在评分: ${name}`
+          // Phase 3: comment
+          streamComment.value = d
+          magicBar.status = 'AI 评价已完成'
+          magicBar.statusType = 'success'
         } else if (et === 'result') {
+          // Final merged result for persistence
           try {
             const r = JSON.parse(d)
             if (active.value) {
-              const dims = r.dimensionScores || r.dimensions || streamDims.value.map(dm => ({ name: dm.name, score: dm.score }))
-              const score = r.score ?? r.aiScore ?? r.totalScore ?? (dims.length ? Math.round(dims.reduce((s: number, d: any) => s + d.score, 0) / dims.length) : 0)
+              const dims = r.dimensionScores || streamDims.value
               evalMap.value = {
                 ...evalMap.value,
                 [active.value.id]: {
                   submissionId: active.value.id,
-                  aiScore: score,
-                  aiIssues: r.aiIssues || r.issues || streamIssues.value || '',
-                  aiComment: r.aiComment || r.comment || streamComment.value || streamIssues.value || '',
+                  aiScore: r.aiScore ?? 0,
+                  aiIssues: r.aiIssues || streamIssues.value || '',
+                  aiComment: r.aiComment || streamComment.value || '',
                   dimensionScores: JSON.stringify(dims),
                   status: 1,
                 },
               }
             }
           } catch { /* ignore */ }
-          magicBar.status = 'AI 评价已完成'
-          magicBar.statusType = 'success'
         }
       }
     }
@@ -1209,8 +1214,11 @@ function rebuildSemesters() {
     filtered = filtered.filter(it => it.assignmentId === selectedAssignmentId.value)
   }
 
-  // Find unsubmitted students — only from the selected assignment's target classes
-  const submittedIds = new Set(submissionsRaw.value.map((s: any) => s.studentId))
+  // Find unsubmitted students — only count submissions for the currently selected assignment
+  const relevantSubs = selectedAssignmentId.value
+    ? submissionsRaw.value.filter((s: any) => s.assignmentId === selectedAssignmentId.value)
+    : submissionsRaw.value
+  const submittedIds = new Set(relevantSubs.map((s: any) => s.studentId))
   const targetClassIds: Set<number> | null = selectedAssignmentId.value
     ? new Set(
         (assignmentsAll.value.find((a: any) => a.id === selectedAssignmentId.value)?.classIds || [])

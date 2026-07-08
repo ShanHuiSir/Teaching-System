@@ -4,10 +4,14 @@ import java.math.BigDecimal;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.alibaba.excel.annotation.write.style.ContentRowHeight;
+import com.alibaba.excel.annotation.write.style.ContentStyle;
+import com.alibaba.excel.enums.BooleanEnum;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "成绩导出 Excel 行数据")
+@ContentRowHeight(20)
 public class ExportRow {
 
     @ExcelProperty("学号")
@@ -47,16 +51,19 @@ public class ExportRow {
 
     @ExcelProperty("AI 发现的问题")
     @ColumnWidth(40)
+    @ContentStyle(wrapped = BooleanEnum.TRUE)
     @Schema(description = "AI 发现的问题列表")
     private String aiIssues;
 
     @ExcelProperty("AI 评语")
     @ColumnWidth(40)
+    @ContentStyle(wrapped = BooleanEnum.TRUE)
     @Schema(description = "AI 综合评语")
     private String aiComment;
 
     @ExcelProperty("AI 分维度评分")
     @ColumnWidth(50)
+    @ContentStyle(wrapped = BooleanEnum.TRUE)
     @Schema(description = "AI分维度评分详情")
     private String dimensionScores;
 
@@ -67,6 +74,7 @@ public class ExportRow {
 
     @ExcelProperty("教师评语")
     @ColumnWidth(40)
+    @ContentStyle(wrapped = BooleanEnum.TRUE)
     @Schema(description = "教师最终评语")
     private String teacherComment;
 

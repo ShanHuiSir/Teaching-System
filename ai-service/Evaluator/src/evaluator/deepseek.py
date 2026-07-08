@@ -176,6 +176,36 @@ def _format_sse(event: str, data: dict | str) -> str:
 
 # ── evaluation ────────────────────────────────────────────────────────────
 
+def _parse_multi_json_output(raw_text: str) -> dict:
+    """Parse the multi-JSON output format (3 sequential JSON objects).
+
+    Returns a merged dict with aiScore, aiIssues, aiComment, dimensionScores.
+    Falls back gracefully if fewer than 3 valid JSONs are found.
+    """
+    merged: dict = {}
+    depth = 0
+    start = 0
+
+    for i, ch in enumerate(raw_text):
+        if ch == '{':
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0:
+                try:
+                    obj = json.loads(raw_text[start:i + 1])
+                    merged.update(obj)
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse JSON segment: %s", raw_text[start:i + 1][:100])
+        elif depth == 0 and ch not in (' ', '\n', '\r', '\t'):
+            # Non-JSON content between objects — skip
+            pass
+
+    return merged
+
+
 def evaluate(
     text: str,
     student_name: str = "",
@@ -237,7 +267,6 @@ def evaluate(
     attempt_count = 0
     error_msg: str | None = None
     eval_result: dict | None = None
-    raw = "{}"
 
     try:
         response, attempt_count = _call_deepseek_with_retry(
@@ -248,13 +277,15 @@ def evaluate(
             extra_body=extra_body,
         )
         raw = response.choices[0].message.content or "{}"
-        result = json.loads(raw)
+        result = _parse_multi_json_output(raw)
+        if not result:
+            raise json.JSONDecodeError("No valid JSON found", raw, 0)
         success = True
     except RuntimeError as e:
         error_msg = str(e)
         raise
-    except json.JSONDecodeError:
-        raw_preview = raw[:200] if raw else "N/A"
+    except (json.JSONDecodeError, ValueError):
+        raw_preview = raw[:200] if 'raw' in dir() else "N/A"
         error_msg = f"AI returned non-JSON content: {raw_preview}"
         logger.warning(error_msg)
         eval_result = {
@@ -390,8 +421,11 @@ def evaluate_stream(
         yield _format_sse("done", {})
         return
 
-    # ── iterate stream chunks ───────────────────────────────────────────
-    content_buffer: list[str] = []
+    # ── iterate stream chunks with real-time JSON detection ─────────────
+    buffer = ""
+    depth = 0
+    json_start = 0
+    merged: dict = {}
     success = False
     error_msg: str | None = None
     eval_result: dict | None = None
@@ -407,27 +441,47 @@ def evaluate_stream(
             if getattr(delta, "reasoning_content", None):
                 yield _format_sse("reasoning", {"delta": delta.reasoning_content})
             if delta.content:
-                content_buffer.append(delta.content)
+                buffer += delta.content and delta.content or ""
                 yield _format_sse("content", {"delta": delta.content})
+
+                # Real-time JSON detection: track brace depth
+                for ch in delta.content:
+                    if ch == '{':
+                        if depth == 0:
+                            json_start = len(buffer) - len(delta.content) + (delta.content.index('{') if '{' in delta.content else 0)
+                        depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            # Complete JSON detected — parse and emit typed event
+                            try:
+                                obj = json.loads(buffer[json_start:])
+                                merged.update(obj)
+                                # Determine which type of JSON this is
+                                if "aiScore" in obj or "dimensionScores" in obj:
+                                    yield _format_sse("scores", obj)
+                                elif "aiIssues" in obj:
+                                    yield _format_sse("issues", {"aiIssues": obj.get("aiIssues", "")})
+                                elif "aiComment" in obj:
+                                    yield _format_sse("comment", {"aiComment": obj.get("aiComment", "")})
+                            except json.JSONDecodeError:
+                                pass  # incomplete JSON, wait for more
     except Exception as e:
         error_msg = f"Stream interrupted: {e}"
         logger.warning(error_msg)
         yield _format_sse("error", {"message": error_msg, "code": "STREAM_INTERRUPTED"})
     else:
-        # ── parse accumulated content ───────────────────────────────────
-        raw_text = "".join(content_buffer)
-        try:
-            raw = json.loads(raw_text)
-            eval_result = _build_result(raw, dimensions)
+        if merged:
+            eval_result = _build_result(merged, dimensions)
             success = True
             yield _format_sse("result", eval_result)
-        except json.JSONDecodeError:
-            error_msg = f"AI returned non-JSON content in stream: {raw_text[:200]}"
+        else:
+            error_msg = "No valid JSON found in stream response"
             logger.warning(error_msg)
             eval_result = {
                 "aiScore": 0,
                 "aiIssues": "1. AI 返回格式异常，请联系教师人工评阅",
-                "aiComment": f"AI 返回了非 JSON 内容，原始输出：{raw_text[:200]}",
+                "aiComment": f"AI 未返回有效的 JSON 内容",
                 "dimensionScores": [],
             }
             yield _format_sse("result", eval_result)
