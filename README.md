@@ -41,7 +41,7 @@ npm run dev
 
 ### 麒麟 LoongArch 虚拟机演示启动（验收推荐）
 
-验收要求中写明“LoongArch 架构 + 麒麟高级服务器版”，因此最终演示建议在 LoongArch 麒麟虚拟机内原生启动项目，而不是优先使用 Docker。LoongArch 上部分官方镜像和 Python/OCR 依赖可能没有稳定可用的原生包，演示主流程使用后端 `demo` 配置和内置演示评分，能稳定展示“登录 -> 作业审批 -> 附件预览/下载 -> AI 评价 -> 教师复核 -> 统计/Excel 导出”的完整闭环。
+验收要求中写明"LoongArch 架构 + 麒麟高级服务器版"，因此最终演示建议在 LoongArch 麒麟虚拟机内原生启动项目，而不是优先使用 Docker。LoongArch 上部分官方镜像和 Python/OCR 依赖可能没有稳定可用的原生包，演示主流程使用后端 `demo` 配置和内置演示评分，能稳定展示"登录 -> 作业审批 -> 附件预览/下载 -> AI 评价 -> 教师复核 -> 统计/Excel 导出"的完整闭环。
 
 ```bash
 # 1. 验收录屏先证明运行环境
@@ -104,7 +104,7 @@ sudo firewall-cmd --reload
 fuser -k 8080/tcp 5173/tcp
 ```
 
-完整操作说明见 `docs/演示文档/麒麟LoongArch虚拟机部署指南.md`。
+完整操作说明见 `docs/部署文档/01-麒麟LoongArch虚拟机部署指南.md`。
 
 ### Docker 演示启动（可选）
 
@@ -125,6 +125,14 @@ docker compose ps
 | OpenAPI JSON | http://localhost:8080/v3/api-docs |
 | 健康检查 | http://localhost:8080/api/health |
 | AI 服务健康检查（可选） | http://localhost:8000/api/health |
+
+## 部署文档
+
+详细的部署文档请查看 `docs/部署文档/` 目录：
+
+- [00-部署文档目录.md](docs/部署文档/00-部署文档目录.md) - 部署文档索引
+- [01-麒麟LoongArch虚拟机部署指南.md](docs/部署文档/01-麒麟LoongArch虚拟机部署指南.md) - 验收专用部署指南
+- [02-部署方案汇总.md](docs/部署文档/部署方案汇总.md) - 4 种部署方式完整指南
 
 ## 当前功能
 
@@ -177,11 +185,23 @@ Teaching-System/
 │   ├── config.py                      # 集中配置
 │   └── requirements.txt
 ├── docs/
+│   ├── README.md                      # 文档导航入口
 │   ├── 设计期文档/                    # 15 份设计文档
+│   ├── 部署文档/                      # 部署指南
 │   ├── 开发期文档/                    # 按天划分的开发记录
 │   └── 工作清单/                      # 每日任务清单
 └── sql/                               # 数据库脚本
 ```
+
+## 文档导航
+
+详细的项目文档请查看 `docs/` 目录：
+
+- [docs/README.md](docs/README.md) - 文档导航入口
+- [docs/设计期文档/](docs/设计期文档/) - 15 份设计文档（项目概述、业务流程、项目结构、数据库设计等）
+- [docs/部署文档/](docs/部署文档/) - 部署指南（4 种部署方式、配置说明、健康检查等）
+- [docs/开发期文档/](docs/开发期文档/) - 开发过程记录（日进度汇报表、数据库变更、测试记录等）
+- [docs/工作清单/](docs/工作清单/) - 任务规划
 
 ## 分工
 
