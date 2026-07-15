@@ -52,9 +52,6 @@ uploads/
 # === DeepSeek docs (large HTML, not tracked) ===
 /docs/开发期文档/DeepSeek接入指南/
 
-# === Deployment docs ===
-# Deployment documentation is tracked, but temporary build artifacts are not
-
 # === nodejs ===
 /frontend/node_modules
 /frontend/dist
